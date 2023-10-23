@@ -22,7 +22,10 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class ApplicationConfigService {
-  private endpointPrefix = '';
+  // private endpointPrefix = '';
+  // private microfrontend = false;
+
+  private endpointPrefix: string | undefined = '';
   private microfrontend = false;
 
   setEndpointPrefix(endpointPrefix: string): void {
@@ -37,9 +40,30 @@ export class ApplicationConfigService {
     return this.microfrontend;
   }
 
+  // getEndpointFor(api: string, microservice?: string): string {
+  //   if (microservice) {
+  //     return `${this.endpointPrefix}services/${microservice}/${api}`;
+  //   }
+  //   return `${this.endpointPrefix}${api}`;
+  // }
+
+
+  /**
+   * Fix for the error in the containerised app which reads like
+   * "Failed to load resource: the server responded with status 405(not allowed)
+   * "undefinedapi/aithenticate:1"
+   * @param api
+   * @param microservice
+   */
   getEndpointFor(api: string, microservice?: string): string {
     if (microservice) {
+      if (this.endpointPrefix === undefined) {
+        return `services/${microservice}/${api}`;
+      }
       return `${this.endpointPrefix}services/${microservice}/${api}`;
+    }
+    if (this.endpointPrefix === undefined) {
+      return `${api}`;
     }
     return `${this.endpointPrefix}${api}`;
   }
