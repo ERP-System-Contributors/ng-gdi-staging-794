@@ -1,6 +1,6 @@
 #
-# Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-# Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
+# GDI STAGING - Mark VI No 3 (Phoebe Series) Client 0.0.1-SNAPSHOT
+# Copyright © 2023 ERP System Contributors (mailnjeru@gmail.com)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
