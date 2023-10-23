@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230914085031",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "glCode",
@@ -30,5 +30,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

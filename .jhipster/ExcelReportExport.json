@@ -120,5 +120,6 @@
       "relationshipValidateRules": ["required"]
     }
   ],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

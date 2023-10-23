@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICardPerformanceFlag, getCardPerformanceFlagIdentifier } from '../card-performance-flag.model';
+import { ICardPerformanceFlag, NewCardPerformanceFlag } from '../card-performance-flag.model';
+
+export type PartialUpdateCardPerformanceFlag = Partial<ICardPerformanceFlag> & Pick<ICardPerformanceFlag, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICardPerformanceFlag>;
 export type EntityArrayResponseType = HttpResponse<ICardPerformanceFlag[]>;
@@ -36,21 +20,21 @@ export class CardPerformanceFlagService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(cardPerformanceFlag: ICardPerformanceFlag): Observable<EntityResponseType> {
+  create(cardPerformanceFlag: NewCardPerformanceFlag): Observable<EntityResponseType> {
     return this.http.post<ICardPerformanceFlag>(this.resourceUrl, cardPerformanceFlag, { observe: 'response' });
   }
 
   update(cardPerformanceFlag: ICardPerformanceFlag): Observable<EntityResponseType> {
     return this.http.put<ICardPerformanceFlag>(
-      `${this.resourceUrl}/${getCardPerformanceFlagIdentifier(cardPerformanceFlag) as number}`,
+      `${this.resourceUrl}/${this.getCardPerformanceFlagIdentifier(cardPerformanceFlag)}`,
       cardPerformanceFlag,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(cardPerformanceFlag: ICardPerformanceFlag): Observable<EntityResponseType> {
+  partialUpdate(cardPerformanceFlag: PartialUpdateCardPerformanceFlag): Observable<EntityResponseType> {
     return this.http.patch<ICardPerformanceFlag>(
-      `${this.resourceUrl}/${getCardPerformanceFlagIdentifier(cardPerformanceFlag) as number}`,
+      `${this.resourceUrl}/${this.getCardPerformanceFlagIdentifier(cardPerformanceFlag)}`,
       cardPerformanceFlag,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class CardPerformanceFlagService {
     return this.http.get<ICardPerformanceFlag[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCardPerformanceFlagToCollectionIfMissing(
-    cardPerformanceFlagCollection: ICardPerformanceFlag[],
-    ...cardPerformanceFlagsToCheck: (ICardPerformanceFlag | null | undefined)[]
-  ): ICardPerformanceFlag[] {
-    const cardPerformanceFlags: ICardPerformanceFlag[] = cardPerformanceFlagsToCheck.filter(isPresent);
+  getCardPerformanceFlagIdentifier(cardPerformanceFlag: Pick<ICardPerformanceFlag, 'id'>): number {
+    return cardPerformanceFlag.id;
+  }
+
+  compareCardPerformanceFlag(o1: Pick<ICardPerformanceFlag, 'id'> | null, o2: Pick<ICardPerformanceFlag, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCardPerformanceFlagIdentifier(o1) === this.getCardPerformanceFlagIdentifier(o2) : o1 === o2;
+  }
+
+  addCardPerformanceFlagToCollectionIfMissing<Type extends Pick<ICardPerformanceFlag, 'id'>>(
+    cardPerformanceFlagCollection: Type[],
+    ...cardPerformanceFlagsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const cardPerformanceFlags: Type[] = cardPerformanceFlagsToCheck.filter(isPresent);
     if (cardPerformanceFlags.length > 0) {
       const cardPerformanceFlagCollectionIdentifiers = cardPerformanceFlagCollection.map(
-        cardPerformanceFlagItem => getCardPerformanceFlagIdentifier(cardPerformanceFlagItem)!
+        cardPerformanceFlagItem => this.getCardPerformanceFlagIdentifier(cardPerformanceFlagItem)!
       );
       const cardPerformanceFlagsToAdd = cardPerformanceFlags.filter(cardPerformanceFlagItem => {
-        const cardPerformanceFlagIdentifier = getCardPerformanceFlagIdentifier(cardPerformanceFlagItem);
-        if (cardPerformanceFlagIdentifier == null || cardPerformanceFlagCollectionIdentifiers.includes(cardPerformanceFlagIdentifier)) {
+        const cardPerformanceFlagIdentifier = this.getCardPerformanceFlagIdentifier(cardPerformanceFlagItem);
+        if (cardPerformanceFlagCollectionIdentifiers.includes(cardPerformanceFlagIdentifier)) {
           return false;
         }
         cardPerformanceFlagCollectionIdentifiers.push(cardPerformanceFlagIdentifier);

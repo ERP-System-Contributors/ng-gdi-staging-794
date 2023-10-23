@@ -1,32 +1,23 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { IAgriculturalEnterpriseActivityType, AgriculturalEnterpriseActivityType } from '../agricultural-enterprise-activity-type.model';
+import { IAgriculturalEnterpriseActivityType } from '../agricultural-enterprise-activity-type.model';
+import {
+  sampleWithRequiredData,
+  sampleWithNewData,
+  sampleWithPartialData,
+  sampleWithFullData,
+} from '../agricultural-enterprise-activity-type.test-samples';
 
 import { AgriculturalEnterpriseActivityTypeService } from './agricultural-enterprise-activity-type.service';
+
+const requireRestSample: IAgriculturalEnterpriseActivityType = {
+  ...sampleWithRequiredData,
+};
 
 describe('AgriculturalEnterpriseActivityType Service', () => {
   let service: AgriculturalEnterpriseActivityTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: IAgriculturalEnterpriseActivityType;
   let expectedResult: IAgriculturalEnterpriseActivityType | IAgriculturalEnterpriseActivityType[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +27,27 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
     expectedResult = null;
     service = TestBed.inject(AgriculturalEnterpriseActivityTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      agriculturalEnterpriseActivityTypeCode: 'AAAAAAA',
-      agriculturalEnterpriseActivityType: 'AAAAAAA',
-      agriculturalEnterpriseActivityTypeDescription: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a AgriculturalEnterpriseActivityType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const agriculturalEnterpriseActivityType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new AgriculturalEnterpriseActivityType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(agriculturalEnterpriseActivityType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +55,11 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
     });
 
     it('should update a AgriculturalEnterpriseActivityType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          agriculturalEnterpriseActivityTypeCode: 'BBBBBB',
-          agriculturalEnterpriseActivityType: 'BBBBBB',
-          agriculturalEnterpriseActivityTypeDescription: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const agriculturalEnterpriseActivityType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(agriculturalEnterpriseActivityType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,16 +67,9 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
     });
 
     it('should partial update a AgriculturalEnterpriseActivityType', () => {
-      const patchObject = Object.assign(
-        {
-          agriculturalEnterpriseActivityTypeDescription: 'BBBBBB',
-        },
-        new AgriculturalEnterpriseActivityType()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -113,49 +79,43 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
     });
 
     it('should return a list of AgriculturalEnterpriseActivityType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          agriculturalEnterpriseActivityTypeCode: 'BBBBBB',
-          agriculturalEnterpriseActivityType: 'BBBBBB',
-          agriculturalEnterpriseActivityTypeDescription: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a AgriculturalEnterpriseActivityType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addAgriculturalEnterpriseActivityTypeToCollectionIfMissing', () => {
       it('should add a AgriculturalEnterpriseActivityType to an empty array', () => {
-        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = { id: 123 };
+        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = sampleWithRequiredData;
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing([], agriculturalEnterpriseActivityType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(agriculturalEnterpriseActivityType);
       });
 
       it('should not add a AgriculturalEnterpriseActivityType to an array that contains it', () => {
-        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = { id: 123 };
+        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = sampleWithRequiredData;
         const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [
           {
             ...agriculturalEnterpriseActivityType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           agriculturalEnterpriseActivityTypeCollection,
@@ -165,8 +125,8 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
       });
 
       it("should add a AgriculturalEnterpriseActivityType to an array that doesn't contain it", () => {
-        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = { id: 123 };
-        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [{ id: 456 }];
+        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = sampleWithRequiredData;
+        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [sampleWithPartialData];
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           agriculturalEnterpriseActivityTypeCollection,
           agriculturalEnterpriseActivityType
@@ -176,8 +136,12 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
       });
 
       it('should add only unique AgriculturalEnterpriseActivityType to an array', () => {
-        const agriculturalEnterpriseActivityTypeArray: IAgriculturalEnterpriseActivityType[] = [{ id: 123 }, { id: 456 }, { id: 28649 }];
-        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [{ id: 123 }];
+        const agriculturalEnterpriseActivityTypeArray: IAgriculturalEnterpriseActivityType[] = [
+          sampleWithRequiredData,
+          sampleWithPartialData,
+          sampleWithFullData,
+        ];
+        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [sampleWithRequiredData];
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           agriculturalEnterpriseActivityTypeCollection,
           ...agriculturalEnterpriseActivityTypeArray
@@ -186,8 +150,8 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
       });
 
       it('should accept varargs', () => {
-        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = { id: 123 };
-        const agriculturalEnterpriseActivityType2: IAgriculturalEnterpriseActivityType = { id: 456 };
+        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = sampleWithRequiredData;
+        const agriculturalEnterpriseActivityType2: IAgriculturalEnterpriseActivityType = sampleWithPartialData;
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           [],
           agriculturalEnterpriseActivityType,
@@ -199,7 +163,7 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = { id: 123 };
+        const agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType = sampleWithRequiredData;
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           [],
           null,
@@ -211,13 +175,57 @@ describe('AgriculturalEnterpriseActivityType Service', () => {
       });
 
       it('should return initial array if no AgriculturalEnterpriseActivityType is added', () => {
-        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [{ id: 123 }];
+        const agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[] = [sampleWithRequiredData];
         expectedResult = service.addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
           agriculturalEnterpriseActivityTypeCollection,
           undefined,
           null
         );
         expect(expectedResult).toEqual(agriculturalEnterpriseActivityTypeCollection);
+      });
+    });
+
+    describe('compareAgriculturalEnterpriseActivityType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareAgriculturalEnterpriseActivityType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareAgriculturalEnterpriseActivityType(entity1, entity2);
+        const compareResult2 = service.compareAgriculturalEnterpriseActivityType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareAgriculturalEnterpriseActivityType(entity1, entity2);
+        const compareResult2 = service.compareAgriculturalEnterpriseActivityType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareAgriculturalEnterpriseActivityType(entity1, entity2);
+        const compareResult2 = service.compareAgriculturalEnterpriseActivityType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

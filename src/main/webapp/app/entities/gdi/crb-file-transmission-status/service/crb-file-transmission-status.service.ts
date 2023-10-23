@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbFileTransmissionStatus, getCrbFileTransmissionStatusIdentifier } from '../crb-file-transmission-status.model';
+import { ICrbFileTransmissionStatus, NewCrbFileTransmissionStatus } from '../crb-file-transmission-status.model';
+
+export type PartialUpdateCrbFileTransmissionStatus = Partial<ICrbFileTransmissionStatus> & Pick<ICrbFileTransmissionStatus, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbFileTransmissionStatus>;
 export type EntityArrayResponseType = HttpResponse<ICrbFileTransmissionStatus[]>;
@@ -36,21 +20,21 @@ export class CrbFileTransmissionStatusService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbFileTransmissionStatus: ICrbFileTransmissionStatus): Observable<EntityResponseType> {
+  create(crbFileTransmissionStatus: NewCrbFileTransmissionStatus): Observable<EntityResponseType> {
     return this.http.post<ICrbFileTransmissionStatus>(this.resourceUrl, crbFileTransmissionStatus, { observe: 'response' });
   }
 
   update(crbFileTransmissionStatus: ICrbFileTransmissionStatus): Observable<EntityResponseType> {
     return this.http.put<ICrbFileTransmissionStatus>(
-      `${this.resourceUrl}/${getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatus) as number}`,
+      `${this.resourceUrl}/${this.getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatus)}`,
       crbFileTransmissionStatus,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(crbFileTransmissionStatus: ICrbFileTransmissionStatus): Observable<EntityResponseType> {
+  partialUpdate(crbFileTransmissionStatus: PartialUpdateCrbFileTransmissionStatus): Observable<EntityResponseType> {
     return this.http.patch<ICrbFileTransmissionStatus>(
-      `${this.resourceUrl}/${getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatus) as number}`,
+      `${this.resourceUrl}/${this.getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatus)}`,
       crbFileTransmissionStatus,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CrbFileTransmissionStatusService {
     return this.http.get<ICrbFileTransmissionStatus[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbFileTransmissionStatusToCollectionIfMissing(
-    crbFileTransmissionStatusCollection: ICrbFileTransmissionStatus[],
-    ...crbFileTransmissionStatusesToCheck: (ICrbFileTransmissionStatus | null | undefined)[]
-  ): ICrbFileTransmissionStatus[] {
-    const crbFileTransmissionStatuses: ICrbFileTransmissionStatus[] = crbFileTransmissionStatusesToCheck.filter(isPresent);
+  getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatus: Pick<ICrbFileTransmissionStatus, 'id'>): number {
+    return crbFileTransmissionStatus.id;
+  }
+
+  compareCrbFileTransmissionStatus(
+    o1: Pick<ICrbFileTransmissionStatus, 'id'> | null,
+    o2: Pick<ICrbFileTransmissionStatus, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCrbFileTransmissionStatusIdentifier(o1) === this.getCrbFileTransmissionStatusIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbFileTransmissionStatusToCollectionIfMissing<Type extends Pick<ICrbFileTransmissionStatus, 'id'>>(
+    crbFileTransmissionStatusCollection: Type[],
+    ...crbFileTransmissionStatusesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbFileTransmissionStatuses: Type[] = crbFileTransmissionStatusesToCheck.filter(isPresent);
     if (crbFileTransmissionStatuses.length > 0) {
       const crbFileTransmissionStatusCollectionIdentifiers = crbFileTransmissionStatusCollection.map(
-        crbFileTransmissionStatusItem => getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatusItem)!
+        crbFileTransmissionStatusItem => this.getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatusItem)!
       );
       const crbFileTransmissionStatusesToAdd = crbFileTransmissionStatuses.filter(crbFileTransmissionStatusItem => {
-        const crbFileTransmissionStatusIdentifier = getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatusItem);
-        if (
-          crbFileTransmissionStatusIdentifier == null ||
-          crbFileTransmissionStatusCollectionIdentifiers.includes(crbFileTransmissionStatusIdentifier)
-        ) {
+        const crbFileTransmissionStatusIdentifier = this.getCrbFileTransmissionStatusIdentifier(crbFileTransmissionStatusItem);
+        if (crbFileTransmissionStatusCollectionIdentifiers.includes(crbFileTransmissionStatusIdentifier)) {
           return false;
         }
         crbFileTransmissionStatusCollectionIdentifiers.push(crbFileTransmissionStatusIdentifier);

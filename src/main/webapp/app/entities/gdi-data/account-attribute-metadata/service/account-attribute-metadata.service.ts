@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IAccountAttributeMetadata, getAccountAttributeMetadataIdentifier } from '../account-attribute-metadata.model';
+import { IAccountAttributeMetadata, NewAccountAttributeMetadata } from '../account-attribute-metadata.model';
+
+export type PartialUpdateAccountAttributeMetadata = Partial<IAccountAttributeMetadata> & Pick<IAccountAttributeMetadata, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAccountAttributeMetadata>;
 export type EntityArrayResponseType = HttpResponse<IAccountAttributeMetadata[]>;
@@ -36,21 +20,21 @@ export class AccountAttributeMetadataService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(accountAttributeMetadata: IAccountAttributeMetadata): Observable<EntityResponseType> {
+  create(accountAttributeMetadata: NewAccountAttributeMetadata): Observable<EntityResponseType> {
     return this.http.post<IAccountAttributeMetadata>(this.resourceUrl, accountAttributeMetadata, { observe: 'response' });
   }
 
   update(accountAttributeMetadata: IAccountAttributeMetadata): Observable<EntityResponseType> {
     return this.http.put<IAccountAttributeMetadata>(
-      `${this.resourceUrl}/${getAccountAttributeMetadataIdentifier(accountAttributeMetadata) as number}`,
+      `${this.resourceUrl}/${this.getAccountAttributeMetadataIdentifier(accountAttributeMetadata)}`,
       accountAttributeMetadata,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(accountAttributeMetadata: IAccountAttributeMetadata): Observable<EntityResponseType> {
+  partialUpdate(accountAttributeMetadata: PartialUpdateAccountAttributeMetadata): Observable<EntityResponseType> {
     return this.http.patch<IAccountAttributeMetadata>(
-      `${this.resourceUrl}/${getAccountAttributeMetadataIdentifier(accountAttributeMetadata) as number}`,
+      `${this.resourceUrl}/${this.getAccountAttributeMetadataIdentifier(accountAttributeMetadata)}`,
       accountAttributeMetadata,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class AccountAttributeMetadataService {
     return this.http.get<IAccountAttributeMetadata[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAccountAttributeMetadataToCollectionIfMissing(
-    accountAttributeMetadataCollection: IAccountAttributeMetadata[],
-    ...accountAttributeMetadataToCheck: (IAccountAttributeMetadata | null | undefined)[]
-  ): IAccountAttributeMetadata[] {
-    const accountAttributeMetadata: IAccountAttributeMetadata[] = accountAttributeMetadataToCheck.filter(isPresent);
+  getAccountAttributeMetadataIdentifier(accountAttributeMetadata: Pick<IAccountAttributeMetadata, 'id'>): number {
+    return accountAttributeMetadata.id;
+  }
+
+  compareAccountAttributeMetadata(
+    o1: Pick<IAccountAttributeMetadata, 'id'> | null,
+    o2: Pick<IAccountAttributeMetadata, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getAccountAttributeMetadataIdentifier(o1) === this.getAccountAttributeMetadataIdentifier(o2) : o1 === o2;
+  }
+
+  addAccountAttributeMetadataToCollectionIfMissing<Type extends Pick<IAccountAttributeMetadata, 'id'>>(
+    accountAttributeMetadataCollection: Type[],
+    ...accountAttributeMetadataToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const accountAttributeMetadata: Type[] = accountAttributeMetadataToCheck.filter(isPresent);
     if (accountAttributeMetadata.length > 0) {
       const accountAttributeMetadataCollectionIdentifiers = accountAttributeMetadataCollection.map(
-        accountAttributeMetadataItem => getAccountAttributeMetadataIdentifier(accountAttributeMetadataItem)!
+        accountAttributeMetadataItem => this.getAccountAttributeMetadataIdentifier(accountAttributeMetadataItem)!
       );
       const accountAttributeMetadataToAdd = accountAttributeMetadata.filter(accountAttributeMetadataItem => {
-        const accountAttributeMetadataIdentifier = getAccountAttributeMetadataIdentifier(accountAttributeMetadataItem);
-        if (
-          accountAttributeMetadataIdentifier == null ||
-          accountAttributeMetadataCollectionIdentifiers.includes(accountAttributeMetadataIdentifier)
-        ) {
+        const accountAttributeMetadataIdentifier = this.getAccountAttributeMetadataIdentifier(accountAttributeMetadataItem);
+        if (accountAttributeMetadataCollectionIdentifiers.includes(accountAttributeMetadataIdentifier)) {
           return false;
         }
         accountAttributeMetadataCollectionIdentifiers.push(accountAttributeMetadataIdentifier);

@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-collateral-information-heading" data-cy="CollateralInformationCreateUpdateHeading">
@@ -27,13 +8,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -45,11 +26,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -60,8 +39,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralId">Collateral Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralId">Collateral Id</label>
           <input
             type="text"
             class="form-control"
@@ -77,8 +56,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_loanContractId">Loan Contract Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_loanContractId">Loan Contract Id</label>
           <input
             type="text"
             class="form-control"
@@ -94,13 +73,13 @@
           >
             <small class="form-text text-danger" *ngIf="editForm.get('loanContractId')?.errors?.required"> This field is required. </small>
             <small class="form-text text-danger" *ngIf="editForm.get('loanContractId')?.errors?.pattern">
-              This field should follow pattern for "Loan Contract Id".
+              This field should follow pattern for Loan Contract Id.
             </small>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_customerId">Customer Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_customerId">Customer Id</label>
           <input
             type="text"
             class="form-control"
@@ -114,8 +93,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_registrationPropertyNumber">Registration Property Number</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_registrationPropertyNumber">Registration Property Number</label>
           <input
             type="text"
             class="form-control"
@@ -126,8 +105,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralOMVInCCY">Collateral OMV In CCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralOMVInCCY">Collateral OMV In CCY</label>
           <input
             type="number"
             class="form-control"
@@ -154,8 +133,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralFSVInLCY">Collateral FSV In LCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralFSVInLCY">Collateral FSV In LCY</label>
           <input
             type="number"
             class="form-control"
@@ -182,8 +161,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralDiscountedValue">Collateral Discounted Value</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralDiscountedValue">Collateral Discounted Value</label>
           <input
             type="number"
             class="form-control"
@@ -207,8 +186,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_amountCharged">Amount Charged</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_amountCharged">Amount Charged</label>
           <input
             type="number"
             class="form-control"
@@ -232,8 +211,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralDiscountRate">Collateral Discount Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralDiscountRate">Collateral Discount Rate</label>
           <input
             type="number"
             class="form-control"
@@ -257,8 +236,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_loanToValueRatio">Loan To Value Ratio</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_loanToValueRatio">Loan To Value Ratio</label>
           <input
             type="number"
             class="form-control"
@@ -282,8 +261,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_nameOfPropertyValuer">Name Of Property Valuer</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_nameOfPropertyValuer">Name Of Property Valuer</label>
           <input
             type="text"
             class="form-control"
@@ -294,8 +273,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralLastValuationDate">Collateral Last Valuation Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralLastValuationDate">Collateral Last Valuation Date</label>
           <div class="input-group">
             <input
               id="field_collateralLastValuationDate"
@@ -307,16 +286,14 @@
               #collateralLastValuationDateDp="ngbDatepicker"
               formControlName="collateralLastValuationDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="collateralLastValuationDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="collateralLastValuationDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_insuredFlag">Insured Flag</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_insuredFlag">Insured Flag</label>
           <select class="form-control" name="insuredFlag" formControlName="insuredFlag" id="field_insuredFlag" data-cy="insuredFlag">
             <option [ngValue]="null"></option>
             <option *ngFor="let collateralInsuredFlagTypes of collateralInsuredFlagTypesValues" [value]="collateralInsuredFlagTypes">
@@ -328,8 +305,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_nameOfInsurer">Name Of Insurer</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_nameOfInsurer">Name Of Insurer</label>
           <input
             type="text"
             class="form-control"
@@ -340,8 +317,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_amountInsured">Amount Insured</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_amountInsured">Amount Insured</label>
           <input
             type="number"
             class="form-control"
@@ -364,8 +341,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_insuranceExpiryDate">Insurance Expiry Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_insuranceExpiryDate">Insurance Expiry Date</label>
           <div class="input-group">
             <input
               id="field_insuranceExpiryDate"
@@ -377,16 +354,14 @@
               #insuranceExpiryDateDp="ngbDatepicker"
               formControlName="insuranceExpiryDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="insuranceExpiryDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="insuranceExpiryDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_guaranteeInsurers">Guarantee Insurers</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_guaranteeInsurers">Guarantee Insurers</label>
           <input
             type="text"
             class="form-control"
@@ -397,16 +372,18 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -415,16 +392,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_branchCode">Branch Code</label>
-          <select class="form-control" id="field_branchCode" data-cy="branchCode" name="branchCode" formControlName="branchCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_branchCode">Branch Code</label>
+          <select
+            class="form-control"
+            id="field_branchCode"
+            data-cy="branchCode"
+            name="branchCode"
+            formControlName="branchCode"
+            [compareWith]="compareBankBranchCode"
+          >
             <option *ngIf="!editForm.get('branchCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                bankBranchCodeOption.id === editForm.get('branchCode')!.value?.id ? editForm.get('branchCode')!.value : bankBranchCodeOption
-              "
-              *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection; trackBy: trackBankBranchCodeById"
-            >
+            <option [ngValue]="bankBranchCodeOption" *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection">
               {{ bankBranchCodeOption.branchCode }}
             </option>
           </select>
@@ -435,24 +414,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['branchCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_collateralType">Collateral Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_collateralType">Collateral Type</label>
           <select
             class="form-control"
             id="field_collateralType"
             data-cy="collateralType"
             name="collateralType"
             formControlName="collateralType"
+            [compareWith]="compareCollateralType"
           >
             <option *ngIf="!editForm.get('collateralType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                collateralTypeOption.id === editForm.get('collateralType')!.value?.id
-                  ? editForm.get('collateralType')!.value
-                  : collateralTypeOption
-              "
-              *ngFor="let collateralTypeOption of collateralTypesSharedCollection; trackBy: trackCollateralTypeById"
-            >
+            <option [ngValue]="collateralTypeOption" *ngFor="let collateralTypeOption of collateralTypesSharedCollection">
               {{ collateralTypeOption.collateralType }}
             </option>
           </select>
@@ -466,18 +439,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['collateralType'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_countyCode">County Code</label>
-          <select class="form-control" id="field_countyCode" data-cy="countyCode" name="countyCode" formControlName="countyCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_countyCode">County Code</label>
+          <select
+            class="form-control"
+            id="field_countyCode"
+            data-cy="countyCode"
+            name="countyCode"
+            formControlName="countyCode"
+            [compareWith]="compareCountySubCountyCode"
+          >
             <option [ngValue]="null"></option>
-            <option
-              [ngValue]="
-                countySubCountyCodeOption.id === editForm.get('countyCode')!.value?.id
-                  ? editForm.get('countyCode')!.value
-                  : countySubCountyCodeOption
-              "
-              *ngFor="let countySubCountyCodeOption of countySubCountyCodesSharedCollection; trackBy: trackCountySubCountyCodeById"
-            >
+            <option [ngValue]="countySubCountyCodeOption" *ngFor="let countySubCountyCodeOption of countySubCountyCodesSharedCollection">
               {{ countySubCountyCodeOption.subCountyName }}
             </option>
           </select>

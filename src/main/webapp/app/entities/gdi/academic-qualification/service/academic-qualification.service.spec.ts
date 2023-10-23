@@ -1,32 +1,23 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { IAcademicQualification, AcademicQualification } from '../academic-qualification.model';
+import { IAcademicQualification } from '../academic-qualification.model';
+import {
+  sampleWithRequiredData,
+  sampleWithNewData,
+  sampleWithPartialData,
+  sampleWithFullData,
+} from '../academic-qualification.test-samples';
 
 import { AcademicQualificationService } from './academic-qualification.service';
+
+const requireRestSample: IAcademicQualification = {
+  ...sampleWithRequiredData,
+};
 
 describe('AcademicQualification Service', () => {
   let service: AcademicQualificationService;
   let httpMock: HttpTestingController;
-  let elemDefault: IAcademicQualification;
   let expectedResult: IAcademicQualification | IAcademicQualification[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +27,27 @@ describe('AcademicQualification Service', () => {
     expectedResult = null;
     service = TestBed.inject(AcademicQualificationService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      academicQualificationsCode: 'AAAAAAA',
-      academicQualificationType: 'AAAAAAA',
-      academicQualificationTypeDetail: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a AcademicQualification', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const academicQualification = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new AcademicQualification()).subscribe(resp => (expectedResult = resp.body));
+      service.create(academicQualification).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +55,11 @@ describe('AcademicQualification Service', () => {
     });
 
     it('should update a AcademicQualification', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          academicQualificationsCode: 'BBBBBB',
-          academicQualificationType: 'BBBBBB',
-          academicQualificationTypeDetail: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const academicQualification = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(academicQualification).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,11 +67,9 @@ describe('AcademicQualification Service', () => {
     });
 
     it('should partial update a AcademicQualification', () => {
-      const patchObject = Object.assign({}, new AcademicQualification());
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -108,65 +79,59 @@ describe('AcademicQualification Service', () => {
     });
 
     it('should return a list of AcademicQualification', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          academicQualificationsCode: 'BBBBBB',
-          academicQualificationType: 'BBBBBB',
-          academicQualificationTypeDetail: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a AcademicQualification', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addAcademicQualificationToCollectionIfMissing', () => {
       it('should add a AcademicQualification to an empty array', () => {
-        const academicQualification: IAcademicQualification = { id: 123 };
+        const academicQualification: IAcademicQualification = sampleWithRequiredData;
         expectedResult = service.addAcademicQualificationToCollectionIfMissing([], academicQualification);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(academicQualification);
       });
 
       it('should not add a AcademicQualification to an array that contains it', () => {
-        const academicQualification: IAcademicQualification = { id: 123 };
+        const academicQualification: IAcademicQualification = sampleWithRequiredData;
         const academicQualificationCollection: IAcademicQualification[] = [
           {
             ...academicQualification,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addAcademicQualificationToCollectionIfMissing(academicQualificationCollection, academicQualification);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a AcademicQualification to an array that doesn't contain it", () => {
-        const academicQualification: IAcademicQualification = { id: 123 };
-        const academicQualificationCollection: IAcademicQualification[] = [{ id: 456 }];
+        const academicQualification: IAcademicQualification = sampleWithRequiredData;
+        const academicQualificationCollection: IAcademicQualification[] = [sampleWithPartialData];
         expectedResult = service.addAcademicQualificationToCollectionIfMissing(academicQualificationCollection, academicQualification);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(academicQualification);
       });
 
       it('should add only unique AcademicQualification to an array', () => {
-        const academicQualificationArray: IAcademicQualification[] = [{ id: 123 }, { id: 456 }, { id: 47882 }];
-        const academicQualificationCollection: IAcademicQualification[] = [{ id: 123 }];
+        const academicQualificationArray: IAcademicQualification[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const academicQualificationCollection: IAcademicQualification[] = [sampleWithRequiredData];
         expectedResult = service.addAcademicQualificationToCollectionIfMissing(
           academicQualificationCollection,
           ...academicQualificationArray
@@ -175,8 +140,8 @@ describe('AcademicQualification Service', () => {
       });
 
       it('should accept varargs', () => {
-        const academicQualification: IAcademicQualification = { id: 123 };
-        const academicQualification2: IAcademicQualification = { id: 456 };
+        const academicQualification: IAcademicQualification = sampleWithRequiredData;
+        const academicQualification2: IAcademicQualification = sampleWithPartialData;
         expectedResult = service.addAcademicQualificationToCollectionIfMissing([], academicQualification, academicQualification2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(academicQualification);
@@ -184,16 +149,60 @@ describe('AcademicQualification Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const academicQualification: IAcademicQualification = { id: 123 };
+        const academicQualification: IAcademicQualification = sampleWithRequiredData;
         expectedResult = service.addAcademicQualificationToCollectionIfMissing([], null, academicQualification, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(academicQualification);
       });
 
       it('should return initial array if no AcademicQualification is added', () => {
-        const academicQualificationCollection: IAcademicQualification[] = [{ id: 123 }];
+        const academicQualificationCollection: IAcademicQualification[] = [sampleWithRequiredData];
         expectedResult = service.addAcademicQualificationToCollectionIfMissing(academicQualificationCollection, undefined, null);
         expect(expectedResult).toEqual(academicQualificationCollection);
+      });
+    });
+
+    describe('compareAcademicQualification', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareAcademicQualification(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareAcademicQualification(entity1, entity2);
+        const compareResult2 = service.compareAcademicQualification(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareAcademicQualification(entity1, entity2);
+        const compareResult2 = service.compareAcademicQualification(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareAcademicQualification(entity1, entity2);
+        const compareResult2 = service.compareAcademicQualification(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

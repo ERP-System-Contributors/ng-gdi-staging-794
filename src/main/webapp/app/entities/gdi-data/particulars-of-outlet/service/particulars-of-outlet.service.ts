@@ -1,33 +1,33 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IParticularsOfOutlet, getParticularsOfOutletIdentifier } from '../particulars-of-outlet.model';
+import { IParticularsOfOutlet, NewParticularsOfOutlet } from '../particulars-of-outlet.model';
+
+export type PartialUpdateParticularsOfOutlet = Partial<IParticularsOfOutlet> & Pick<IParticularsOfOutlet, 'id'>;
+
+type RestOf<T extends IParticularsOfOutlet | NewParticularsOfOutlet> = Omit<
+  T,
+  'businessReportingDate' | 'cbkApprovalDate' | 'outletOpeningDate' | 'outletClosureDate'
+> & {
+  businessReportingDate?: string | null;
+  cbkApprovalDate?: string | null;
+  outletOpeningDate?: string | null;
+  outletClosureDate?: string | null;
+};
+
+export type RestParticularsOfOutlet = RestOf<IParticularsOfOutlet>;
+
+export type NewRestParticularsOfOutlet = RestOf<NewParticularsOfOutlet>;
+
+export type PartialUpdateRestParticularsOfOutlet = RestOf<PartialUpdateParticularsOfOutlet>;
 
 export type EntityResponseType = HttpResponse<IParticularsOfOutlet>;
 export type EntityArrayResponseType = HttpResponse<IParticularsOfOutlet[]>;
@@ -39,42 +39,42 @@ export class ParticularsOfOutletService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(particularsOfOutlet: IParticularsOfOutlet): Observable<EntityResponseType> {
+  create(particularsOfOutlet: NewParticularsOfOutlet): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(particularsOfOutlet);
     return this.http
-      .post<IParticularsOfOutlet>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestParticularsOfOutlet>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(particularsOfOutlet: IParticularsOfOutlet): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(particularsOfOutlet);
     return this.http
-      .put<IParticularsOfOutlet>(`${this.resourceUrl}/${getParticularsOfOutletIdentifier(particularsOfOutlet) as number}`, copy, {
+      .put<RestParticularsOfOutlet>(`${this.resourceUrl}/${this.getParticularsOfOutletIdentifier(particularsOfOutlet)}`, copy, {
         observe: 'response',
       })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(particularsOfOutlet: IParticularsOfOutlet): Observable<EntityResponseType> {
+  partialUpdate(particularsOfOutlet: PartialUpdateParticularsOfOutlet): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(particularsOfOutlet);
     return this.http
-      .patch<IParticularsOfOutlet>(`${this.resourceUrl}/${getParticularsOfOutletIdentifier(particularsOfOutlet) as number}`, copy, {
+      .patch<RestParticularsOfOutlet>(`${this.resourceUrl}/${this.getParticularsOfOutletIdentifier(particularsOfOutlet)}`, copy, {
         observe: 'response',
       })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<IParticularsOfOutlet>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestParticularsOfOutlet>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IParticularsOfOutlet[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestParticularsOfOutlet[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -84,22 +84,30 @@ export class ParticularsOfOutletService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IParticularsOfOutlet[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestParticularsOfOutlet[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addParticularsOfOutletToCollectionIfMissing(
-    particularsOfOutletCollection: IParticularsOfOutlet[],
-    ...particularsOfOutletsToCheck: (IParticularsOfOutlet | null | undefined)[]
-  ): IParticularsOfOutlet[] {
-    const particularsOfOutlets: IParticularsOfOutlet[] = particularsOfOutletsToCheck.filter(isPresent);
+  getParticularsOfOutletIdentifier(particularsOfOutlet: Pick<IParticularsOfOutlet, 'id'>): number {
+    return particularsOfOutlet.id;
+  }
+
+  compareParticularsOfOutlet(o1: Pick<IParticularsOfOutlet, 'id'> | null, o2: Pick<IParticularsOfOutlet, 'id'> | null): boolean {
+    return o1 && o2 ? this.getParticularsOfOutletIdentifier(o1) === this.getParticularsOfOutletIdentifier(o2) : o1 === o2;
+  }
+
+  addParticularsOfOutletToCollectionIfMissing<Type extends Pick<IParticularsOfOutlet, 'id'>>(
+    particularsOfOutletCollection: Type[],
+    ...particularsOfOutletsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const particularsOfOutlets: Type[] = particularsOfOutletsToCheck.filter(isPresent);
     if (particularsOfOutlets.length > 0) {
       const particularsOfOutletCollectionIdentifiers = particularsOfOutletCollection.map(
-        particularsOfOutletItem => getParticularsOfOutletIdentifier(particularsOfOutletItem)!
+        particularsOfOutletItem => this.getParticularsOfOutletIdentifier(particularsOfOutletItem)!
       );
       const particularsOfOutletsToAdd = particularsOfOutlets.filter(particularsOfOutletItem => {
-        const particularsOfOutletIdentifier = getParticularsOfOutletIdentifier(particularsOfOutletItem);
-        if (particularsOfOutletIdentifier == null || particularsOfOutletCollectionIdentifiers.includes(particularsOfOutletIdentifier)) {
+        const particularsOfOutletIdentifier = this.getParticularsOfOutletIdentifier(particularsOfOutletItem);
+        if (particularsOfOutletCollectionIdentifiers.includes(particularsOfOutletIdentifier)) {
           return false;
         }
         particularsOfOutletCollectionIdentifiers.push(particularsOfOutletIdentifier);
@@ -110,46 +118,39 @@ export class ParticularsOfOutletService {
     return particularsOfOutletCollection;
   }
 
-  protected convertDateFromClient(particularsOfOutlet: IParticularsOfOutlet): IParticularsOfOutlet {
-    return Object.assign({}, particularsOfOutlet, {
-      businessReportingDate: particularsOfOutlet.businessReportingDate?.isValid()
-        ? particularsOfOutlet.businessReportingDate.format(DATE_FORMAT)
+  protected convertDateFromClient<T extends IParticularsOfOutlet | NewParticularsOfOutlet | PartialUpdateParticularsOfOutlet>(
+    particularsOfOutlet: T
+  ): RestOf<T> {
+    return {
+      ...particularsOfOutlet,
+      businessReportingDate: particularsOfOutlet.businessReportingDate?.format(DATE_FORMAT) ?? null,
+      cbkApprovalDate: particularsOfOutlet.cbkApprovalDate?.format(DATE_FORMAT) ?? null,
+      outletOpeningDate: particularsOfOutlet.outletOpeningDate?.format(DATE_FORMAT) ?? null,
+      outletClosureDate: particularsOfOutlet.outletClosureDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restParticularsOfOutlet: RestParticularsOfOutlet): IParticularsOfOutlet {
+    return {
+      ...restParticularsOfOutlet,
+      businessReportingDate: restParticularsOfOutlet.businessReportingDate
+        ? dayjs(restParticularsOfOutlet.businessReportingDate)
         : undefined,
-      cbkApprovalDate: particularsOfOutlet.cbkApprovalDate?.isValid() ? particularsOfOutlet.cbkApprovalDate.format(DATE_FORMAT) : undefined,
-      outletOpeningDate: particularsOfOutlet.outletOpeningDate?.isValid()
-        ? particularsOfOutlet.outletOpeningDate.format(DATE_FORMAT)
-        : undefined,
-      outletClosureDate: particularsOfOutlet.outletClosureDate?.isValid()
-        ? particularsOfOutlet.outletClosureDate.format(DATE_FORMAT)
-        : undefined,
+      cbkApprovalDate: restParticularsOfOutlet.cbkApprovalDate ? dayjs(restParticularsOfOutlet.cbkApprovalDate) : undefined,
+      outletOpeningDate: restParticularsOfOutlet.outletOpeningDate ? dayjs(restParticularsOfOutlet.outletOpeningDate) : undefined,
+      outletClosureDate: restParticularsOfOutlet.outletClosureDate ? dayjs(restParticularsOfOutlet.outletClosureDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestParticularsOfOutlet>): HttpResponse<IParticularsOfOutlet> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.businessReportingDate = res.body.businessReportingDate ? dayjs(res.body.businessReportingDate) : undefined;
-      res.body.cbkApprovalDate = res.body.cbkApprovalDate ? dayjs(res.body.cbkApprovalDate) : undefined;
-      res.body.outletOpeningDate = res.body.outletOpeningDate ? dayjs(res.body.outletOpeningDate) : undefined;
-      res.body.outletClosureDate = res.body.outletClosureDate ? dayjs(res.body.outletClosureDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((particularsOfOutlet: IParticularsOfOutlet) => {
-        particularsOfOutlet.businessReportingDate = particularsOfOutlet.businessReportingDate
-          ? dayjs(particularsOfOutlet.businessReportingDate)
-          : undefined;
-        particularsOfOutlet.cbkApprovalDate = particularsOfOutlet.cbkApprovalDate ? dayjs(particularsOfOutlet.cbkApprovalDate) : undefined;
-        particularsOfOutlet.outletOpeningDate = particularsOfOutlet.outletOpeningDate
-          ? dayjs(particularsOfOutlet.outletOpeningDate)
-          : undefined;
-        particularsOfOutlet.outletClosureDate = particularsOfOutlet.outletClosureDate
-          ? dayjs(particularsOfOutlet.outletClosureDate)
-          : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestParticularsOfOutlet[]>): HttpResponse<IParticularsOfOutlet[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

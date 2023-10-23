@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230912071437",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "entityId",
@@ -41,5 +41,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 
 /**
@@ -45,18 +27,15 @@ export class ParseLinks {
         throw new Error('section could not be split on ";"');
       }
 
-      const url: string = section[0].replace(/<(.*)>/, '$1').trim();
+      const url: string = section[0].replace(/<(.*)>/, '$1').trim(); // NOSONAR
       const queryString: { [key: string]: string | undefined } = {};
 
-      url.replace(
-        new RegExp('([^?=&]+)(=([^&]*))?', 'g'),
-        ($0: string, $1: string | undefined, $2: string | undefined, $3: string | undefined) => {
-          if ($1 !== undefined) {
-            queryString[$1] = $3;
-          }
-          return $3 ?? '';
+      url.replace(/([^?=&]+)(=([^&]*))?/g, (_$0: string, $1: string | undefined, _$2: string | undefined, $3: string | undefined) => {
+        if ($1 !== undefined) {
+          queryString[$1] = $3;
         }
-      );
+        return $3 ?? '';
+      });
 
       if (queryString.page !== undefined) {
         const name: string = section[1].replace(/rel="(.*)"/, '$1').trim();

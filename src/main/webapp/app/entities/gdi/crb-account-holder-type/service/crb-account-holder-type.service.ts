@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbAccountHolderType, getCrbAccountHolderTypeIdentifier } from '../crb-account-holder-type.model';
+import { ICrbAccountHolderType, NewCrbAccountHolderType } from '../crb-account-holder-type.model';
+
+export type PartialUpdateCrbAccountHolderType = Partial<ICrbAccountHolderType> & Pick<ICrbAccountHolderType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbAccountHolderType>;
 export type EntityArrayResponseType = HttpResponse<ICrbAccountHolderType[]>;
@@ -36,21 +20,21 @@ export class CrbAccountHolderTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbAccountHolderType: ICrbAccountHolderType): Observable<EntityResponseType> {
+  create(crbAccountHolderType: NewCrbAccountHolderType): Observable<EntityResponseType> {
     return this.http.post<ICrbAccountHolderType>(this.resourceUrl, crbAccountHolderType, { observe: 'response' });
   }
 
   update(crbAccountHolderType: ICrbAccountHolderType): Observable<EntityResponseType> {
     return this.http.put<ICrbAccountHolderType>(
-      `${this.resourceUrl}/${getCrbAccountHolderTypeIdentifier(crbAccountHolderType) as number}`,
+      `${this.resourceUrl}/${this.getCrbAccountHolderTypeIdentifier(crbAccountHolderType)}`,
       crbAccountHolderType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(crbAccountHolderType: ICrbAccountHolderType): Observable<EntityResponseType> {
+  partialUpdate(crbAccountHolderType: PartialUpdateCrbAccountHolderType): Observable<EntityResponseType> {
     return this.http.patch<ICrbAccountHolderType>(
-      `${this.resourceUrl}/${getCrbAccountHolderTypeIdentifier(crbAccountHolderType) as number}`,
+      `${this.resourceUrl}/${this.getCrbAccountHolderTypeIdentifier(crbAccountHolderType)}`,
       crbAccountHolderType,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class CrbAccountHolderTypeService {
     return this.http.get<ICrbAccountHolderType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbAccountHolderTypeToCollectionIfMissing(
-    crbAccountHolderTypeCollection: ICrbAccountHolderType[],
-    ...crbAccountHolderTypesToCheck: (ICrbAccountHolderType | null | undefined)[]
-  ): ICrbAccountHolderType[] {
-    const crbAccountHolderTypes: ICrbAccountHolderType[] = crbAccountHolderTypesToCheck.filter(isPresent);
+  getCrbAccountHolderTypeIdentifier(crbAccountHolderType: Pick<ICrbAccountHolderType, 'id'>): number {
+    return crbAccountHolderType.id;
+  }
+
+  compareCrbAccountHolderType(o1: Pick<ICrbAccountHolderType, 'id'> | null, o2: Pick<ICrbAccountHolderType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCrbAccountHolderTypeIdentifier(o1) === this.getCrbAccountHolderTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbAccountHolderTypeToCollectionIfMissing<Type extends Pick<ICrbAccountHolderType, 'id'>>(
+    crbAccountHolderTypeCollection: Type[],
+    ...crbAccountHolderTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbAccountHolderTypes: Type[] = crbAccountHolderTypesToCheck.filter(isPresent);
     if (crbAccountHolderTypes.length > 0) {
       const crbAccountHolderTypeCollectionIdentifiers = crbAccountHolderTypeCollection.map(
-        crbAccountHolderTypeItem => getCrbAccountHolderTypeIdentifier(crbAccountHolderTypeItem)!
+        crbAccountHolderTypeItem => this.getCrbAccountHolderTypeIdentifier(crbAccountHolderTypeItem)!
       );
       const crbAccountHolderTypesToAdd = crbAccountHolderTypes.filter(crbAccountHolderTypeItem => {
-        const crbAccountHolderTypeIdentifier = getCrbAccountHolderTypeIdentifier(crbAccountHolderTypeItem);
-        if (crbAccountHolderTypeIdentifier == null || crbAccountHolderTypeCollectionIdentifiers.includes(crbAccountHolderTypeIdentifier)) {
+        const crbAccountHolderTypeIdentifier = this.getCrbAccountHolderTypeIdentifier(crbAccountHolderTypeItem);
+        if (crbAccountHolderTypeCollectionIdentifiers.includes(crbAccountHolderTypeIdentifier)) {
           return false;
         }
         crbAccountHolderTypeCollectionIdentifiers.push(crbAccountHolderTypeIdentifier);

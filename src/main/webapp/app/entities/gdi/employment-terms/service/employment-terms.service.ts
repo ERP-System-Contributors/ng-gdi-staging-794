@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IEmploymentTerms, getEmploymentTermsIdentifier } from '../employment-terms.model';
+import { IEmploymentTerms, NewEmploymentTerms } from '../employment-terms.model';
+
+export type PartialUpdateEmploymentTerms = Partial<IEmploymentTerms> & Pick<IEmploymentTerms, 'id'>;
 
 export type EntityResponseType = HttpResponse<IEmploymentTerms>;
 export type EntityArrayResponseType = HttpResponse<IEmploymentTerms[]>;
@@ -36,24 +20,20 @@ export class EmploymentTermsService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(employmentTerms: IEmploymentTerms): Observable<EntityResponseType> {
+  create(employmentTerms: NewEmploymentTerms): Observable<EntityResponseType> {
     return this.http.post<IEmploymentTerms>(this.resourceUrl, employmentTerms, { observe: 'response' });
   }
 
   update(employmentTerms: IEmploymentTerms): Observable<EntityResponseType> {
-    return this.http.put<IEmploymentTerms>(
-      `${this.resourceUrl}/${getEmploymentTermsIdentifier(employmentTerms) as number}`,
-      employmentTerms,
-      { observe: 'response' }
-    );
+    return this.http.put<IEmploymentTerms>(`${this.resourceUrl}/${this.getEmploymentTermsIdentifier(employmentTerms)}`, employmentTerms, {
+      observe: 'response',
+    });
   }
 
-  partialUpdate(employmentTerms: IEmploymentTerms): Observable<EntityResponseType> {
-    return this.http.patch<IEmploymentTerms>(
-      `${this.resourceUrl}/${getEmploymentTermsIdentifier(employmentTerms) as number}`,
-      employmentTerms,
-      { observe: 'response' }
-    );
+  partialUpdate(employmentTerms: PartialUpdateEmploymentTerms): Observable<EntityResponseType> {
+    return this.http.patch<IEmploymentTerms>(`${this.resourceUrl}/${this.getEmploymentTermsIdentifier(employmentTerms)}`, employmentTerms, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -74,18 +54,26 @@ export class EmploymentTermsService {
     return this.http.get<IEmploymentTerms[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addEmploymentTermsToCollectionIfMissing(
-    employmentTermsCollection: IEmploymentTerms[],
-    ...employmentTermsToCheck: (IEmploymentTerms | null | undefined)[]
-  ): IEmploymentTerms[] {
-    const employmentTerms: IEmploymentTerms[] = employmentTermsToCheck.filter(isPresent);
+  getEmploymentTermsIdentifier(employmentTerms: Pick<IEmploymentTerms, 'id'>): number {
+    return employmentTerms.id;
+  }
+
+  compareEmploymentTerms(o1: Pick<IEmploymentTerms, 'id'> | null, o2: Pick<IEmploymentTerms, 'id'> | null): boolean {
+    return o1 && o2 ? this.getEmploymentTermsIdentifier(o1) === this.getEmploymentTermsIdentifier(o2) : o1 === o2;
+  }
+
+  addEmploymentTermsToCollectionIfMissing<Type extends Pick<IEmploymentTerms, 'id'>>(
+    employmentTermsCollection: Type[],
+    ...employmentTermsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const employmentTerms: Type[] = employmentTermsToCheck.filter(isPresent);
     if (employmentTerms.length > 0) {
       const employmentTermsCollectionIdentifiers = employmentTermsCollection.map(
-        employmentTermsItem => getEmploymentTermsIdentifier(employmentTermsItem)!
+        employmentTermsItem => this.getEmploymentTermsIdentifier(employmentTermsItem)!
       );
       const employmentTermsToAdd = employmentTerms.filter(employmentTermsItem => {
-        const employmentTermsIdentifier = getEmploymentTermsIdentifier(employmentTermsItem);
-        if (employmentTermsIdentifier == null || employmentTermsCollectionIdentifiers.includes(employmentTermsIdentifier)) {
+        const employmentTermsIdentifier = this.getEmploymentTermsIdentifier(employmentTermsItem);
+        if (employmentTermsCollectionIdentifiers.includes(employmentTermsIdentifier)) {
           return false;
         }
         employmentTermsCollectionIdentifiers.push(employmentTermsIdentifier);

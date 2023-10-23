@@ -85,14 +85,6 @@
   "readOnly": false,
   "relationships": [
     {
-      "otherEntityField": "description",
-      "otherEntityName": "paymentLabel",
-      "otherEntityRelationshipName": "dealer",
-      "ownerSide": true,
-      "relationshipName": "paymentLabel",
-      "relationshipType": "many-to-many"
-    },
-    {
       "otherEntityField": "dealerName",
       "otherEntityName": "dealer",
       "relationshipName": "dealerGroup",

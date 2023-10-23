@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.erp</groupId>
-    <artifactId>erp-client</artifactId>
-    <version>1.5.3</version>
-    <name>Erp System</name>
-    <description>Mark VI No 2 (Phoebe Series) Client 1.5.3</description>
+    <artifactId>ng-gdi-staging-794</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>GDI STAGING</name>
+    <description>Mark VI No 3 (Phoebe Series) Client 0.0.1-SNAPSHOT</description>
 
     <repositories>
         <!-- jhipster-needle-maven-repository -->
@@ -30,10 +30,10 @@
 
         <erp.system.dev.db>${env.ERP_SYSTEM_DEV_DB}</erp.system.dev.db>
         <docker.image.prefix>ghacupha</docker.image.prefix>
-        <founder.website>https://github.com/ghacupha</founder.website>
+        <founder.website>https://github.com/ERP-System-Contributors</founder.website>
         <owner.email>mailnjeru@gmail.com</owner.email>
-        <project.inceptionYear>2021 - 2023</project.inceptionYear>
-        <project.owner>Edwin Njeru</project.owner>
+        <project.inceptionYear>2023</project.inceptionYear>
+        <project.owner>ERP System Contributors</project.owner>
 
     </properties>
 

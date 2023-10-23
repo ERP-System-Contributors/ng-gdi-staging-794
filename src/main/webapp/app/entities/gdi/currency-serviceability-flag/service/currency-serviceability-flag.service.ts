@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICurrencyServiceabilityFlag, getCurrencyServiceabilityFlagIdentifier } from '../currency-serviceability-flag.model';
+import { ICurrencyServiceabilityFlag, NewCurrencyServiceabilityFlag } from '../currency-serviceability-flag.model';
+
+export type PartialUpdateCurrencyServiceabilityFlag = Partial<ICurrencyServiceabilityFlag> & Pick<ICurrencyServiceabilityFlag, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICurrencyServiceabilityFlag>;
 export type EntityArrayResponseType = HttpResponse<ICurrencyServiceabilityFlag[]>;
@@ -36,21 +20,21 @@ export class CurrencyServiceabilityFlagService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(currencyServiceabilityFlag: ICurrencyServiceabilityFlag): Observable<EntityResponseType> {
+  create(currencyServiceabilityFlag: NewCurrencyServiceabilityFlag): Observable<EntityResponseType> {
     return this.http.post<ICurrencyServiceabilityFlag>(this.resourceUrl, currencyServiceabilityFlag, { observe: 'response' });
   }
 
   update(currencyServiceabilityFlag: ICurrencyServiceabilityFlag): Observable<EntityResponseType> {
     return this.http.put<ICurrencyServiceabilityFlag>(
-      `${this.resourceUrl}/${getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlag) as number}`,
+      `${this.resourceUrl}/${this.getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlag)}`,
       currencyServiceabilityFlag,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(currencyServiceabilityFlag: ICurrencyServiceabilityFlag): Observable<EntityResponseType> {
+  partialUpdate(currencyServiceabilityFlag: PartialUpdateCurrencyServiceabilityFlag): Observable<EntityResponseType> {
     return this.http.patch<ICurrencyServiceabilityFlag>(
-      `${this.resourceUrl}/${getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlag) as number}`,
+      `${this.resourceUrl}/${this.getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlag)}`,
       currencyServiceabilityFlag,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CurrencyServiceabilityFlagService {
     return this.http.get<ICurrencyServiceabilityFlag[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCurrencyServiceabilityFlagToCollectionIfMissing(
-    currencyServiceabilityFlagCollection: ICurrencyServiceabilityFlag[],
-    ...currencyServiceabilityFlagsToCheck: (ICurrencyServiceabilityFlag | null | undefined)[]
-  ): ICurrencyServiceabilityFlag[] {
-    const currencyServiceabilityFlags: ICurrencyServiceabilityFlag[] = currencyServiceabilityFlagsToCheck.filter(isPresent);
+  getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlag: Pick<ICurrencyServiceabilityFlag, 'id'>): number {
+    return currencyServiceabilityFlag.id;
+  }
+
+  compareCurrencyServiceabilityFlag(
+    o1: Pick<ICurrencyServiceabilityFlag, 'id'> | null,
+    o2: Pick<ICurrencyServiceabilityFlag, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCurrencyServiceabilityFlagIdentifier(o1) === this.getCurrencyServiceabilityFlagIdentifier(o2) : o1 === o2;
+  }
+
+  addCurrencyServiceabilityFlagToCollectionIfMissing<Type extends Pick<ICurrencyServiceabilityFlag, 'id'>>(
+    currencyServiceabilityFlagCollection: Type[],
+    ...currencyServiceabilityFlagsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const currencyServiceabilityFlags: Type[] = currencyServiceabilityFlagsToCheck.filter(isPresent);
     if (currencyServiceabilityFlags.length > 0) {
       const currencyServiceabilityFlagCollectionIdentifiers = currencyServiceabilityFlagCollection.map(
-        currencyServiceabilityFlagItem => getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlagItem)!
+        currencyServiceabilityFlagItem => this.getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlagItem)!
       );
       const currencyServiceabilityFlagsToAdd = currencyServiceabilityFlags.filter(currencyServiceabilityFlagItem => {
-        const currencyServiceabilityFlagIdentifier = getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlagItem);
-        if (
-          currencyServiceabilityFlagIdentifier == null ||
-          currencyServiceabilityFlagCollectionIdentifiers.includes(currencyServiceabilityFlagIdentifier)
-        ) {
+        const currencyServiceabilityFlagIdentifier = this.getCurrencyServiceabilityFlagIdentifier(currencyServiceabilityFlagItem);
+        if (currencyServiceabilityFlagCollectionIdentifiers.includes(currencyServiceabilityFlagIdentifier)) {
           return false;
         }
         currencyServiceabilityFlagCollectionIdentifiers.push(currencyServiceabilityFlagIdentifier);

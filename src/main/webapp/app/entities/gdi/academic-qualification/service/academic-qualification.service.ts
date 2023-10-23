@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IAcademicQualification, getAcademicQualificationIdentifier } from '../academic-qualification.model';
+import { IAcademicQualification, NewAcademicQualification } from '../academic-qualification.model';
+
+export type PartialUpdateAcademicQualification = Partial<IAcademicQualification> & Pick<IAcademicQualification, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAcademicQualification>;
 export type EntityArrayResponseType = HttpResponse<IAcademicQualification[]>;
@@ -36,21 +20,21 @@ export class AcademicQualificationService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(academicQualification: IAcademicQualification): Observable<EntityResponseType> {
+  create(academicQualification: NewAcademicQualification): Observable<EntityResponseType> {
     return this.http.post<IAcademicQualification>(this.resourceUrl, academicQualification, { observe: 'response' });
   }
 
   update(academicQualification: IAcademicQualification): Observable<EntityResponseType> {
     return this.http.put<IAcademicQualification>(
-      `${this.resourceUrl}/${getAcademicQualificationIdentifier(academicQualification) as number}`,
+      `${this.resourceUrl}/${this.getAcademicQualificationIdentifier(academicQualification)}`,
       academicQualification,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(academicQualification: IAcademicQualification): Observable<EntityResponseType> {
+  partialUpdate(academicQualification: PartialUpdateAcademicQualification): Observable<EntityResponseType> {
     return this.http.patch<IAcademicQualification>(
-      `${this.resourceUrl}/${getAcademicQualificationIdentifier(academicQualification) as number}`,
+      `${this.resourceUrl}/${this.getAcademicQualificationIdentifier(academicQualification)}`,
       academicQualification,
       { observe: 'response' }
     );
@@ -74,21 +58,26 @@ export class AcademicQualificationService {
     return this.http.get<IAcademicQualification[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAcademicQualificationToCollectionIfMissing(
-    academicQualificationCollection: IAcademicQualification[],
-    ...academicQualificationsToCheck: (IAcademicQualification | null | undefined)[]
-  ): IAcademicQualification[] {
-    const academicQualifications: IAcademicQualification[] = academicQualificationsToCheck.filter(isPresent);
+  getAcademicQualificationIdentifier(academicQualification: Pick<IAcademicQualification, 'id'>): number {
+    return academicQualification.id;
+  }
+
+  compareAcademicQualification(o1: Pick<IAcademicQualification, 'id'> | null, o2: Pick<IAcademicQualification, 'id'> | null): boolean {
+    return o1 && o2 ? this.getAcademicQualificationIdentifier(o1) === this.getAcademicQualificationIdentifier(o2) : o1 === o2;
+  }
+
+  addAcademicQualificationToCollectionIfMissing<Type extends Pick<IAcademicQualification, 'id'>>(
+    academicQualificationCollection: Type[],
+    ...academicQualificationsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const academicQualifications: Type[] = academicQualificationsToCheck.filter(isPresent);
     if (academicQualifications.length > 0) {
       const academicQualificationCollectionIdentifiers = academicQualificationCollection.map(
-        academicQualificationItem => getAcademicQualificationIdentifier(academicQualificationItem)!
+        academicQualificationItem => this.getAcademicQualificationIdentifier(academicQualificationItem)!
       );
       const academicQualificationsToAdd = academicQualifications.filter(academicQualificationItem => {
-        const academicQualificationIdentifier = getAcademicQualificationIdentifier(academicQualificationItem);
-        if (
-          academicQualificationIdentifier == null ||
-          academicQualificationCollectionIdentifiers.includes(academicQualificationIdentifier)
-        ) {
+        const academicQualificationIdentifier = this.getAcademicQualificationIdentifier(academicQualificationItem);
+        if (academicQualificationCollectionIdentifiers.includes(academicQualificationIdentifier)) {
           return false;
         }
         academicQualificationCollectionIdentifiers.push(academicQualificationIdentifier);

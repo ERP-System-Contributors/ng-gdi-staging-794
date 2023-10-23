@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IAccountAttributeMetadata, AccountAttributeMetadata } from '../account-attribute-metadata.model';
+import { AccountAttributeMetadataFormService, AccountAttributeMetadataFormGroup } from './account-attribute-metadata-form.service';
+import { IAccountAttributeMetadata } from '../account-attribute-metadata.model';
 import { AccountAttributeMetadataService } from '../service/account-attribute-metadata.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -38,39 +20,31 @@ import { MandatoryFieldFlagTypes } from 'app/entities/enumerations/mandatory-fie
 })
 export class AccountAttributeMetadataUpdateComponent implements OnInit {
   isSaving = false;
+  accountAttributeMetadata: IAccountAttributeMetadata | null = null;
   mandatoryFieldFlagTypesValues = Object.keys(MandatoryFieldFlagTypes);
 
   gdiMasterDataIndicesSharedCollection: IGdiMasterDataIndex[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    precedence: [null, [Validators.required]],
-    columnName: [null, [Validators.required]],
-    shortName: [null, [Validators.required]],
-    detailedDefinition: [],
-    dataType: [null, [Validators.required]],
-    length: [],
-    columnIndex: [],
-    mandatoryFieldFlag: [null, [Validators.required]],
-    businessValidation: [],
-    technicalValidation: [],
-    dbColumnName: [],
-    metadataVersion: [],
-    standardInputTemplate: [],
-  });
+  editForm: AccountAttributeMetadataFormGroup = this.accountAttributeMetadataFormService.createAccountAttributeMetadataFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected accountAttributeMetadataService: AccountAttributeMetadataService,
+    protected accountAttributeMetadataFormService: AccountAttributeMetadataFormService,
     protected gdiMasterDataIndexService: GdiMasterDataIndexService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareGdiMasterDataIndex = (o1: IGdiMasterDataIndex | null, o2: IGdiMasterDataIndex | null): boolean =>
+    this.gdiMasterDataIndexService.compareGdiMasterDataIndex(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ accountAttributeMetadata }) => {
-      this.updateForm(accountAttributeMetadata);
+      this.accountAttributeMetadata = accountAttributeMetadata;
+      if (accountAttributeMetadata) {
+        this.updateForm(accountAttributeMetadata);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -87,7 +61,7 @@ export class AccountAttributeMetadataUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -97,23 +71,19 @@ export class AccountAttributeMetadataUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const accountAttributeMetadata = this.createFromForm();
-    if (accountAttributeMetadata.id !== undefined) {
+    const accountAttributeMetadata = this.accountAttributeMetadataFormService.getAccountAttributeMetadata(this.editForm);
+    if (accountAttributeMetadata.id !== null) {
       this.subscribeToSaveResponse(this.accountAttributeMetadataService.update(accountAttributeMetadata));
     } else {
       this.subscribeToSaveResponse(this.accountAttributeMetadataService.create(accountAttributeMetadata));
     }
   }
 
-  trackGdiMasterDataIndexById(index: number, item: IGdiMasterDataIndex): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IAccountAttributeMetadata>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -129,27 +99,14 @@ export class AccountAttributeMetadataUpdateComponent implements OnInit {
   }
 
   protected updateForm(accountAttributeMetadata: IAccountAttributeMetadata): void {
-    this.editForm.patchValue({
-      id: accountAttributeMetadata.id,
-      precedence: accountAttributeMetadata.precedence,
-      columnName: accountAttributeMetadata.columnName,
-      shortName: accountAttributeMetadata.shortName,
-      detailedDefinition: accountAttributeMetadata.detailedDefinition,
-      dataType: accountAttributeMetadata.dataType,
-      length: accountAttributeMetadata.length,
-      columnIndex: accountAttributeMetadata.columnIndex,
-      mandatoryFieldFlag: accountAttributeMetadata.mandatoryFieldFlag,
-      businessValidation: accountAttributeMetadata.businessValidation,
-      technicalValidation: accountAttributeMetadata.technicalValidation,
-      dbColumnName: accountAttributeMetadata.dbColumnName,
-      metadataVersion: accountAttributeMetadata.metadataVersion,
-      standardInputTemplate: accountAttributeMetadata.standardInputTemplate,
-    });
+    this.accountAttributeMetadata = accountAttributeMetadata;
+    this.accountAttributeMetadataFormService.resetForm(this.editForm, accountAttributeMetadata);
 
-    this.gdiMasterDataIndicesSharedCollection = this.gdiMasterDataIndexService.addGdiMasterDataIndexToCollectionIfMissing(
-      this.gdiMasterDataIndicesSharedCollection,
-      accountAttributeMetadata.standardInputTemplate
-    );
+    this.gdiMasterDataIndicesSharedCollection =
+      this.gdiMasterDataIndexService.addGdiMasterDataIndexToCollectionIfMissing<IGdiMasterDataIndex>(
+        this.gdiMasterDataIndicesSharedCollection,
+        accountAttributeMetadata.standardInputTemplate
+      );
   }
 
   protected loadRelationshipsOptions(): void {
@@ -158,32 +115,12 @@ export class AccountAttributeMetadataUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IGdiMasterDataIndex[]>) => res.body ?? []))
       .pipe(
         map((gdiMasterDataIndices: IGdiMasterDataIndex[]) =>
-          this.gdiMasterDataIndexService.addGdiMasterDataIndexToCollectionIfMissing(
+          this.gdiMasterDataIndexService.addGdiMasterDataIndexToCollectionIfMissing<IGdiMasterDataIndex>(
             gdiMasterDataIndices,
-            this.editForm.get('standardInputTemplate')!.value
+            this.accountAttributeMetadata?.standardInputTemplate
           )
         )
       )
       .subscribe((gdiMasterDataIndices: IGdiMasterDataIndex[]) => (this.gdiMasterDataIndicesSharedCollection = gdiMasterDataIndices));
-  }
-
-  protected createFromForm(): IAccountAttributeMetadata {
-    return {
-      ...new AccountAttributeMetadata(),
-      id: this.editForm.get(['id'])!.value,
-      precedence: this.editForm.get(['precedence'])!.value,
-      columnName: this.editForm.get(['columnName'])!.value,
-      shortName: this.editForm.get(['shortName'])!.value,
-      detailedDefinition: this.editForm.get(['detailedDefinition'])!.value,
-      dataType: this.editForm.get(['dataType'])!.value,
-      length: this.editForm.get(['length'])!.value,
-      columnIndex: this.editForm.get(['columnIndex'])!.value,
-      mandatoryFieldFlag: this.editForm.get(['mandatoryFieldFlag'])!.value,
-      businessValidation: this.editForm.get(['businessValidation'])!.value,
-      technicalValidation: this.editForm.get(['technicalValidation'])!.value,
-      dbColumnName: this.editForm.get(['dbColumnName'])!.value,
-      metadataVersion: this.editForm.get(['metadataVersion'])!.value,
-      standardInputTemplate: this.editForm.get(['standardInputTemplate'])!.value,
-    };
   }
 }

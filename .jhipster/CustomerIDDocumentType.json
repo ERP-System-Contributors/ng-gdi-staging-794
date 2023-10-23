@@ -1,7 +1,7 @@
 {
   "changelogDate": "20220404134249",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "documentCode",
@@ -33,5 +33,6 @@
       "relationshipType": "many-to-many"
     }
   ],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

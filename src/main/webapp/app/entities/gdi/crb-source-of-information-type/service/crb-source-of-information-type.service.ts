@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbSourceOfInformationType, getCrbSourceOfInformationTypeIdentifier } from '../crb-source-of-information-type.model';
+import { ICrbSourceOfInformationType, NewCrbSourceOfInformationType } from '../crb-source-of-information-type.model';
+
+export type PartialUpdateCrbSourceOfInformationType = Partial<ICrbSourceOfInformationType> & Pick<ICrbSourceOfInformationType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbSourceOfInformationType>;
 export type EntityArrayResponseType = HttpResponse<ICrbSourceOfInformationType[]>;
@@ -36,21 +20,21 @@ export class CrbSourceOfInformationTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbSourceOfInformationType: ICrbSourceOfInformationType): Observable<EntityResponseType> {
+  create(crbSourceOfInformationType: NewCrbSourceOfInformationType): Observable<EntityResponseType> {
     return this.http.post<ICrbSourceOfInformationType>(this.resourceUrl, crbSourceOfInformationType, { observe: 'response' });
   }
 
   update(crbSourceOfInformationType: ICrbSourceOfInformationType): Observable<EntityResponseType> {
     return this.http.put<ICrbSourceOfInformationType>(
-      `${this.resourceUrl}/${getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationType) as number}`,
+      `${this.resourceUrl}/${this.getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationType)}`,
       crbSourceOfInformationType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(crbSourceOfInformationType: ICrbSourceOfInformationType): Observable<EntityResponseType> {
+  partialUpdate(crbSourceOfInformationType: PartialUpdateCrbSourceOfInformationType): Observable<EntityResponseType> {
     return this.http.patch<ICrbSourceOfInformationType>(
-      `${this.resourceUrl}/${getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationType) as number}`,
+      `${this.resourceUrl}/${this.getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationType)}`,
       crbSourceOfInformationType,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CrbSourceOfInformationTypeService {
     return this.http.get<ICrbSourceOfInformationType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbSourceOfInformationTypeToCollectionIfMissing(
-    crbSourceOfInformationTypeCollection: ICrbSourceOfInformationType[],
-    ...crbSourceOfInformationTypesToCheck: (ICrbSourceOfInformationType | null | undefined)[]
-  ): ICrbSourceOfInformationType[] {
-    const crbSourceOfInformationTypes: ICrbSourceOfInformationType[] = crbSourceOfInformationTypesToCheck.filter(isPresent);
+  getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationType: Pick<ICrbSourceOfInformationType, 'id'>): number {
+    return crbSourceOfInformationType.id;
+  }
+
+  compareCrbSourceOfInformationType(
+    o1: Pick<ICrbSourceOfInformationType, 'id'> | null,
+    o2: Pick<ICrbSourceOfInformationType, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCrbSourceOfInformationTypeIdentifier(o1) === this.getCrbSourceOfInformationTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbSourceOfInformationTypeToCollectionIfMissing<Type extends Pick<ICrbSourceOfInformationType, 'id'>>(
+    crbSourceOfInformationTypeCollection: Type[],
+    ...crbSourceOfInformationTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbSourceOfInformationTypes: Type[] = crbSourceOfInformationTypesToCheck.filter(isPresent);
     if (crbSourceOfInformationTypes.length > 0) {
       const crbSourceOfInformationTypeCollectionIdentifiers = crbSourceOfInformationTypeCollection.map(
-        crbSourceOfInformationTypeItem => getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationTypeItem)!
+        crbSourceOfInformationTypeItem => this.getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationTypeItem)!
       );
       const crbSourceOfInformationTypesToAdd = crbSourceOfInformationTypes.filter(crbSourceOfInformationTypeItem => {
-        const crbSourceOfInformationTypeIdentifier = getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationTypeItem);
-        if (
-          crbSourceOfInformationTypeIdentifier == null ||
-          crbSourceOfInformationTypeCollectionIdentifiers.includes(crbSourceOfInformationTypeIdentifier)
-        ) {
+        const crbSourceOfInformationTypeIdentifier = this.getCrbSourceOfInformationTypeIdentifier(crbSourceOfInformationTypeItem);
+        if (crbSourceOfInformationTypeCollectionIdentifiers.includes(crbSourceOfInformationTypeIdentifier)) {
           return false;
         }
         crbSourceOfInformationTypeCollectionIdentifiers.push(crbSourceOfInformationTypeIdentifier);

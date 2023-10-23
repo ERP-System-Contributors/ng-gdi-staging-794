@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IContractStatus, getContractStatusIdentifier } from '../contract-status.model';
+import { IContractStatus, NewContractStatus } from '../contract-status.model';
+
+export type PartialUpdateContractStatus = Partial<IContractStatus> & Pick<IContractStatus, 'id'>;
 
 export type EntityResponseType = HttpResponse<IContractStatus>;
 export type EntityArrayResponseType = HttpResponse<IContractStatus[]>;
@@ -36,22 +20,20 @@ export class ContractStatusService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(contractStatus: IContractStatus): Observable<EntityResponseType> {
+  create(contractStatus: NewContractStatus): Observable<EntityResponseType> {
     return this.http.post<IContractStatus>(this.resourceUrl, contractStatus, { observe: 'response' });
   }
 
   update(contractStatus: IContractStatus): Observable<EntityResponseType> {
-    return this.http.put<IContractStatus>(`${this.resourceUrl}/${getContractStatusIdentifier(contractStatus) as number}`, contractStatus, {
+    return this.http.put<IContractStatus>(`${this.resourceUrl}/${this.getContractStatusIdentifier(contractStatus)}`, contractStatus, {
       observe: 'response',
     });
   }
 
-  partialUpdate(contractStatus: IContractStatus): Observable<EntityResponseType> {
-    return this.http.patch<IContractStatus>(
-      `${this.resourceUrl}/${getContractStatusIdentifier(contractStatus) as number}`,
-      contractStatus,
-      { observe: 'response' }
-    );
+  partialUpdate(contractStatus: PartialUpdateContractStatus): Observable<EntityResponseType> {
+    return this.http.patch<IContractStatus>(`${this.resourceUrl}/${this.getContractStatusIdentifier(contractStatus)}`, contractStatus, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -72,18 +54,26 @@ export class ContractStatusService {
     return this.http.get<IContractStatus[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addContractStatusToCollectionIfMissing(
-    contractStatusCollection: IContractStatus[],
-    ...contractStatusesToCheck: (IContractStatus | null | undefined)[]
-  ): IContractStatus[] {
-    const contractStatuses: IContractStatus[] = contractStatusesToCheck.filter(isPresent);
+  getContractStatusIdentifier(contractStatus: Pick<IContractStatus, 'id'>): number {
+    return contractStatus.id;
+  }
+
+  compareContractStatus(o1: Pick<IContractStatus, 'id'> | null, o2: Pick<IContractStatus, 'id'> | null): boolean {
+    return o1 && o2 ? this.getContractStatusIdentifier(o1) === this.getContractStatusIdentifier(o2) : o1 === o2;
+  }
+
+  addContractStatusToCollectionIfMissing<Type extends Pick<IContractStatus, 'id'>>(
+    contractStatusCollection: Type[],
+    ...contractStatusesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const contractStatuses: Type[] = contractStatusesToCheck.filter(isPresent);
     if (contractStatuses.length > 0) {
       const contractStatusCollectionIdentifiers = contractStatusCollection.map(
-        contractStatusItem => getContractStatusIdentifier(contractStatusItem)!
+        contractStatusItem => this.getContractStatusIdentifier(contractStatusItem)!
       );
       const contractStatusesToAdd = contractStatuses.filter(contractStatusItem => {
-        const contractStatusIdentifier = getContractStatusIdentifier(contractStatusItem);
-        if (contractStatusIdentifier == null || contractStatusCollectionIdentifiers.includes(contractStatusIdentifier)) {
+        const contractStatusIdentifier = this.getContractStatusIdentifier(contractStatusItem);
+        if (contractStatusCollectionIdentifiers.includes(contractStatusIdentifier)) {
           return false;
         }
         contractStatusCollectionIdentifiers.push(contractStatusIdentifier);

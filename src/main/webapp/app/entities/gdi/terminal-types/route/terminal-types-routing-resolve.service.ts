@@ -1,39 +1,21 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable, of, EMPTY } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { ITerminalTypes, TerminalTypes } from '../terminal-types.model';
+import { ITerminalTypes } from '../terminal-types.model';
 import { TerminalTypesService } from '../service/terminal-types.service';
 
 @Injectable({ providedIn: 'root' })
-export class TerminalTypesRoutingResolveService implements Resolve<ITerminalTypes> {
+export class TerminalTypesRoutingResolveService implements Resolve<ITerminalTypes | null> {
   constructor(protected service: TerminalTypesService, protected router: Router) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<ITerminalTypes> | Observable<never> {
+  resolve(route: ActivatedRouteSnapshot): Observable<ITerminalTypes | null | never> {
     const id = route.params['id'];
     if (id) {
       return this.service.find(id).pipe(
-        mergeMap((terminalTypes: HttpResponse<TerminalTypes>) => {
+        mergeMap((terminalTypes: HttpResponse<ITerminalTypes>) => {
           if (terminalTypes.body) {
             return of(terminalTypes.body);
           } else {
@@ -43,6 +25,6 @@ export class TerminalTypesRoutingResolveService implements Resolve<ITerminalType
         })
       );
     }
-    return of(new TerminalTypes());
+    return of(null);
   }
 }

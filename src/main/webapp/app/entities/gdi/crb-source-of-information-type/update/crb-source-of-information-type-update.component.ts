@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICrbSourceOfInformationType, CrbSourceOfInformationType } from '../crb-source-of-information-type.model';
+import { CrbSourceOfInformationTypeFormService, CrbSourceOfInformationTypeFormGroup } from './crb-source-of-information-type-form.service';
+import { ICrbSourceOfInformationType } from '../crb-source-of-information-type.model';
 import { CrbSourceOfInformationTypeService } from '../service/crb-source-of-information-type.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { CrbSourceOfInformationTypeService } from '../service/crb-source-of-info
 })
 export class CrbSourceOfInformationTypeUpdateComponent implements OnInit {
   isSaving = false;
+  crbSourceOfInformationType: ICrbSourceOfInformationType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    sourceOfInformationTypeCode: [null, [Validators.required]],
-    sourceOfInformationTypeDescription: [null, []],
-  });
+  editForm: CrbSourceOfInformationTypeFormGroup = this.crbSourceOfInformationTypeFormService.createCrbSourceOfInformationTypeFormGroup();
 
   constructor(
     protected crbSourceOfInformationTypeService: CrbSourceOfInformationTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected crbSourceOfInformationTypeFormService: CrbSourceOfInformationTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ crbSourceOfInformationType }) => {
-      this.updateForm(crbSourceOfInformationType);
+      this.crbSourceOfInformationType = crbSourceOfInformationType;
+      if (crbSourceOfInformationType) {
+        this.updateForm(crbSourceOfInformationType);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class CrbSourceOfInformationTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const crbSourceOfInformationType = this.createFromForm();
-    if (crbSourceOfInformationType.id !== undefined) {
+    const crbSourceOfInformationType = this.crbSourceOfInformationTypeFormService.getCrbSourceOfInformationType(this.editForm);
+    if (crbSourceOfInformationType.id !== null) {
       this.subscribeToSaveResponse(this.crbSourceOfInformationTypeService.update(crbSourceOfInformationType));
     } else {
       this.subscribeToSaveResponse(this.crbSourceOfInformationTypeService.create(crbSourceOfInformationType));
@@ -66,10 +48,10 @@ export class CrbSourceOfInformationTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICrbSourceOfInformationType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class CrbSourceOfInformationTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(crbSourceOfInformationType: ICrbSourceOfInformationType): void {
-    this.editForm.patchValue({
-      id: crbSourceOfInformationType.id,
-      sourceOfInformationTypeCode: crbSourceOfInformationType.sourceOfInformationTypeCode,
-      sourceOfInformationTypeDescription: crbSourceOfInformationType.sourceOfInformationTypeDescription,
-    });
-  }
-
-  protected createFromForm(): ICrbSourceOfInformationType {
-    return {
-      ...new CrbSourceOfInformationType(),
-      id: this.editForm.get(['id'])!.value,
-      sourceOfInformationTypeCode: this.editForm.get(['sourceOfInformationTypeCode'])!.value,
-      sourceOfInformationTypeDescription: this.editForm.get(['sourceOfInformationTypeDescription'])!.value,
-    };
+    this.crbSourceOfInformationType = crbSourceOfInformationType;
+    this.crbSourceOfInformationTypeFormService.resetForm(this.editForm, crbSourceOfInformationType);
   }
 }

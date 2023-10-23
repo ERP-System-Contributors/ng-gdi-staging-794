@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICollateralType, getCollateralTypeIdentifier } from '../collateral-type.model';
+import { ICollateralType, NewCollateralType } from '../collateral-type.model';
+
+export type PartialUpdateCollateralType = Partial<ICollateralType> & Pick<ICollateralType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICollateralType>;
 export type EntityArrayResponseType = HttpResponse<ICollateralType[]>;
@@ -36,22 +20,20 @@ export class CollateralTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(collateralType: ICollateralType): Observable<EntityResponseType> {
+  create(collateralType: NewCollateralType): Observable<EntityResponseType> {
     return this.http.post<ICollateralType>(this.resourceUrl, collateralType, { observe: 'response' });
   }
 
   update(collateralType: ICollateralType): Observable<EntityResponseType> {
-    return this.http.put<ICollateralType>(`${this.resourceUrl}/${getCollateralTypeIdentifier(collateralType) as number}`, collateralType, {
+    return this.http.put<ICollateralType>(`${this.resourceUrl}/${this.getCollateralTypeIdentifier(collateralType)}`, collateralType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(collateralType: ICollateralType): Observable<EntityResponseType> {
-    return this.http.patch<ICollateralType>(
-      `${this.resourceUrl}/${getCollateralTypeIdentifier(collateralType) as number}`,
-      collateralType,
-      { observe: 'response' }
-    );
+  partialUpdate(collateralType: PartialUpdateCollateralType): Observable<EntityResponseType> {
+    return this.http.patch<ICollateralType>(`${this.resourceUrl}/${this.getCollateralTypeIdentifier(collateralType)}`, collateralType, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -72,18 +54,26 @@ export class CollateralTypeService {
     return this.http.get<ICollateralType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCollateralTypeToCollectionIfMissing(
-    collateralTypeCollection: ICollateralType[],
-    ...collateralTypesToCheck: (ICollateralType | null | undefined)[]
-  ): ICollateralType[] {
-    const collateralTypes: ICollateralType[] = collateralTypesToCheck.filter(isPresent);
+  getCollateralTypeIdentifier(collateralType: Pick<ICollateralType, 'id'>): number {
+    return collateralType.id;
+  }
+
+  compareCollateralType(o1: Pick<ICollateralType, 'id'> | null, o2: Pick<ICollateralType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCollateralTypeIdentifier(o1) === this.getCollateralTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCollateralTypeToCollectionIfMissing<Type extends Pick<ICollateralType, 'id'>>(
+    collateralTypeCollection: Type[],
+    ...collateralTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const collateralTypes: Type[] = collateralTypesToCheck.filter(isPresent);
     if (collateralTypes.length > 0) {
       const collateralTypeCollectionIdentifiers = collateralTypeCollection.map(
-        collateralTypeItem => getCollateralTypeIdentifier(collateralTypeItem)!
+        collateralTypeItem => this.getCollateralTypeIdentifier(collateralTypeItem)!
       );
       const collateralTypesToAdd = collateralTypes.filter(collateralTypeItem => {
-        const collateralTypeIdentifier = getCollateralTypeIdentifier(collateralTypeItem);
-        if (collateralTypeIdentifier == null || collateralTypeCollectionIdentifiers.includes(collateralTypeIdentifier)) {
+        const collateralTypeIdentifier = this.getCollateralTypeIdentifier(collateralTypeItem);
+        if (collateralTypeCollectionIdentifiers.includes(collateralTypeIdentifier)) {
           return false;
         }
         collateralTypeCollectionIdentifiers.push(collateralTypeIdentifier);

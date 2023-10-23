@@ -1,22 +1,3 @@
-/*
- * Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
- * Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-// require('dotenv').config();
-
 const webpack = require('webpack');
 const { merge } = require('webpack-merge');
 const path = require('path');
@@ -30,30 +11,18 @@ const environment = require('./environment');
 const proxyConfig = require('./proxy.conf');
 
 module.exports = async (config, options, targetOptions) => {
-  config.cache = {
-    // 1. Set cache type to filesystem
-    type: 'filesystem',
-    cacheDirectory: path.resolve(__dirname, '../target/webpack'),
-    buildDependencies: {
-      // 2. Add your config as buildDependency to get cache invalidation on config change
-      config: [
-        __filename,
-        path.resolve(__dirname, 'webpack.custom.js'),
-        path.resolve(__dirname, '../angular.json'),
-        path.resolve(__dirname, '../tsconfig.app.json'),
-        path.resolve(__dirname, '../tsconfig.json'),
-      ],
-    },
-  };
-
   // PLUGINS
   if (config.mode === 'development') {
     config.plugins.push(
       new ESLintPlugin({
-        extensions: ['js', 'ts'],
+        baseConfig: {
+          parserOptions: {
+            project: ['../tsconfig.app.json'],
+          },
+        },
       }),
       new WebpackNotifierPlugin({
-        title: 'Erp System',
+        title: 'Ng Gdi Staging 794',
         contentImage: path.join(__dirname, 'logo-jhipster.png'),
       })
     );
@@ -81,7 +50,7 @@ module.exports = async (config, options, targetOptions) => {
           },
           socket: {
             clients: {
-              heartbeatTimeout: 90000,
+              heartbeatTimeout: 60000,
             },
           },
           /*
@@ -105,10 +74,6 @@ module.exports = async (config, options, targetOptions) => {
       new BundleAnalyzerPlugin({
         analyzerMode: 'static',
         openAnalyzer: false,
-        // fallback: {
-        //   "child_process": false,
-        //   // and also other packages that are not found
-        // },
         // Webpack statistics in target folder
         reportFilename: '../target/stats.html',
       })
@@ -116,6 +81,18 @@ module.exports = async (config, options, targetOptions) => {
   }
 
   const patterns = [
+    {
+      // https://github.com/swagger-api/swagger-ui/blob/v4.6.1/swagger-ui-dist-package/README.md
+      context: require('swagger-ui-dist').getAbsoluteFSPath(),
+      from: '*.{js,css,html,png}',
+      to: 'swagger-ui/',
+      globOptions: { ignore: ['**/index.html'] },
+    },
+    {
+      from: require.resolve('axios/dist/axios.min.js'),
+      to: 'swagger-ui/',
+    },
+    { from: './src/main/webapp/swagger-ui/', to: 'swagger-ui/' },
     // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
   ];
 
@@ -132,7 +109,7 @@ module.exports = async (config, options, targetOptions) => {
       // If this URL is left empty (""), then it will be relative to the current context.
       // If you use an API server, in `prod` mode, you will need to enable CORS
       // (see the `jhipster.cors` common JHipster property in the `application-*.yml` configurations)
-      // SERVER_API_URL: `"http://localhost:8980/"`,
+      // SERVER_API_URL: JSON.stringify(environment.SERVER_API_URL),
       SERVER_API_URL: process.env.SERVER_API_URL,
     })
   );

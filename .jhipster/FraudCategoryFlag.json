@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230912120312",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "fraudCategoryFlag",
@@ -20,5 +20,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IInstitutionContactDetails, InstitutionContactDetails } from '../institution-contact-details.model';
+import { InstitutionContactDetailsFormService, InstitutionContactDetailsFormGroup } from './institution-contact-details-form.service';
+import { IInstitutionContactDetails } from '../institution-contact-details.model';
 import { InstitutionContactDetailsService } from '../service/institution-contact-details.service';
 
 @Component({
@@ -32,27 +14,22 @@ import { InstitutionContactDetailsService } from '../service/institution-contact
 })
 export class InstitutionContactDetailsUpdateComponent implements OnInit {
   isSaving = false;
+  institutionContactDetails: IInstitutionContactDetails | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    entityId: [null, [Validators.required]],
-    entityName: [null, [Validators.required]],
-    contactType: [null, [Validators.required]],
-    contactLevel: [],
-    contactValue: [],
-    contactName: [],
-    contactDesignation: [],
-  });
+  editForm: InstitutionContactDetailsFormGroup = this.institutionContactDetailsFormService.createInstitutionContactDetailsFormGroup();
 
   constructor(
     protected institutionContactDetailsService: InstitutionContactDetailsService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected institutionContactDetailsFormService: InstitutionContactDetailsFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ institutionContactDetails }) => {
-      this.updateForm(institutionContactDetails);
+      this.institutionContactDetails = institutionContactDetails;
+      if (institutionContactDetails) {
+        this.updateForm(institutionContactDetails);
+      }
     });
   }
 
@@ -62,8 +39,8 @@ export class InstitutionContactDetailsUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const institutionContactDetails = this.createFromForm();
-    if (institutionContactDetails.id !== undefined) {
+    const institutionContactDetails = this.institutionContactDetailsFormService.getInstitutionContactDetails(this.editForm);
+    if (institutionContactDetails.id !== null) {
       this.subscribeToSaveResponse(this.institutionContactDetailsService.update(institutionContactDetails));
     } else {
       this.subscribeToSaveResponse(this.institutionContactDetailsService.create(institutionContactDetails));
@@ -71,10 +48,10 @@ export class InstitutionContactDetailsUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IInstitutionContactDetails>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -90,29 +67,7 @@ export class InstitutionContactDetailsUpdateComponent implements OnInit {
   }
 
   protected updateForm(institutionContactDetails: IInstitutionContactDetails): void {
-    this.editForm.patchValue({
-      id: institutionContactDetails.id,
-      entityId: institutionContactDetails.entityId,
-      entityName: institutionContactDetails.entityName,
-      contactType: institutionContactDetails.contactType,
-      contactLevel: institutionContactDetails.contactLevel,
-      contactValue: institutionContactDetails.contactValue,
-      contactName: institutionContactDetails.contactName,
-      contactDesignation: institutionContactDetails.contactDesignation,
-    });
-  }
-
-  protected createFromForm(): IInstitutionContactDetails {
-    return {
-      ...new InstitutionContactDetails(),
-      id: this.editForm.get(['id'])!.value,
-      entityId: this.editForm.get(['entityId'])!.value,
-      entityName: this.editForm.get(['entityName'])!.value,
-      contactType: this.editForm.get(['contactType'])!.value,
-      contactLevel: this.editForm.get(['contactLevel'])!.value,
-      contactValue: this.editForm.get(['contactValue'])!.value,
-      contactName: this.editForm.get(['contactName'])!.value,
-      contactDesignation: this.editForm.get(['contactDesignation'])!.value,
-    };
+    this.institutionContactDetails = institutionContactDetails;
+    this.institutionContactDetailsFormService.resetForm(this.editForm, institutionContactDetails);
   }
 }

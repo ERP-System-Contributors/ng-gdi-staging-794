@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CardCategoryTypeFormService } from './card-category-type-form.service';
 import { CardCategoryTypeService } from '../service/card-category-type.service';
-import { ICardCategoryType, CardCategoryType } from '../card-category-type.model';
+import { ICardCategoryType } from '../card-category-type.model';
 
 import { CardCategoryTypeUpdateComponent } from './card-category-type-update.component';
 
@@ -34,19 +16,29 @@ describe('CardCategoryType Management Update Component', () => {
   let comp: CardCategoryTypeUpdateComponent;
   let fixture: ComponentFixture<CardCategoryTypeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let cardCategoryTypeFormService: CardCategoryTypeFormService;
   let cardCategoryTypeService: CardCategoryTypeService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CardCategoryTypeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CardCategoryTypeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CardCategoryTypeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    cardCategoryTypeFormService = TestBed.inject(CardCategoryTypeFormService);
     cardCategoryTypeService = TestBed.inject(CardCategoryTypeService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('CardCategoryType Management Update Component', () => {
       activatedRoute.data = of({ cardCategoryType });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(cardCategoryType));
+      expect(comp.cardCategoryType).toEqual(cardCategoryType);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardCategoryType>>();
+      const saveSubject = new Subject<HttpResponse<ICardCategoryType>>();
       const cardCategoryType = { id: 123 };
+      jest.spyOn(cardCategoryTypeFormService, 'getCardCategoryType').mockReturnValue(cardCategoryType);
       jest.spyOn(cardCategoryTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ cardCategoryType });
@@ -80,18 +73,20 @@ describe('CardCategoryType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(cardCategoryTypeFormService.getCardCategoryType).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(cardCategoryTypeService.update).toHaveBeenCalledWith(cardCategoryType);
+      expect(cardCategoryTypeService.update).toHaveBeenCalledWith(expect.objectContaining(cardCategoryType));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardCategoryType>>();
-      const cardCategoryType = new CardCategoryType();
+      const saveSubject = new Subject<HttpResponse<ICardCategoryType>>();
+      const cardCategoryType = { id: 123 };
+      jest.spyOn(cardCategoryTypeFormService, 'getCardCategoryType').mockReturnValue({ id: null });
       jest.spyOn(cardCategoryTypeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ cardCategoryType });
+      activatedRoute.data = of({ cardCategoryType: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('CardCategoryType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(cardCategoryTypeService.create).toHaveBeenCalledWith(cardCategoryType);
+      expect(cardCategoryTypeFormService.getCardCategoryType).toHaveBeenCalled();
+      expect(cardCategoryTypeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardCategoryType>>();
+      const saveSubject = new Subject<HttpResponse<ICardCategoryType>>();
       const cardCategoryType = { id: 123 };
       jest.spyOn(cardCategoryTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('CardCategoryType Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(cardCategoryTypeService.update).toHaveBeenCalledWith(cardCategoryType);
+      expect(cardCategoryTypeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

@@ -1,33 +1,27 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICardAcquiringTransaction, getCardAcquiringTransactionIdentifier } from '../card-acquiring-transaction.model';
+import { ICardAcquiringTransaction, NewCardAcquiringTransaction } from '../card-acquiring-transaction.model';
+
+export type PartialUpdateCardAcquiringTransaction = Partial<ICardAcquiringTransaction> & Pick<ICardAcquiringTransaction, 'id'>;
+
+type RestOf<T extends ICardAcquiringTransaction | NewCardAcquiringTransaction> = Omit<T, 'reportingDate'> & {
+  reportingDate?: string | null;
+};
+
+export type RestCardAcquiringTransaction = RestOf<ICardAcquiringTransaction>;
+
+export type NewRestCardAcquiringTransaction = RestOf<NewCardAcquiringTransaction>;
+
+export type PartialUpdateRestCardAcquiringTransaction = RestOf<PartialUpdateCardAcquiringTransaction>;
 
 export type EntityResponseType = HttpResponse<ICardAcquiringTransaction>;
 export type EntityArrayResponseType = HttpResponse<ICardAcquiringTransaction[]>;
@@ -39,46 +33,46 @@ export class CardAcquiringTransactionService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(cardAcquiringTransaction: ICardAcquiringTransaction): Observable<EntityResponseType> {
+  create(cardAcquiringTransaction: NewCardAcquiringTransaction): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardAcquiringTransaction);
     return this.http
-      .post<ICardAcquiringTransaction>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestCardAcquiringTransaction>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(cardAcquiringTransaction: ICardAcquiringTransaction): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardAcquiringTransaction);
     return this.http
-      .put<ICardAcquiringTransaction>(
-        `${this.resourceUrl}/${getCardAcquiringTransactionIdentifier(cardAcquiringTransaction) as number}`,
+      .put<RestCardAcquiringTransaction>(
+        `${this.resourceUrl}/${this.getCardAcquiringTransactionIdentifier(cardAcquiringTransaction)}`,
         copy,
         { observe: 'response' }
       )
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(cardAcquiringTransaction: ICardAcquiringTransaction): Observable<EntityResponseType> {
+  partialUpdate(cardAcquiringTransaction: PartialUpdateCardAcquiringTransaction): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardAcquiringTransaction);
     return this.http
-      .patch<ICardAcquiringTransaction>(
-        `${this.resourceUrl}/${getCardAcquiringTransactionIdentifier(cardAcquiringTransaction) as number}`,
+      .patch<RestCardAcquiringTransaction>(
+        `${this.resourceUrl}/${this.getCardAcquiringTransactionIdentifier(cardAcquiringTransaction)}`,
         copy,
         { observe: 'response' }
       )
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<ICardAcquiringTransaction>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestCardAcquiringTransaction>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<ICardAcquiringTransaction[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestCardAcquiringTransaction[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -88,25 +82,33 @@ export class CardAcquiringTransactionService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<ICardAcquiringTransaction[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestCardAcquiringTransaction[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addCardAcquiringTransactionToCollectionIfMissing(
-    cardAcquiringTransactionCollection: ICardAcquiringTransaction[],
-    ...cardAcquiringTransactionsToCheck: (ICardAcquiringTransaction | null | undefined)[]
-  ): ICardAcquiringTransaction[] {
-    const cardAcquiringTransactions: ICardAcquiringTransaction[] = cardAcquiringTransactionsToCheck.filter(isPresent);
+  getCardAcquiringTransactionIdentifier(cardAcquiringTransaction: Pick<ICardAcquiringTransaction, 'id'>): number {
+    return cardAcquiringTransaction.id;
+  }
+
+  compareCardAcquiringTransaction(
+    o1: Pick<ICardAcquiringTransaction, 'id'> | null,
+    o2: Pick<ICardAcquiringTransaction, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCardAcquiringTransactionIdentifier(o1) === this.getCardAcquiringTransactionIdentifier(o2) : o1 === o2;
+  }
+
+  addCardAcquiringTransactionToCollectionIfMissing<Type extends Pick<ICardAcquiringTransaction, 'id'>>(
+    cardAcquiringTransactionCollection: Type[],
+    ...cardAcquiringTransactionsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const cardAcquiringTransactions: Type[] = cardAcquiringTransactionsToCheck.filter(isPresent);
     if (cardAcquiringTransactions.length > 0) {
       const cardAcquiringTransactionCollectionIdentifiers = cardAcquiringTransactionCollection.map(
-        cardAcquiringTransactionItem => getCardAcquiringTransactionIdentifier(cardAcquiringTransactionItem)!
+        cardAcquiringTransactionItem => this.getCardAcquiringTransactionIdentifier(cardAcquiringTransactionItem)!
       );
       const cardAcquiringTransactionsToAdd = cardAcquiringTransactions.filter(cardAcquiringTransactionItem => {
-        const cardAcquiringTransactionIdentifier = getCardAcquiringTransactionIdentifier(cardAcquiringTransactionItem);
-        if (
-          cardAcquiringTransactionIdentifier == null ||
-          cardAcquiringTransactionCollectionIdentifiers.includes(cardAcquiringTransactionIdentifier)
-        ) {
+        const cardAcquiringTransactionIdentifier = this.getCardAcquiringTransactionIdentifier(cardAcquiringTransactionItem);
+        if (cardAcquiringTransactionCollectionIdentifiers.includes(cardAcquiringTransactionIdentifier)) {
           return false;
         }
         cardAcquiringTransactionCollectionIdentifiers.push(cardAcquiringTransactionIdentifier);
@@ -117,29 +119,31 @@ export class CardAcquiringTransactionService {
     return cardAcquiringTransactionCollection;
   }
 
-  protected convertDateFromClient(cardAcquiringTransaction: ICardAcquiringTransaction): ICardAcquiringTransaction {
-    return Object.assign({}, cardAcquiringTransaction, {
-      reportingDate: cardAcquiringTransaction.reportingDate?.isValid()
-        ? cardAcquiringTransaction.reportingDate.format(DATE_FORMAT)
-        : undefined,
+  protected convertDateFromClient<
+    T extends ICardAcquiringTransaction | NewCardAcquiringTransaction | PartialUpdateCardAcquiringTransaction
+  >(cardAcquiringTransaction: T): RestOf<T> {
+    return {
+      ...cardAcquiringTransaction,
+      reportingDate: cardAcquiringTransaction.reportingDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restCardAcquiringTransaction: RestCardAcquiringTransaction): ICardAcquiringTransaction {
+    return {
+      ...restCardAcquiringTransaction,
+      reportingDate: restCardAcquiringTransaction.reportingDate ? dayjs(restCardAcquiringTransaction.reportingDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestCardAcquiringTransaction>): HttpResponse<ICardAcquiringTransaction> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.reportingDate = res.body.reportingDate ? dayjs(res.body.reportingDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((cardAcquiringTransaction: ICardAcquiringTransaction) => {
-        cardAcquiringTransaction.reportingDate = cardAcquiringTransaction.reportingDate
-          ? dayjs(cardAcquiringTransaction.reportingDate)
-          : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestCardAcquiringTransaction[]>): HttpResponse<ICardAcquiringTransaction[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

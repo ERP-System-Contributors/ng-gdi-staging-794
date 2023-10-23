@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <div *ngIf="relatedPartyRelationship">
       <h2 data-cy="relatedPartyRelationshipDetailsHeading"><span>Related Party Relationship</span></h2>
@@ -48,24 +29,24 @@
         <dt><span>Bank Code</span></dt>
         <dd>
           <div *ngIf="relatedPartyRelationship.bankCode">
-            <a [routerLink]="['/institution-code', relatedPartyRelationship.bankCode?.id, 'view']">{{
-              relatedPartyRelationship.bankCode?.institutionName
+            <a [routerLink]="['/institution-code', relatedPartyRelationship.bankCode.id, 'view']">{{
+              relatedPartyRelationship.bankCode.institutionName
             }}</a>
           </div>
         </dd>
         <dt><span>Branch Id</span></dt>
         <dd>
           <div *ngIf="relatedPartyRelationship.branchId">
-            <a [routerLink]="['/bank-branch-code', relatedPartyRelationship.branchId?.id, 'view']">{{
-              relatedPartyRelationship.branchId?.branchCode
+            <a [routerLink]="['/bank-branch-code', relatedPartyRelationship.branchId.id, 'view']">{{
+              relatedPartyRelationship.branchId.branchCode
             }}</a>
           </div>
         </dd>
         <dt><span>Relationship Type</span></dt>
         <dd>
           <div *ngIf="relatedPartyRelationship.relationshipType">
-            <a [routerLink]="['/party-relation-type', relatedPartyRelationship.relationshipType?.id, 'view']">{{
-              relatedPartyRelationship.relationshipType?.partyRelationType
+            <a [routerLink]="['/party-relation-type', relatedPartyRelationship.relationshipType.id, 'view']">{{
+              relatedPartyRelationship.relationshipType.partyRelationType
             }}</a>
           </div>
         </dd>

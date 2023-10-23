@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230914084202",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "submittedFileStatusTypeCode",
@@ -26,5 +26,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceClass"
 }

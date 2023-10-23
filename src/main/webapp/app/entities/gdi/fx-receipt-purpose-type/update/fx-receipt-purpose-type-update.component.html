@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-fx-receipt-purpose-type-heading" data-cy="FxReceiptPurposeTypeCreateUpdateHeading">
@@ -27,21 +8,21 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_itemCode">Item Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_itemCode">Item Code</label>
           <input type="text" class="form-control" name="itemCode" id="field_itemCode" data-cy="itemCode" formControlName="itemCode" />
           <div *ngIf="editForm.get('itemCode')!.invalid && (editForm.get('itemCode')!.dirty || editForm.get('itemCode')!.touched)">
             <small class="form-text text-danger" *ngIf="editForm.get('itemCode')?.errors?.required"> This field is required. </small>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute1ReceiptPaymentPurposeCode">Attribute 1 Receipt Payment Purpose Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute1ReceiptPaymentPurposeCode">Attribute 1 Receipt Payment Purpose Code</label>
           <input
             type="text"
             class="form-control"
@@ -52,8 +33,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute1ReceiptPaymentPurposeType">Attribute 1 Receipt Payment Purpose Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute1ReceiptPaymentPurposeType">Attribute 1 Receipt Payment Purpose Type</label>
           <input
             type="text"
             class="form-control"
@@ -64,8 +45,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute2ReceiptPaymentPurposeCode">Attribute 2 Receipt Payment Purpose Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute2ReceiptPaymentPurposeCode">Attribute 2 Receipt Payment Purpose Code</label>
           <input
             type="text"
             class="form-control"
@@ -76,8 +57,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute2ReceiptPaymentPurposeDescription"
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute2ReceiptPaymentPurposeDescription"
             >Attribute 2 Receipt Payment Purpose Description</label
           >
           <input
@@ -90,8 +71,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute3ReceiptPaymentPurposeCode">Attribute 3 Receipt Payment Purpose Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute3ReceiptPaymentPurposeCode">Attribute 3 Receipt Payment Purpose Code</label>
           <input
             type="text"
             class="form-control"
@@ -102,8 +83,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute3ReceiptPaymentPurposeDescription"
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute3ReceiptPaymentPurposeDescription"
             >Attribute 3 Receipt Payment Purpose Description</label
           >
           <input
@@ -116,8 +97,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute4ReceiptPaymentPurposeCode">Attribute 4 Receipt Payment Purpose Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute4ReceiptPaymentPurposeCode">Attribute 4 Receipt Payment Purpose Code</label>
           <input
             type="text"
             class="form-control"
@@ -128,8 +109,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute4ReceiptPaymentPurposeDescription"
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute4ReceiptPaymentPurposeDescription"
             >Attribute 4 Receipt Payment Purpose Description</label
           >
           <input
@@ -142,8 +123,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute5ReceiptPaymentPurposeCode">Attribute 5 Receipt Payment Purpose Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute5ReceiptPaymentPurposeCode">Attribute 5 Receipt Payment Purpose Code</label>
           <input
             type="text"
             class="form-control"
@@ -154,8 +135,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_attribute5ReceiptPaymentPurposeDescription"
+        <div class="row mb-3">
+          <label class="form-label" for="field_attribute5ReceiptPaymentPurposeDescription"
             >Attribute 5 Receipt Payment Purpose Description</label
           >
           <input
@@ -168,8 +149,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_lastChild">Last Child</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_lastChild">Last Child</label>
           <input type="text" class="form-control" name="lastChild" id="field_lastChild" data-cy="lastChild" formControlName="lastChild" />
         </div>
       </div>

@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IShareHoldingFlag, ShareHoldingFlag } from '../share-holding-flag.model';
+import { ShareHoldingFlagFormService, ShareHoldingFlagFormGroup } from './share-holding-flag-form.service';
+import { IShareHoldingFlag } from '../share-holding-flag.model';
 import { ShareHoldingFlagService } from '../service/share-holding-flag.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -36,26 +18,25 @@ import { ShareholdingFlagTypes } from 'app/entities/enumerations/shareholding-fl
 })
 export class ShareHoldingFlagUpdateComponent implements OnInit {
   isSaving = false;
+  shareHoldingFlag: IShareHoldingFlag | null = null;
   shareholdingFlagTypesValues = Object.keys(ShareholdingFlagTypes);
 
-  editForm = this.fb.group({
-    id: [],
-    shareholdingFlagTypeCode: [null, [Validators.required]],
-    shareholdingFlagType: [null, [Validators.required]],
-    shareholdingTypeDescription: [],
-  });
+  editForm: ShareHoldingFlagFormGroup = this.shareHoldingFlagFormService.createShareHoldingFlagFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected shareHoldingFlagService: ShareHoldingFlagService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected shareHoldingFlagFormService: ShareHoldingFlagFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ shareHoldingFlag }) => {
-      this.updateForm(shareHoldingFlag);
+      this.shareHoldingFlag = shareHoldingFlag;
+      if (shareHoldingFlag) {
+        this.updateForm(shareHoldingFlag);
+      }
     });
   }
 
@@ -70,7 +51,7 @@ export class ShareHoldingFlagUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -80,8 +61,8 @@ export class ShareHoldingFlagUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const shareHoldingFlag = this.createFromForm();
-    if (shareHoldingFlag.id !== undefined) {
+    const shareHoldingFlag = this.shareHoldingFlagFormService.getShareHoldingFlag(this.editForm);
+    if (shareHoldingFlag.id !== null) {
       this.subscribeToSaveResponse(this.shareHoldingFlagService.update(shareHoldingFlag));
     } else {
       this.subscribeToSaveResponse(this.shareHoldingFlagService.create(shareHoldingFlag));
@@ -89,10 +70,10 @@ export class ShareHoldingFlagUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IShareHoldingFlag>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -108,21 +89,7 @@ export class ShareHoldingFlagUpdateComponent implements OnInit {
   }
 
   protected updateForm(shareHoldingFlag: IShareHoldingFlag): void {
-    this.editForm.patchValue({
-      id: shareHoldingFlag.id,
-      shareholdingFlagTypeCode: shareHoldingFlag.shareholdingFlagTypeCode,
-      shareholdingFlagType: shareHoldingFlag.shareholdingFlagType,
-      shareholdingTypeDescription: shareHoldingFlag.shareholdingTypeDescription,
-    });
-  }
-
-  protected createFromForm(): IShareHoldingFlag {
-    return {
-      ...new ShareHoldingFlag(),
-      id: this.editForm.get(['id'])!.value,
-      shareholdingFlagTypeCode: this.editForm.get(['shareholdingFlagTypeCode'])!.value,
-      shareholdingFlagType: this.editForm.get(['shareholdingFlagType'])!.value,
-      shareholdingTypeDescription: this.editForm.get(['shareholdingTypeDescription'])!.value,
-    };
+    this.shareHoldingFlag = shareHoldingFlag;
+    this.shareHoldingFlagFormService.resetForm(this.editForm, shareHoldingFlag);
   }
 }

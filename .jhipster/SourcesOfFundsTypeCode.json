@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230914073929",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "sourceOfFundsTypeCode",
@@ -25,5 +25,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

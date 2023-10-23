@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20230816125243",
   "clientRootFolder": "system",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "quarterNumber",
@@ -22,37 +24,36 @@
       "fieldValidateRules": ["required", "unique"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "FiscalQuarter",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "fiscalYear",
+      "otherEntityField": "fiscalYearCode",
       "otherEntityName": "fiscalYear",
+      "relationshipName": "fiscalYear",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "fiscalYearCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "placeholder",
-      "otherEntityName": "placeholder",
-      "relationshipType": "many-to-many",
       "otherEntityField": "description",
+      "otherEntityName": "placeholder",
+      "otherEntityRelationshipName": "fiscalQuarter",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalQuarter"
+      "relationshipName": "placeholder",
+      "relationshipType": "many-to-many"
     },
     {
-      "relationshipName": "universallyUniqueMapping",
-      "otherEntityName": "universallyUniqueMapping",
-      "relationshipType": "many-to-many",
       "otherEntityField": "universalKey",
+      "otherEntityName": "universallyUniqueMapping",
+      "otherEntityRelationshipName": "fiscalQuarter",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalQuarter"
+      "relationshipName": "universallyUniqueMapping",
+      "relationshipType": "many-to-many"
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "FiscalQuarter",
-  "changelogDate": "20230816125243",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

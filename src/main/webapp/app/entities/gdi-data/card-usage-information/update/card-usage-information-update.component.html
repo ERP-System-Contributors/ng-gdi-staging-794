@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-card-usage-information-heading" data-cy="CardUsageInformationCreateUpdateHeading">
@@ -27,13 +8,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -45,11 +26,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -60,8 +39,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNumberOfLiveCards">Total Number Of Live Cards</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNumberOfLiveCards">Total Number Of Live Cards</label>
           <input
             type="number"
             class="form-control"
@@ -88,8 +67,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalActiveCards">Total Active Cards</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalActiveCards">Total Active Cards</label>
           <input
             type="number"
             class="form-control"
@@ -116,8 +95,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNumberOfTransactionsDone">Total Number Of Transactions Done</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNumberOfTransactionsDone">Total Number Of Transactions Done</label>
           <input
             type="number"
             class="form-control"
@@ -144,8 +123,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalValueOfTransactionsDoneInLCY">Total Value Of Transactions Done In LCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalValueOfTransactionsDoneInLCY">Total Value Of Transactions Done In LCY</label>
           <input
             type="number"
             class="form-control"
@@ -172,16 +151,18 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -190,14 +171,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_cardType">Card Type</label>
-          <select class="form-control" id="field_cardType" data-cy="cardType" name="cardType" formControlName="cardType">
+        <div class="row mb-3">
+          <label class="form-label" for="field_cardType">Card Type</label>
+          <select
+            class="form-control"
+            id="field_cardType"
+            data-cy="cardType"
+            name="cardType"
+            formControlName="cardType"
+            [compareWith]="compareCardTypes"
+          >
             <option *ngIf="!editForm.get('cardType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="cardTypesOption.id === editForm.get('cardType')!.value?.id ? editForm.get('cardType')!.value : cardTypesOption"
-              *ngFor="let cardTypesOption of cardTypesSharedCollection; trackBy: trackCardTypesById"
-            >
+            <option [ngValue]="cardTypesOption" *ngFor="let cardTypesOption of cardTypesSharedCollection">
               {{ cardTypesOption.cardType }}
             </option>
           </select>
@@ -206,16 +191,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['cardType'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_cardBrand">Card Brand</label>
-          <select class="form-control" id="field_cardBrand" data-cy="cardBrand" name="cardBrand" formControlName="cardBrand">
+        <div class="row mb-3">
+          <label class="form-label" for="field_cardBrand">Card Brand</label>
+          <select
+            class="form-control"
+            id="field_cardBrand"
+            data-cy="cardBrand"
+            name="cardBrand"
+            formControlName="cardBrand"
+            [compareWith]="compareCardBrandType"
+          >
             <option *ngIf="!editForm.get('cardBrand')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                cardBrandTypeOption.id === editForm.get('cardBrand')!.value?.id ? editForm.get('cardBrand')!.value : cardBrandTypeOption
-              "
-              *ngFor="let cardBrandTypeOption of cardBrandTypesSharedCollection; trackBy: trackCardBrandTypeById"
-            >
+            <option [ngValue]="cardBrandTypeOption" *ngFor="let cardBrandTypeOption of cardBrandTypesSharedCollection">
               {{ cardBrandTypeOption.cardBrandType }}
             </option>
           </select>
@@ -224,24 +211,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['cardBrand'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_cardCategoryType">Card Category Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_cardCategoryType">Card Category Type</label>
           <select
             class="form-control"
             id="field_cardCategoryType"
             data-cy="cardCategoryType"
             name="cardCategoryType"
             formControlName="cardCategoryType"
+            [compareWith]="compareCardCategoryType"
           >
             <option *ngIf="!editForm.get('cardCategoryType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                cardCategoryTypeOption.id === editForm.get('cardCategoryType')!.value?.id
-                  ? editForm.get('cardCategoryType')!.value
-                  : cardCategoryTypeOption
-              "
-              *ngFor="let cardCategoryTypeOption of cardCategoryTypesSharedCollection; trackBy: trackCardCategoryTypeById"
-            >
+            <option [ngValue]="cardCategoryTypeOption" *ngFor="let cardCategoryTypeOption of cardCategoryTypesSharedCollection">
               {{ cardCategoryTypeOption.cardCategoryDescription }}
             </option>
           </select>
@@ -257,24 +238,18 @@
           </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_transactionType">Transaction Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_transactionType">Transaction Type</label>
           <select
             class="form-control"
             id="field_transactionType"
             data-cy="transactionType"
             name="transactionType"
             formControlName="transactionType"
+            [compareWith]="compareBankTransactionType"
           >
             <option *ngIf="!editForm.get('transactionType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                bankTransactionTypeOption.id === editForm.get('transactionType')!.value?.id
-                  ? editForm.get('transactionType')!.value
-                  : bankTransactionTypeOption
-              "
-              *ngFor="let bankTransactionTypeOption of bankTransactionTypesSharedCollection; trackBy: trackBankTransactionTypeById"
-            >
+            <option [ngValue]="bankTransactionTypeOption" *ngFor="let bankTransactionTypeOption of bankTransactionTypesSharedCollection">
               {{ bankTransactionTypeOption.transactionTypeDetails }}
             </option>
           </select>
@@ -288,16 +263,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['transactionType'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_channelType">Channel Type</label>
-          <select class="form-control" id="field_channelType" data-cy="channelType" name="channelType" formControlName="channelType">
+        <div class="row mb-3">
+          <label class="form-label" for="field_channelType">Channel Type</label>
+          <select
+            class="form-control"
+            id="field_channelType"
+            data-cy="channelType"
+            name="channelType"
+            formControlName="channelType"
+            [compareWith]="compareChannelType"
+          >
             <option *ngIf="!editForm.get('channelType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                channelTypeOption.id === editForm.get('channelType')!.value?.id ? editForm.get('channelType')!.value : channelTypeOption
-              "
-              *ngFor="let channelTypeOption of channelTypesSharedCollection; trackBy: trackChannelTypeById"
-            >
+            <option [ngValue]="channelTypeOption" *ngFor="let channelTypeOption of channelTypesSharedCollection">
               {{ channelTypeOption.channelTypes }}
             </option>
           </select>
@@ -308,14 +285,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['channelType'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_cardState">Card State</label>
-          <select class="form-control" id="field_cardState" data-cy="cardState" name="cardState" formControlName="cardState">
+        <div class="row mb-3">
+          <label class="form-label" for="field_cardState">Card State</label>
+          <select
+            class="form-control"
+            id="field_cardState"
+            data-cy="cardState"
+            name="cardState"
+            formControlName="cardState"
+            [compareWith]="compareCardState"
+          >
             <option *ngIf="!editForm.get('cardState')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="cardStateOption.id === editForm.get('cardState')!.value?.id ? editForm.get('cardState')!.value : cardStateOption"
-              *ngFor="let cardStateOption of cardStatesSharedCollection; trackBy: trackCardStateById"
-            >
+            <option [ngValue]="cardStateOption" *ngFor="let cardStateOption of cardStatesSharedCollection">
               {{ cardStateOption.cardStateFlagDetails }}
             </option>
           </select>

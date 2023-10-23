@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { INatureOfCustomerComplaints, getNatureOfCustomerComplaintsIdentifier } from '../nature-of-customer-complaints.model';
+import { INatureOfCustomerComplaints, NewNatureOfCustomerComplaints } from '../nature-of-customer-complaints.model';
+
+export type PartialUpdateNatureOfCustomerComplaints = Partial<INatureOfCustomerComplaints> & Pick<INatureOfCustomerComplaints, 'id'>;
 
 export type EntityResponseType = HttpResponse<INatureOfCustomerComplaints>;
 export type EntityArrayResponseType = HttpResponse<INatureOfCustomerComplaints[]>;
@@ -36,21 +20,21 @@ export class NatureOfCustomerComplaintsService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(natureOfCustomerComplaints: INatureOfCustomerComplaints): Observable<EntityResponseType> {
+  create(natureOfCustomerComplaints: NewNatureOfCustomerComplaints): Observable<EntityResponseType> {
     return this.http.post<INatureOfCustomerComplaints>(this.resourceUrl, natureOfCustomerComplaints, { observe: 'response' });
   }
 
   update(natureOfCustomerComplaints: INatureOfCustomerComplaints): Observable<EntityResponseType> {
     return this.http.put<INatureOfCustomerComplaints>(
-      `${this.resourceUrl}/${getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaints) as number}`,
+      `${this.resourceUrl}/${this.getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaints)}`,
       natureOfCustomerComplaints,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(natureOfCustomerComplaints: INatureOfCustomerComplaints): Observable<EntityResponseType> {
+  partialUpdate(natureOfCustomerComplaints: PartialUpdateNatureOfCustomerComplaints): Observable<EntityResponseType> {
     return this.http.patch<INatureOfCustomerComplaints>(
-      `${this.resourceUrl}/${getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaints) as number}`,
+      `${this.resourceUrl}/${this.getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaints)}`,
       natureOfCustomerComplaints,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class NatureOfCustomerComplaintsService {
     return this.http.get<INatureOfCustomerComplaints[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addNatureOfCustomerComplaintsToCollectionIfMissing(
-    natureOfCustomerComplaintsCollection: INatureOfCustomerComplaints[],
-    ...natureOfCustomerComplaintsToCheck: (INatureOfCustomerComplaints | null | undefined)[]
-  ): INatureOfCustomerComplaints[] {
-    const natureOfCustomerComplaints: INatureOfCustomerComplaints[] = natureOfCustomerComplaintsToCheck.filter(isPresent);
+  getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaints: Pick<INatureOfCustomerComplaints, 'id'>): number {
+    return natureOfCustomerComplaints.id;
+  }
+
+  compareNatureOfCustomerComplaints(
+    o1: Pick<INatureOfCustomerComplaints, 'id'> | null,
+    o2: Pick<INatureOfCustomerComplaints, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getNatureOfCustomerComplaintsIdentifier(o1) === this.getNatureOfCustomerComplaintsIdentifier(o2) : o1 === o2;
+  }
+
+  addNatureOfCustomerComplaintsToCollectionIfMissing<Type extends Pick<INatureOfCustomerComplaints, 'id'>>(
+    natureOfCustomerComplaintsCollection: Type[],
+    ...natureOfCustomerComplaintsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const natureOfCustomerComplaints: Type[] = natureOfCustomerComplaintsToCheck.filter(isPresent);
     if (natureOfCustomerComplaints.length > 0) {
       const natureOfCustomerComplaintsCollectionIdentifiers = natureOfCustomerComplaintsCollection.map(
-        natureOfCustomerComplaintsItem => getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaintsItem)!
+        natureOfCustomerComplaintsItem => this.getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaintsItem)!
       );
       const natureOfCustomerComplaintsToAdd = natureOfCustomerComplaints.filter(natureOfCustomerComplaintsItem => {
-        const natureOfCustomerComplaintsIdentifier = getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaintsItem);
-        if (
-          natureOfCustomerComplaintsIdentifier == null ||
-          natureOfCustomerComplaintsCollectionIdentifiers.includes(natureOfCustomerComplaintsIdentifier)
-        ) {
+        const natureOfCustomerComplaintsIdentifier = this.getNatureOfCustomerComplaintsIdentifier(natureOfCustomerComplaintsItem);
+        if (natureOfCustomerComplaintsCollectionIdentifiers.includes(natureOfCustomerComplaintsIdentifier)) {
           return false;
         }
         natureOfCustomerComplaintsCollectionIdentifiers.push(natureOfCustomerComplaintsIdentifier);

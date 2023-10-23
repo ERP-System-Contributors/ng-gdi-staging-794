@@ -1,7 +1,7 @@
 {
   "changelogDate": "20220301113030",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "branchStatusTypeCode",
@@ -34,5 +34,6 @@
       "relationshipType": "many-to-many"
     }
   ],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

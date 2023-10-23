@@ -1,39 +1,21 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable, of, EMPTY } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { ICollateralType, CollateralType } from '../collateral-type.model';
+import { ICollateralType } from '../collateral-type.model';
 import { CollateralTypeService } from '../service/collateral-type.service';
 
 @Injectable({ providedIn: 'root' })
-export class CollateralTypeRoutingResolveService implements Resolve<ICollateralType> {
+export class CollateralTypeRoutingResolveService implements Resolve<ICollateralType | null> {
   constructor(protected service: CollateralTypeService, protected router: Router) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<ICollateralType> | Observable<never> {
+  resolve(route: ActivatedRouteSnapshot): Observable<ICollateralType | null | never> {
     const id = route.params['id'];
     if (id) {
       return this.service.find(id).pipe(
-        mergeMap((collateralType: HttpResponse<CollateralType>) => {
+        mergeMap((collateralType: HttpResponse<ICollateralType>) => {
           if (collateralType.body) {
             return of(collateralType.body);
           } else {
@@ -43,6 +25,6 @@ export class CollateralTypeRoutingResolveService implements Resolve<ICollateralT
         })
       );
     }
-    return of(new CollateralType());
+    return of(null);
   }
 }

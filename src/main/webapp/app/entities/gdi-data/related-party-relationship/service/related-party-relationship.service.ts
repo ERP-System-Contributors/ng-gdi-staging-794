@@ -1,33 +1,27 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IRelatedPartyRelationship, getRelatedPartyRelationshipIdentifier } from '../related-party-relationship.model';
+import { IRelatedPartyRelationship, NewRelatedPartyRelationship } from '../related-party-relationship.model';
+
+export type PartialUpdateRelatedPartyRelationship = Partial<IRelatedPartyRelationship> & Pick<IRelatedPartyRelationship, 'id'>;
+
+type RestOf<T extends IRelatedPartyRelationship | NewRelatedPartyRelationship> = Omit<T, 'reportingDate'> & {
+  reportingDate?: string | null;
+};
+
+export type RestRelatedPartyRelationship = RestOf<IRelatedPartyRelationship>;
+
+export type NewRestRelatedPartyRelationship = RestOf<NewRelatedPartyRelationship>;
+
+export type PartialUpdateRestRelatedPartyRelationship = RestOf<PartialUpdateRelatedPartyRelationship>;
 
 export type EntityResponseType = HttpResponse<IRelatedPartyRelationship>;
 export type EntityArrayResponseType = HttpResponse<IRelatedPartyRelationship[]>;
@@ -39,46 +33,46 @@ export class RelatedPartyRelationshipService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(relatedPartyRelationship: IRelatedPartyRelationship): Observable<EntityResponseType> {
+  create(relatedPartyRelationship: NewRelatedPartyRelationship): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(relatedPartyRelationship);
     return this.http
-      .post<IRelatedPartyRelationship>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestRelatedPartyRelationship>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(relatedPartyRelationship: IRelatedPartyRelationship): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(relatedPartyRelationship);
     return this.http
-      .put<IRelatedPartyRelationship>(
-        `${this.resourceUrl}/${getRelatedPartyRelationshipIdentifier(relatedPartyRelationship) as number}`,
+      .put<RestRelatedPartyRelationship>(
+        `${this.resourceUrl}/${this.getRelatedPartyRelationshipIdentifier(relatedPartyRelationship)}`,
         copy,
         { observe: 'response' }
       )
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(relatedPartyRelationship: IRelatedPartyRelationship): Observable<EntityResponseType> {
+  partialUpdate(relatedPartyRelationship: PartialUpdateRelatedPartyRelationship): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(relatedPartyRelationship);
     return this.http
-      .patch<IRelatedPartyRelationship>(
-        `${this.resourceUrl}/${getRelatedPartyRelationshipIdentifier(relatedPartyRelationship) as number}`,
+      .patch<RestRelatedPartyRelationship>(
+        `${this.resourceUrl}/${this.getRelatedPartyRelationshipIdentifier(relatedPartyRelationship)}`,
         copy,
         { observe: 'response' }
       )
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<IRelatedPartyRelationship>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestRelatedPartyRelationship>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IRelatedPartyRelationship[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestRelatedPartyRelationship[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -88,25 +82,33 @@ export class RelatedPartyRelationshipService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IRelatedPartyRelationship[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestRelatedPartyRelationship[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addRelatedPartyRelationshipToCollectionIfMissing(
-    relatedPartyRelationshipCollection: IRelatedPartyRelationship[],
-    ...relatedPartyRelationshipsToCheck: (IRelatedPartyRelationship | null | undefined)[]
-  ): IRelatedPartyRelationship[] {
-    const relatedPartyRelationships: IRelatedPartyRelationship[] = relatedPartyRelationshipsToCheck.filter(isPresent);
+  getRelatedPartyRelationshipIdentifier(relatedPartyRelationship: Pick<IRelatedPartyRelationship, 'id'>): number {
+    return relatedPartyRelationship.id;
+  }
+
+  compareRelatedPartyRelationship(
+    o1: Pick<IRelatedPartyRelationship, 'id'> | null,
+    o2: Pick<IRelatedPartyRelationship, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getRelatedPartyRelationshipIdentifier(o1) === this.getRelatedPartyRelationshipIdentifier(o2) : o1 === o2;
+  }
+
+  addRelatedPartyRelationshipToCollectionIfMissing<Type extends Pick<IRelatedPartyRelationship, 'id'>>(
+    relatedPartyRelationshipCollection: Type[],
+    ...relatedPartyRelationshipsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const relatedPartyRelationships: Type[] = relatedPartyRelationshipsToCheck.filter(isPresent);
     if (relatedPartyRelationships.length > 0) {
       const relatedPartyRelationshipCollectionIdentifiers = relatedPartyRelationshipCollection.map(
-        relatedPartyRelationshipItem => getRelatedPartyRelationshipIdentifier(relatedPartyRelationshipItem)!
+        relatedPartyRelationshipItem => this.getRelatedPartyRelationshipIdentifier(relatedPartyRelationshipItem)!
       );
       const relatedPartyRelationshipsToAdd = relatedPartyRelationships.filter(relatedPartyRelationshipItem => {
-        const relatedPartyRelationshipIdentifier = getRelatedPartyRelationshipIdentifier(relatedPartyRelationshipItem);
-        if (
-          relatedPartyRelationshipIdentifier == null ||
-          relatedPartyRelationshipCollectionIdentifiers.includes(relatedPartyRelationshipIdentifier)
-        ) {
+        const relatedPartyRelationshipIdentifier = this.getRelatedPartyRelationshipIdentifier(relatedPartyRelationshipItem);
+        if (relatedPartyRelationshipCollectionIdentifiers.includes(relatedPartyRelationshipIdentifier)) {
           return false;
         }
         relatedPartyRelationshipCollectionIdentifiers.push(relatedPartyRelationshipIdentifier);
@@ -117,29 +119,31 @@ export class RelatedPartyRelationshipService {
     return relatedPartyRelationshipCollection;
   }
 
-  protected convertDateFromClient(relatedPartyRelationship: IRelatedPartyRelationship): IRelatedPartyRelationship {
-    return Object.assign({}, relatedPartyRelationship, {
-      reportingDate: relatedPartyRelationship.reportingDate?.isValid()
-        ? relatedPartyRelationship.reportingDate.format(DATE_FORMAT)
-        : undefined,
+  protected convertDateFromClient<
+    T extends IRelatedPartyRelationship | NewRelatedPartyRelationship | PartialUpdateRelatedPartyRelationship
+  >(relatedPartyRelationship: T): RestOf<T> {
+    return {
+      ...relatedPartyRelationship,
+      reportingDate: relatedPartyRelationship.reportingDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restRelatedPartyRelationship: RestRelatedPartyRelationship): IRelatedPartyRelationship {
+    return {
+      ...restRelatedPartyRelationship,
+      reportingDate: restRelatedPartyRelationship.reportingDate ? dayjs(restRelatedPartyRelationship.reportingDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestRelatedPartyRelationship>): HttpResponse<IRelatedPartyRelationship> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.reportingDate = res.body.reportingDate ? dayjs(res.body.reportingDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((relatedPartyRelationship: IRelatedPartyRelationship) => {
-        relatedPartyRelationship.reportingDate = relatedPartyRelationship.reportingDate
-          ? dayjs(relatedPartyRelationship.reportingDate)
-          : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestRelatedPartyRelationship[]>): HttpResponse<IRelatedPartyRelationship[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

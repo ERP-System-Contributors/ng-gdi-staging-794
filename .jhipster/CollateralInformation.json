@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004123713",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -73,8 +75,8 @@
     {
       "fieldName": "insuredFlag",
       "fieldType": "CollateralInsuredFlagTypes",
-      "fieldValues": "Y,N",
-      "fieldValidateRules": ["required"]
+      "fieldValidateRules": ["required"],
+      "fieldValues": "Y,N"
     },
     {
       "fieldName": "nameOfInsurer",
@@ -95,41 +97,40 @@
       "fieldType": "String"
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "CollateralInformation",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchCode",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "collateralType",
+      "otherEntityField": "collateralType",
       "otherEntityName": "collateralType",
+      "relationshipName": "collateralType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "collateralType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "countyCode",
+      "otherEntityField": "subCountyName",
       "otherEntityName": "countySubCountyCode",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "subCountyName"
+      "relationshipName": "countyCode",
+      "relationshipType": "many-to-one"
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "CollateralInformation",
-  "changelogDate": "20231004123713",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

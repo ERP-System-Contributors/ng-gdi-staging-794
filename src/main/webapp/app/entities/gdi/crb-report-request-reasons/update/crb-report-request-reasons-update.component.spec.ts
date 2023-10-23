@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CrbReportRequestReasonsFormService } from './crb-report-request-reasons-form.service';
 import { CrbReportRequestReasonsService } from '../service/crb-report-request-reasons.service';
-import { ICrbReportRequestReasons, CrbReportRequestReasons } from '../crb-report-request-reasons.model';
+import { ICrbReportRequestReasons } from '../crb-report-request-reasons.model';
 
 import { CrbReportRequestReasonsUpdateComponent } from './crb-report-request-reasons-update.component';
 
@@ -34,19 +16,29 @@ describe('CrbReportRequestReasons Management Update Component', () => {
   let comp: CrbReportRequestReasonsUpdateComponent;
   let fixture: ComponentFixture<CrbReportRequestReasonsUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let crbReportRequestReasonsFormService: CrbReportRequestReasonsFormService;
   let crbReportRequestReasonsService: CrbReportRequestReasonsService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CrbReportRequestReasonsUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CrbReportRequestReasonsUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CrbReportRequestReasonsUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    crbReportRequestReasonsFormService = TestBed.inject(CrbReportRequestReasonsFormService);
     crbReportRequestReasonsService = TestBed.inject(CrbReportRequestReasonsService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('CrbReportRequestReasons Management Update Component', () => {
       activatedRoute.data = of({ crbReportRequestReasons });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(crbReportRequestReasons));
+      expect(comp.crbReportRequestReasons).toEqual(crbReportRequestReasons);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportRequestReasons>>();
+      const saveSubject = new Subject<HttpResponse<ICrbReportRequestReasons>>();
       const crbReportRequestReasons = { id: 123 };
+      jest.spyOn(crbReportRequestReasonsFormService, 'getCrbReportRequestReasons').mockReturnValue(crbReportRequestReasons);
       jest.spyOn(crbReportRequestReasonsService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ crbReportRequestReasons });
@@ -80,18 +73,20 @@ describe('CrbReportRequestReasons Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(crbReportRequestReasonsFormService.getCrbReportRequestReasons).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(crbReportRequestReasonsService.update).toHaveBeenCalledWith(crbReportRequestReasons);
+      expect(crbReportRequestReasonsService.update).toHaveBeenCalledWith(expect.objectContaining(crbReportRequestReasons));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportRequestReasons>>();
-      const crbReportRequestReasons = new CrbReportRequestReasons();
+      const saveSubject = new Subject<HttpResponse<ICrbReportRequestReasons>>();
+      const crbReportRequestReasons = { id: 123 };
+      jest.spyOn(crbReportRequestReasonsFormService, 'getCrbReportRequestReasons').mockReturnValue({ id: null });
       jest.spyOn(crbReportRequestReasonsService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ crbReportRequestReasons });
+      activatedRoute.data = of({ crbReportRequestReasons: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('CrbReportRequestReasons Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(crbReportRequestReasonsService.create).toHaveBeenCalledWith(crbReportRequestReasons);
+      expect(crbReportRequestReasonsFormService.getCrbReportRequestReasons).toHaveBeenCalled();
+      expect(crbReportRequestReasonsService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportRequestReasons>>();
+      const saveSubject = new Subject<HttpResponse<ICrbReportRequestReasons>>();
       const crbReportRequestReasons = { id: 123 };
       jest.spyOn(crbReportRequestReasonsService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('CrbReportRequestReasons Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(crbReportRequestReasonsService.update).toHaveBeenCalledWith(crbReportRequestReasons);
+      expect(crbReportRequestReasonsService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

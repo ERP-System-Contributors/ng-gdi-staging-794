@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IChartOfAccountsCode, ChartOfAccountsCode } from '../chart-of-accounts-code.model';
+import { ChartOfAccountsCodeFormService, ChartOfAccountsCodeFormGroup } from './chart-of-accounts-code-form.service';
+import { IChartOfAccountsCode } from '../chart-of-accounts-code.model';
 import { ChartOfAccountsCodeService } from '../service/chart-of-accounts-code.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class ChartOfAccountsCodeUpdateComponent implements OnInit {
   isSaving = false;
+  chartOfAccountsCode: IChartOfAccountsCode | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    chartOfAccountsCode: [null, [Validators.required]],
-    chartOfAccountsClass: [null, [Validators.required]],
-    description: [],
-  });
+  editForm: ChartOfAccountsCodeFormGroup = this.chartOfAccountsCodeFormService.createChartOfAccountsCodeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected chartOfAccountsCodeService: ChartOfAccountsCodeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected chartOfAccountsCodeFormService: ChartOfAccountsCodeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ chartOfAccountsCode }) => {
-      this.updateForm(chartOfAccountsCode);
+      this.chartOfAccountsCode = chartOfAccountsCode;
+      if (chartOfAccountsCode) {
+        this.updateForm(chartOfAccountsCode);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class ChartOfAccountsCodeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class ChartOfAccountsCodeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const chartOfAccountsCode = this.createFromForm();
-    if (chartOfAccountsCode.id !== undefined) {
+    const chartOfAccountsCode = this.chartOfAccountsCodeFormService.getChartOfAccountsCode(this.editForm);
+    if (chartOfAccountsCode.id !== null) {
       this.subscribeToSaveResponse(this.chartOfAccountsCodeService.update(chartOfAccountsCode));
     } else {
       this.subscribeToSaveResponse(this.chartOfAccountsCodeService.create(chartOfAccountsCode));
@@ -87,10 +68,10 @@ export class ChartOfAccountsCodeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IChartOfAccountsCode>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class ChartOfAccountsCodeUpdateComponent implements OnInit {
   }
 
   protected updateForm(chartOfAccountsCode: IChartOfAccountsCode): void {
-    this.editForm.patchValue({
-      id: chartOfAccountsCode.id,
-      chartOfAccountsCode: chartOfAccountsCode.chartOfAccountsCode,
-      chartOfAccountsClass: chartOfAccountsCode.chartOfAccountsClass,
-      description: chartOfAccountsCode.description,
-    });
-  }
-
-  protected createFromForm(): IChartOfAccountsCode {
-    return {
-      ...new ChartOfAccountsCode(),
-      id: this.editForm.get(['id'])!.value,
-      chartOfAccountsCode: this.editForm.get(['chartOfAccountsCode'])!.value,
-      chartOfAccountsClass: this.editForm.get(['chartOfAccountsClass'])!.value,
-      description: this.editForm.get(['description'])!.value,
-    };
+    this.chartOfAccountsCode = chartOfAccountsCode;
+    this.chartOfAccountsCodeFormService.resetForm(this.editForm, chartOfAccountsCode);
   }
 }

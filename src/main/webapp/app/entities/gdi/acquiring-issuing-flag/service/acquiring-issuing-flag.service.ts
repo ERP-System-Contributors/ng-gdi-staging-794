@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IAcquiringIssuingFlag, getAcquiringIssuingFlagIdentifier } from '../acquiring-issuing-flag.model';
+import { IAcquiringIssuingFlag, NewAcquiringIssuingFlag } from '../acquiring-issuing-flag.model';
+
+export type PartialUpdateAcquiringIssuingFlag = Partial<IAcquiringIssuingFlag> & Pick<IAcquiringIssuingFlag, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAcquiringIssuingFlag>;
 export type EntityArrayResponseType = HttpResponse<IAcquiringIssuingFlag[]>;
@@ -36,21 +20,21 @@ export class AcquiringIssuingFlagService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(acquiringIssuingFlag: IAcquiringIssuingFlag): Observable<EntityResponseType> {
+  create(acquiringIssuingFlag: NewAcquiringIssuingFlag): Observable<EntityResponseType> {
     return this.http.post<IAcquiringIssuingFlag>(this.resourceUrl, acquiringIssuingFlag, { observe: 'response' });
   }
 
   update(acquiringIssuingFlag: IAcquiringIssuingFlag): Observable<EntityResponseType> {
     return this.http.put<IAcquiringIssuingFlag>(
-      `${this.resourceUrl}/${getAcquiringIssuingFlagIdentifier(acquiringIssuingFlag) as number}`,
+      `${this.resourceUrl}/${this.getAcquiringIssuingFlagIdentifier(acquiringIssuingFlag)}`,
       acquiringIssuingFlag,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(acquiringIssuingFlag: IAcquiringIssuingFlag): Observable<EntityResponseType> {
+  partialUpdate(acquiringIssuingFlag: PartialUpdateAcquiringIssuingFlag): Observable<EntityResponseType> {
     return this.http.patch<IAcquiringIssuingFlag>(
-      `${this.resourceUrl}/${getAcquiringIssuingFlagIdentifier(acquiringIssuingFlag) as number}`,
+      `${this.resourceUrl}/${this.getAcquiringIssuingFlagIdentifier(acquiringIssuingFlag)}`,
       acquiringIssuingFlag,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class AcquiringIssuingFlagService {
     return this.http.get<IAcquiringIssuingFlag[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAcquiringIssuingFlagToCollectionIfMissing(
-    acquiringIssuingFlagCollection: IAcquiringIssuingFlag[],
-    ...acquiringIssuingFlagsToCheck: (IAcquiringIssuingFlag | null | undefined)[]
-  ): IAcquiringIssuingFlag[] {
-    const acquiringIssuingFlags: IAcquiringIssuingFlag[] = acquiringIssuingFlagsToCheck.filter(isPresent);
+  getAcquiringIssuingFlagIdentifier(acquiringIssuingFlag: Pick<IAcquiringIssuingFlag, 'id'>): number {
+    return acquiringIssuingFlag.id;
+  }
+
+  compareAcquiringIssuingFlag(o1: Pick<IAcquiringIssuingFlag, 'id'> | null, o2: Pick<IAcquiringIssuingFlag, 'id'> | null): boolean {
+    return o1 && o2 ? this.getAcquiringIssuingFlagIdentifier(o1) === this.getAcquiringIssuingFlagIdentifier(o2) : o1 === o2;
+  }
+
+  addAcquiringIssuingFlagToCollectionIfMissing<Type extends Pick<IAcquiringIssuingFlag, 'id'>>(
+    acquiringIssuingFlagCollection: Type[],
+    ...acquiringIssuingFlagsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const acquiringIssuingFlags: Type[] = acquiringIssuingFlagsToCheck.filter(isPresent);
     if (acquiringIssuingFlags.length > 0) {
       const acquiringIssuingFlagCollectionIdentifiers = acquiringIssuingFlagCollection.map(
-        acquiringIssuingFlagItem => getAcquiringIssuingFlagIdentifier(acquiringIssuingFlagItem)!
+        acquiringIssuingFlagItem => this.getAcquiringIssuingFlagIdentifier(acquiringIssuingFlagItem)!
       );
       const acquiringIssuingFlagsToAdd = acquiringIssuingFlags.filter(acquiringIssuingFlagItem => {
-        const acquiringIssuingFlagIdentifier = getAcquiringIssuingFlagIdentifier(acquiringIssuingFlagItem);
-        if (acquiringIssuingFlagIdentifier == null || acquiringIssuingFlagCollectionIdentifiers.includes(acquiringIssuingFlagIdentifier)) {
+        const acquiringIssuingFlagIdentifier = this.getAcquiringIssuingFlagIdentifier(acquiringIssuingFlagItem);
+        if (acquiringIssuingFlagCollectionIdentifiers.includes(acquiringIssuingFlagIdentifier)) {
           return false;
         }
         acquiringIssuingFlagCollectionIdentifiers.push(acquiringIssuingFlagIdentifier);

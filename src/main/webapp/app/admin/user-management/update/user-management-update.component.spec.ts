@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { ComponentFixture, TestBed, waitForAsync, inject, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
@@ -33,25 +15,23 @@ describe('User Management Update Component', () => {
   let fixture: ComponentFixture<UserManagementUpdateComponent>;
   let service: UserManagementService;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        declarations: [UserManagementUpdateComponent],
-        providers: [
-          FormBuilder,
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              data: of({ user: new User(123, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], 'admin') }),
-            },
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      declarations: [UserManagementUpdateComponent],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({ user: new User(123, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], 'admin') }),
           },
-        ],
-      })
-        .overrideTemplate(UserManagementUpdateComponent, '')
-        .compileComponents();
+        },
+      ],
     })
-  );
+      .overrideTemplate(UserManagementUpdateComponent, '')
+      .compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(UserManagementUpdateComponent);
@@ -81,16 +61,15 @@ describe('User Management Update Component', () => {
       [],
       fakeAsync(() => {
         // GIVEN
-        const entity = new User(123);
+        const entity = { id: 123 };
         jest.spyOn(service, 'update').mockReturnValue(of(entity));
-        comp.user = entity;
-        comp.editForm.patchValue({ id: entity.id });
+        comp.editForm.patchValue(entity);
         // WHEN
         comp.save();
         tick(); // simulate async
 
         // THEN
-        expect(service.update).toHaveBeenCalledWith(entity);
+        expect(service.update).toHaveBeenCalledWith(expect.objectContaining(entity));
         expect(comp.isSaving).toEqual(false);
       })
     ));
@@ -99,15 +78,16 @@ describe('User Management Update Component', () => {
       [],
       fakeAsync(() => {
         // GIVEN
-        const entity = new User();
+        const entity = { login: 'foo' } as User;
         jest.spyOn(service, 'create').mockReturnValue(of(entity));
-        comp.user = entity;
+        comp.editForm.patchValue(entity);
         // WHEN
         comp.save();
         tick(); // simulate async
 
         // THEN
-        expect(service.create).toHaveBeenCalledWith(entity);
+        expect(comp.editForm.getRawValue().id).toBeNull();
+        expect(service.create).toHaveBeenCalledWith(expect.objectContaining(entity));
         expect(comp.isSaving).toEqual(false);
       })
     ));

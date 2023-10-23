@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IRelatedPartyRelationship, RelatedPartyRelationship } from '../related-party-relationship.model';
+import { RelatedPartyRelationshipFormService, RelatedPartyRelationshipFormGroup } from './related-party-relationship-form.service';
+import { IRelatedPartyRelationship } from '../related-party-relationship.model';
 import { RelatedPartyRelationshipService } from '../service/related-party-relationship.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -38,33 +20,38 @@ import { PartyRelationTypeService } from 'app/entities/gdi/party-relation-type/s
 })
 export class RelatedPartyRelationshipUpdateComponent implements OnInit {
   isSaving = false;
+  relatedPartyRelationship: IRelatedPartyRelationship | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   bankBranchCodesSharedCollection: IBankBranchCode[] = [];
   partyRelationTypesSharedCollection: IPartyRelationType[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    customerId: [null, [Validators.required]],
-    relatedPartyId: [null, [Validators.required]],
-    bankCode: [null, Validators.required],
-    branchId: [null, Validators.required],
-    relationshipType: [null, Validators.required],
-  });
+  editForm: RelatedPartyRelationshipFormGroup = this.relatedPartyRelationshipFormService.createRelatedPartyRelationshipFormGroup();
 
   constructor(
     protected relatedPartyRelationshipService: RelatedPartyRelationshipService,
+    protected relatedPartyRelationshipFormService: RelatedPartyRelationshipFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected bankBranchCodeService: BankBranchCodeService,
     protected partyRelationTypeService: PartyRelationTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareBankBranchCode = (o1: IBankBranchCode | null, o2: IBankBranchCode | null): boolean =>
+    this.bankBranchCodeService.compareBankBranchCode(o1, o2);
+
+  comparePartyRelationType = (o1: IPartyRelationType | null, o2: IPartyRelationType | null): boolean =>
+    this.partyRelationTypeService.comparePartyRelationType(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ relatedPartyRelationship }) => {
-      this.updateForm(relatedPartyRelationship);
+      this.relatedPartyRelationship = relatedPartyRelationship;
+      if (relatedPartyRelationship) {
+        this.updateForm(relatedPartyRelationship);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -76,31 +63,19 @@ export class RelatedPartyRelationshipUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const relatedPartyRelationship = this.createFromForm();
-    if (relatedPartyRelationship.id !== undefined) {
+    const relatedPartyRelationship = this.relatedPartyRelationshipFormService.getRelatedPartyRelationship(this.editForm);
+    if (relatedPartyRelationship.id !== null) {
       this.subscribeToSaveResponse(this.relatedPartyRelationshipService.update(relatedPartyRelationship));
     } else {
       this.subscribeToSaveResponse(this.relatedPartyRelationshipService.create(relatedPartyRelationship));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackBankBranchCodeById(index: number, item: IBankBranchCode): number {
-    return item.id!;
-  }
-
-  trackPartyRelationTypeById(index: number, item: IPartyRelationType): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IRelatedPartyRelationship>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -116,25 +91,18 @@ export class RelatedPartyRelationshipUpdateComponent implements OnInit {
   }
 
   protected updateForm(relatedPartyRelationship: IRelatedPartyRelationship): void {
-    this.editForm.patchValue({
-      id: relatedPartyRelationship.id,
-      reportingDate: relatedPartyRelationship.reportingDate,
-      customerId: relatedPartyRelationship.customerId,
-      relatedPartyId: relatedPartyRelationship.relatedPartyId,
-      bankCode: relatedPartyRelationship.bankCode,
-      branchId: relatedPartyRelationship.branchId,
-      relationshipType: relatedPartyRelationship.relationshipType,
-    });
+    this.relatedPartyRelationship = relatedPartyRelationship;
+    this.relatedPartyRelationshipFormService.resetForm(this.editForm, relatedPartyRelationship);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       relatedPartyRelationship.bankCode
     );
-    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(
+    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
       this.bankBranchCodesSharedCollection,
       relatedPartyRelationship.branchId
     );
-    this.partyRelationTypesSharedCollection = this.partyRelationTypeService.addPartyRelationTypeToCollectionIfMissing(
+    this.partyRelationTypesSharedCollection = this.partyRelationTypeService.addPartyRelationTypeToCollectionIfMissing<IPartyRelationType>(
       this.partyRelationTypesSharedCollection,
       relatedPartyRelationship.relationshipType
     );
@@ -146,7 +114,10 @@ export class RelatedPartyRelationshipUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.relatedPartyRelationship?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -156,7 +127,10 @@ export class RelatedPartyRelationshipUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankBranchCode[]>) => res.body ?? []))
       .pipe(
         map((bankBranchCodes: IBankBranchCode[]) =>
-          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(bankBranchCodes, this.editForm.get('branchId')!.value)
+          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
+            bankBranchCodes,
+            this.relatedPartyRelationship?.branchId
+          )
         )
       )
       .subscribe((bankBranchCodes: IBankBranchCode[]) => (this.bankBranchCodesSharedCollection = bankBranchCodes));
@@ -166,25 +140,12 @@ export class RelatedPartyRelationshipUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IPartyRelationType[]>) => res.body ?? []))
       .pipe(
         map((partyRelationTypes: IPartyRelationType[]) =>
-          this.partyRelationTypeService.addPartyRelationTypeToCollectionIfMissing(
+          this.partyRelationTypeService.addPartyRelationTypeToCollectionIfMissing<IPartyRelationType>(
             partyRelationTypes,
-            this.editForm.get('relationshipType')!.value
+            this.relatedPartyRelationship?.relationshipType
           )
         )
       )
       .subscribe((partyRelationTypes: IPartyRelationType[]) => (this.partyRelationTypesSharedCollection = partyRelationTypes));
-  }
-
-  protected createFromForm(): IRelatedPartyRelationship {
-    return {
-      ...new RelatedPartyRelationship(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      customerId: this.editForm.get(['customerId'])!.value,
-      relatedPartyId: this.editForm.get(['relatedPartyId'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      branchId: this.editForm.get(['branchId'])!.value,
-      relationshipType: this.editForm.get(['relationshipType'])!.value,
-    };
   }
 }

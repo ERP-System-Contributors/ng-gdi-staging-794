@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IFxCustomerType, FxCustomerType } from '../fx-customer-type.model';
+import { FxCustomerTypeFormService, FxCustomerTypeFormGroup } from './fx-customer-type-form.service';
+import { IFxCustomerType } from '../fx-customer-type.model';
 import { FxCustomerTypeService } from '../service/fx-customer-type.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { FxCustomerTypeService } from '../service/fx-customer-type.service';
 })
 export class FxCustomerTypeUpdateComponent implements OnInit {
   isSaving = false;
+  fxCustomerType: IFxCustomerType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    foreignExchangeCustomerTypeCode: [null, [Validators.required]],
-    foreignCustomerType: [null, [Validators.required]],
-  });
+  editForm: FxCustomerTypeFormGroup = this.fxCustomerTypeFormService.createFxCustomerTypeFormGroup();
 
   constructor(
     protected fxCustomerTypeService: FxCustomerTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected fxCustomerTypeFormService: FxCustomerTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ fxCustomerType }) => {
-      this.updateForm(fxCustomerType);
+      this.fxCustomerType = fxCustomerType;
+      if (fxCustomerType) {
+        this.updateForm(fxCustomerType);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class FxCustomerTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const fxCustomerType = this.createFromForm();
-    if (fxCustomerType.id !== undefined) {
+    const fxCustomerType = this.fxCustomerTypeFormService.getFxCustomerType(this.editForm);
+    if (fxCustomerType.id !== null) {
       this.subscribeToSaveResponse(this.fxCustomerTypeService.update(fxCustomerType));
     } else {
       this.subscribeToSaveResponse(this.fxCustomerTypeService.create(fxCustomerType));
@@ -66,10 +48,10 @@ export class FxCustomerTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IFxCustomerType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class FxCustomerTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(fxCustomerType: IFxCustomerType): void {
-    this.editForm.patchValue({
-      id: fxCustomerType.id,
-      foreignExchangeCustomerTypeCode: fxCustomerType.foreignExchangeCustomerTypeCode,
-      foreignCustomerType: fxCustomerType.foreignCustomerType,
-    });
-  }
-
-  protected createFromForm(): IFxCustomerType {
-    return {
-      ...new FxCustomerType(),
-      id: this.editForm.get(['id'])!.value,
-      foreignExchangeCustomerTypeCode: this.editForm.get(['foreignExchangeCustomerTypeCode'])!.value,
-      foreignCustomerType: this.editForm.get(['foreignCustomerType'])!.value,
-    };
+    this.fxCustomerType = fxCustomerType;
+    this.fxCustomerTypeFormService.resetForm(this.editForm, fxCustomerType);
   }
 }

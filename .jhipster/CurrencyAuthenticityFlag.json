@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230914063738",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "currencyAuthenticityFlag",
@@ -27,5 +27,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-account-attribute-heading" data-cy="AccountAttributeCreateUpdateHeading">Create or edit a Account Attribute</h2>
@@ -25,13 +6,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -43,11 +24,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -58,8 +37,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_customerNumber">Customer Number</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_customerNumber">Customer Number</label>
           <input
             type="text"
             class="form-control"
@@ -77,8 +56,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountContractNumber">Account Contract Number</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountContractNumber">Account Contract Number</label>
           <input
             type="text"
             class="form-control"
@@ -99,8 +78,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountName">Account Name</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountName">Account Name</label>
           <input
             type="text"
             class="form-control"
@@ -114,8 +93,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountOpeningDate">Account Opening Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountOpeningDate">Account Opening Date</label>
           <div class="input-group">
             <input
               id="field_accountOpeningDate"
@@ -127,16 +106,14 @@
               #accountOpeningDateDp="ngbDatepicker"
               formControlName="accountOpeningDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="accountOpeningDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="accountOpeningDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountClosingDate">Account Closing Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountClosingDate">Account Closing Date</label>
           <div class="input-group">
             <input
               id="field_accountClosingDate"
@@ -148,16 +125,14 @@
               #accountClosingDateDp="ngbDatepicker"
               formControlName="accountClosingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="accountClosingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="accountClosingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_debitInterestRate">Debit Interest Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_debitInterestRate">Debit Interest Rate</label>
           <input
             type="number"
             class="form-control"
@@ -181,8 +156,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_creditInterestRate">Credit Interest Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_creditInterestRate">Credit Interest Rate</label>
           <input
             type="number"
             class="form-control"
@@ -206,8 +181,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_sanctionedAccountLimitFcy">Sanctioned Account Limit Fcy</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_sanctionedAccountLimitFcy">Sanctioned Account Limit Fcy</label>
           <input
             type="number"
             class="form-control"
@@ -231,8 +206,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_sanctionedAccountLimitLcy">Sanctioned Account Limit Lcy</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_sanctionedAccountLimitLcy">Sanctioned Account Limit Lcy</label>
           <input
             type="number"
             class="form-control"
@@ -256,8 +231,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountStatusChangeDate">Account Status Change Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountStatusChangeDate">Account Status Change Date</label>
           <div class="input-group">
             <input
               id="field_accountStatusChangeDate"
@@ -269,16 +244,14 @@
               #accountStatusChangeDateDp="ngbDatepicker"
               formControlName="accountStatusChangeDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="accountStatusChangeDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="accountStatusChangeDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_expiryDate">Expiry Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_expiryDate">Expiry Date</label>
           <div class="input-group">
             <input
               id="field_expiryDate"
@@ -290,24 +263,22 @@
               #expiryDateDp="ngbDatepicker"
               formControlName="expiryDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="expiryDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="expiryDateDp.toggle()"><fa-icon icon="calendar-alt"></fa-icon></button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionCode }}
             </option>
           </select>
@@ -316,16 +287,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_branchCode">Branch Code</label>
-          <select class="form-control" id="field_branchCode" data-cy="branchCode" name="branchCode" formControlName="branchCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_branchCode">Branch Code</label>
+          <select
+            class="form-control"
+            id="field_branchCode"
+            data-cy="branchCode"
+            name="branchCode"
+            formControlName="branchCode"
+            [compareWith]="compareBankBranchCode"
+          >
             <option *ngIf="!editForm.get('branchCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                bankBranchCodeOption.id === editForm.get('branchCode')!.value?.id ? editForm.get('branchCode')!.value : bankBranchCodeOption
-              "
-              *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection; trackBy: trackBankBranchCodeById"
-            >
+            <option [ngValue]="bankBranchCodeOption" *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection">
               {{ bankBranchCodeOption.branchCode }}
             </option>
           </select>
@@ -336,24 +309,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['branchCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_accountOwnershipType">Account Ownership Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_accountOwnershipType">Account Ownership Type</label>
           <select
             class="form-control"
             id="field_accountOwnershipType"
             data-cy="accountOwnershipType"
             name="accountOwnershipType"
             formControlName="accountOwnershipType"
+            [compareWith]="compareAccountOwnershipType"
           >
             <option *ngIf="!editForm.get('accountOwnershipType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                accountOwnershipTypeOption.id === editForm.get('accountOwnershipType')!.value?.id
-                  ? editForm.get('accountOwnershipType')!.value
-                  : accountOwnershipTypeOption
-              "
-              *ngFor="let accountOwnershipTypeOption of accountOwnershipTypesSharedCollection; trackBy: trackAccountOwnershipTypeById"
-            >
+            <option [ngValue]="accountOwnershipTypeOption" *ngFor="let accountOwnershipTypeOption of accountOwnershipTypesSharedCollection">
               {{ accountOwnershipTypeOption.accountOwnershipType }}
             </option>
           </select>

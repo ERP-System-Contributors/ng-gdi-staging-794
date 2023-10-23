@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { InstitutionStatusTypeFormService } from './institution-status-type-form.service';
 import { InstitutionStatusTypeService } from '../service/institution-status-type.service';
-import { IInstitutionStatusType, InstitutionStatusType } from '../institution-status-type.model';
+import { IInstitutionStatusType } from '../institution-status-type.model';
 
 import { InstitutionStatusTypeUpdateComponent } from './institution-status-type-update.component';
 
@@ -34,19 +16,29 @@ describe('InstitutionStatusType Management Update Component', () => {
   let comp: InstitutionStatusTypeUpdateComponent;
   let fixture: ComponentFixture<InstitutionStatusTypeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let institutionStatusTypeFormService: InstitutionStatusTypeFormService;
   let institutionStatusTypeService: InstitutionStatusTypeService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [InstitutionStatusTypeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(InstitutionStatusTypeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(InstitutionStatusTypeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    institutionStatusTypeFormService = TestBed.inject(InstitutionStatusTypeFormService);
     institutionStatusTypeService = TestBed.inject(InstitutionStatusTypeService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('InstitutionStatusType Management Update Component', () => {
       activatedRoute.data = of({ institutionStatusType });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(institutionStatusType));
+      expect(comp.institutionStatusType).toEqual(institutionStatusType);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<InstitutionStatusType>>();
+      const saveSubject = new Subject<HttpResponse<IInstitutionStatusType>>();
       const institutionStatusType = { id: 123 };
+      jest.spyOn(institutionStatusTypeFormService, 'getInstitutionStatusType').mockReturnValue(institutionStatusType);
       jest.spyOn(institutionStatusTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ institutionStatusType });
@@ -80,18 +73,20 @@ describe('InstitutionStatusType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(institutionStatusTypeFormService.getInstitutionStatusType).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(institutionStatusTypeService.update).toHaveBeenCalledWith(institutionStatusType);
+      expect(institutionStatusTypeService.update).toHaveBeenCalledWith(expect.objectContaining(institutionStatusType));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<InstitutionStatusType>>();
-      const institutionStatusType = new InstitutionStatusType();
+      const saveSubject = new Subject<HttpResponse<IInstitutionStatusType>>();
+      const institutionStatusType = { id: 123 };
+      jest.spyOn(institutionStatusTypeFormService, 'getInstitutionStatusType').mockReturnValue({ id: null });
       jest.spyOn(institutionStatusTypeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ institutionStatusType });
+      activatedRoute.data = of({ institutionStatusType: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('InstitutionStatusType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(institutionStatusTypeService.create).toHaveBeenCalledWith(institutionStatusType);
+      expect(institutionStatusTypeFormService.getInstitutionStatusType).toHaveBeenCalled();
+      expect(institutionStatusTypeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<InstitutionStatusType>>();
+      const saveSubject = new Subject<HttpResponse<IInstitutionStatusType>>();
       const institutionStatusType = { id: 123 };
       jest.spyOn(institutionStatusTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('InstitutionStatusType Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(institutionStatusTypeService.update).toHaveBeenCalledWith(institutionStatusType);
+      expect(institutionStatusTypeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

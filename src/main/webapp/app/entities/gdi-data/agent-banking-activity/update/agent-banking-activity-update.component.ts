@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IAgentBankingActivity, AgentBankingActivity } from '../agent-banking-activity.model';
+import { AgentBankingActivityFormService, AgentBankingActivityFormGroup } from './agent-banking-activity-form.service';
+import { IAgentBankingActivity } from '../agent-banking-activity.model';
 import { AgentBankingActivityService } from '../service/agent-banking-activity.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -38,35 +20,38 @@ import { BankTransactionTypeService } from 'app/entities/gdi/bank-transaction-ty
 })
 export class AgentBankingActivityUpdateComponent implements OnInit {
   isSaving = false;
+  agentBankingActivity: IAgentBankingActivity | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   bankBranchCodesSharedCollection: IBankBranchCode[] = [];
   bankTransactionTypesSharedCollection: IBankTransactionType[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    agentUniqueId: [null, [Validators.required]],
-    terminalUniqueId: [null, [Validators.required]],
-    totalCountOfTransactions: [null, [Validators.required, Validators.min(0)]],
-    totalValueOfTransactionsInLCY: [null, [Validators.required, Validators.min(0)]],
-    bankCode: [null, Validators.required],
-    branchCode: [null, Validators.required],
-    transactionType: [null, Validators.required],
-  });
+  editForm: AgentBankingActivityFormGroup = this.agentBankingActivityFormService.createAgentBankingActivityFormGroup();
 
   constructor(
     protected agentBankingActivityService: AgentBankingActivityService,
+    protected agentBankingActivityFormService: AgentBankingActivityFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected bankBranchCodeService: BankBranchCodeService,
     protected bankTransactionTypeService: BankTransactionTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareBankBranchCode = (o1: IBankBranchCode | null, o2: IBankBranchCode | null): boolean =>
+    this.bankBranchCodeService.compareBankBranchCode(o1, o2);
+
+  compareBankTransactionType = (o1: IBankTransactionType | null, o2: IBankTransactionType | null): boolean =>
+    this.bankTransactionTypeService.compareBankTransactionType(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ agentBankingActivity }) => {
-      this.updateForm(agentBankingActivity);
+      this.agentBankingActivity = agentBankingActivity;
+      if (agentBankingActivity) {
+        this.updateForm(agentBankingActivity);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -78,31 +63,19 @@ export class AgentBankingActivityUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const agentBankingActivity = this.createFromForm();
-    if (agentBankingActivity.id !== undefined) {
+    const agentBankingActivity = this.agentBankingActivityFormService.getAgentBankingActivity(this.editForm);
+    if (agentBankingActivity.id !== null) {
       this.subscribeToSaveResponse(this.agentBankingActivityService.update(agentBankingActivity));
     } else {
       this.subscribeToSaveResponse(this.agentBankingActivityService.create(agentBankingActivity));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackBankBranchCodeById(index: number, item: IBankBranchCode): number {
-    return item.id!;
-  }
-
-  trackBankTransactionTypeById(index: number, item: IBankTransactionType): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IAgentBankingActivity>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -118,30 +91,22 @@ export class AgentBankingActivityUpdateComponent implements OnInit {
   }
 
   protected updateForm(agentBankingActivity: IAgentBankingActivity): void {
-    this.editForm.patchValue({
-      id: agentBankingActivity.id,
-      reportingDate: agentBankingActivity.reportingDate,
-      agentUniqueId: agentBankingActivity.agentUniqueId,
-      terminalUniqueId: agentBankingActivity.terminalUniqueId,
-      totalCountOfTransactions: agentBankingActivity.totalCountOfTransactions,
-      totalValueOfTransactionsInLCY: agentBankingActivity.totalValueOfTransactionsInLCY,
-      bankCode: agentBankingActivity.bankCode,
-      branchCode: agentBankingActivity.branchCode,
-      transactionType: agentBankingActivity.transactionType,
-    });
+    this.agentBankingActivity = agentBankingActivity;
+    this.agentBankingActivityFormService.resetForm(this.editForm, agentBankingActivity);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       agentBankingActivity.bankCode
     );
-    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(
+    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
       this.bankBranchCodesSharedCollection,
       agentBankingActivity.branchCode
     );
-    this.bankTransactionTypesSharedCollection = this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing(
-      this.bankTransactionTypesSharedCollection,
-      agentBankingActivity.transactionType
-    );
+    this.bankTransactionTypesSharedCollection =
+      this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing<IBankTransactionType>(
+        this.bankTransactionTypesSharedCollection,
+        agentBankingActivity.transactionType
+      );
   }
 
   protected loadRelationshipsOptions(): void {
@@ -150,7 +115,10 @@ export class AgentBankingActivityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.agentBankingActivity?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -160,7 +128,10 @@ export class AgentBankingActivityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankBranchCode[]>) => res.body ?? []))
       .pipe(
         map((bankBranchCodes: IBankBranchCode[]) =>
-          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(bankBranchCodes, this.editForm.get('branchCode')!.value)
+          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
+            bankBranchCodes,
+            this.agentBankingActivity?.branchCode
+          )
         )
       )
       .subscribe((bankBranchCodes: IBankBranchCode[]) => (this.bankBranchCodesSharedCollection = bankBranchCodes));
@@ -170,27 +141,12 @@ export class AgentBankingActivityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankTransactionType[]>) => res.body ?? []))
       .pipe(
         map((bankTransactionTypes: IBankTransactionType[]) =>
-          this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing(
+          this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing<IBankTransactionType>(
             bankTransactionTypes,
-            this.editForm.get('transactionType')!.value
+            this.agentBankingActivity?.transactionType
           )
         )
       )
       .subscribe((bankTransactionTypes: IBankTransactionType[]) => (this.bankTransactionTypesSharedCollection = bankTransactionTypes));
-  }
-
-  protected createFromForm(): IAgentBankingActivity {
-    return {
-      ...new AgentBankingActivity(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      agentUniqueId: this.editForm.get(['agentUniqueId'])!.value,
-      terminalUniqueId: this.editForm.get(['terminalUniqueId'])!.value,
-      totalCountOfTransactions: this.editForm.get(['totalCountOfTransactions'])!.value,
-      totalValueOfTransactionsInLCY: this.editForm.get(['totalValueOfTransactionsInLCY'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      branchCode: this.editForm.get(['branchCode'])!.value,
-      transactionType: this.editForm.get(['transactionType'])!.value,
-    };
   }
 }

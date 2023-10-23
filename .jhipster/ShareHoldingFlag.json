@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230912144752",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "shareholdingFlagTypeCode",
@@ -26,5 +26,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

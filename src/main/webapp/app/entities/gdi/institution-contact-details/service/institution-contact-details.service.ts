@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IInstitutionContactDetails, getInstitutionContactDetailsIdentifier } from '../institution-contact-details.model';
+import { IInstitutionContactDetails, NewInstitutionContactDetails } from '../institution-contact-details.model';
+
+export type PartialUpdateInstitutionContactDetails = Partial<IInstitutionContactDetails> & Pick<IInstitutionContactDetails, 'id'>;
 
 export type EntityResponseType = HttpResponse<IInstitutionContactDetails>;
 export type EntityArrayResponseType = HttpResponse<IInstitutionContactDetails[]>;
@@ -36,21 +20,21 @@ export class InstitutionContactDetailsService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(institutionContactDetails: IInstitutionContactDetails): Observable<EntityResponseType> {
+  create(institutionContactDetails: NewInstitutionContactDetails): Observable<EntityResponseType> {
     return this.http.post<IInstitutionContactDetails>(this.resourceUrl, institutionContactDetails, { observe: 'response' });
   }
 
   update(institutionContactDetails: IInstitutionContactDetails): Observable<EntityResponseType> {
     return this.http.put<IInstitutionContactDetails>(
-      `${this.resourceUrl}/${getInstitutionContactDetailsIdentifier(institutionContactDetails) as number}`,
+      `${this.resourceUrl}/${this.getInstitutionContactDetailsIdentifier(institutionContactDetails)}`,
       institutionContactDetails,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(institutionContactDetails: IInstitutionContactDetails): Observable<EntityResponseType> {
+  partialUpdate(institutionContactDetails: PartialUpdateInstitutionContactDetails): Observable<EntityResponseType> {
     return this.http.patch<IInstitutionContactDetails>(
-      `${this.resourceUrl}/${getInstitutionContactDetailsIdentifier(institutionContactDetails) as number}`,
+      `${this.resourceUrl}/${this.getInstitutionContactDetailsIdentifier(institutionContactDetails)}`,
       institutionContactDetails,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class InstitutionContactDetailsService {
     return this.http.get<IInstitutionContactDetails[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addInstitutionContactDetailsToCollectionIfMissing(
-    institutionContactDetailsCollection: IInstitutionContactDetails[],
-    ...institutionContactDetailsToCheck: (IInstitutionContactDetails | null | undefined)[]
-  ): IInstitutionContactDetails[] {
-    const institutionContactDetails: IInstitutionContactDetails[] = institutionContactDetailsToCheck.filter(isPresent);
+  getInstitutionContactDetailsIdentifier(institutionContactDetails: Pick<IInstitutionContactDetails, 'id'>): number {
+    return institutionContactDetails.id;
+  }
+
+  compareInstitutionContactDetails(
+    o1: Pick<IInstitutionContactDetails, 'id'> | null,
+    o2: Pick<IInstitutionContactDetails, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getInstitutionContactDetailsIdentifier(o1) === this.getInstitutionContactDetailsIdentifier(o2) : o1 === o2;
+  }
+
+  addInstitutionContactDetailsToCollectionIfMissing<Type extends Pick<IInstitutionContactDetails, 'id'>>(
+    institutionContactDetailsCollection: Type[],
+    ...institutionContactDetailsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const institutionContactDetails: Type[] = institutionContactDetailsToCheck.filter(isPresent);
     if (institutionContactDetails.length > 0) {
       const institutionContactDetailsCollectionIdentifiers = institutionContactDetailsCollection.map(
-        institutionContactDetailsItem => getInstitutionContactDetailsIdentifier(institutionContactDetailsItem)!
+        institutionContactDetailsItem => this.getInstitutionContactDetailsIdentifier(institutionContactDetailsItem)!
       );
       const institutionContactDetailsToAdd = institutionContactDetails.filter(institutionContactDetailsItem => {
-        const institutionContactDetailsIdentifier = getInstitutionContactDetailsIdentifier(institutionContactDetailsItem);
-        if (
-          institutionContactDetailsIdentifier == null ||
-          institutionContactDetailsCollectionIdentifiers.includes(institutionContactDetailsIdentifier)
-        ) {
+        const institutionContactDetailsIdentifier = this.getInstitutionContactDetailsIdentifier(institutionContactDetailsItem);
+        if (institutionContactDetailsCollectionIdentifiers.includes(institutionContactDetailsIdentifier)) {
           return false;
         }
         institutionContactDetailsCollectionIdentifiers.push(institutionContactDetailsIdentifier);

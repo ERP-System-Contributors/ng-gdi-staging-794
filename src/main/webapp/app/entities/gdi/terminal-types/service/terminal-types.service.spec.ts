@@ -1,32 +1,18 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { ITerminalTypes, TerminalTypes } from '../terminal-types.model';
+import { ITerminalTypes } from '../terminal-types.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../terminal-types.test-samples';
 
 import { TerminalTypesService } from './terminal-types.service';
+
+const requireRestSample: ITerminalTypes = {
+  ...sampleWithRequiredData,
+};
 
 describe('TerminalTypes Service', () => {
   let service: TerminalTypesService;
   let httpMock: HttpTestingController;
-  let elemDefault: ITerminalTypes;
   let expectedResult: ITerminalTypes | ITerminalTypes[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +22,27 @@ describe('TerminalTypes Service', () => {
     expectedResult = null;
     service = TestBed.inject(TerminalTypesService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      txnTerminalTypeCode: 'AAAAAAA',
-      txnChannelType: 'AAAAAAA',
-      txnChannelTypeDetails: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a TerminalTypes', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const terminalTypes = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new TerminalTypes()).subscribe(resp => (expectedResult = resp.body));
+      service.create(terminalTypes).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +50,11 @@ describe('TerminalTypes Service', () => {
     });
 
     it('should update a TerminalTypes', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          txnTerminalTypeCode: 'BBBBBB',
-          txnChannelType: 'BBBBBB',
-          txnChannelTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const terminalTypes = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(terminalTypes).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,11 +62,9 @@ describe('TerminalTypes Service', () => {
     });
 
     it('should partial update a TerminalTypes', () => {
-      const patchObject = Object.assign({}, new TerminalTypes());
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -108,72 +74,66 @@ describe('TerminalTypes Service', () => {
     });
 
     it('should return a list of TerminalTypes', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          txnTerminalTypeCode: 'BBBBBB',
-          txnChannelType: 'BBBBBB',
-          txnChannelTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a TerminalTypes', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addTerminalTypesToCollectionIfMissing', () => {
       it('should add a TerminalTypes to an empty array', () => {
-        const terminalTypes: ITerminalTypes = { id: 123 };
+        const terminalTypes: ITerminalTypes = sampleWithRequiredData;
         expectedResult = service.addTerminalTypesToCollectionIfMissing([], terminalTypes);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(terminalTypes);
       });
 
       it('should not add a TerminalTypes to an array that contains it', () => {
-        const terminalTypes: ITerminalTypes = { id: 123 };
+        const terminalTypes: ITerminalTypes = sampleWithRequiredData;
         const terminalTypesCollection: ITerminalTypes[] = [
           {
             ...terminalTypes,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addTerminalTypesToCollectionIfMissing(terminalTypesCollection, terminalTypes);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a TerminalTypes to an array that doesn't contain it", () => {
-        const terminalTypes: ITerminalTypes = { id: 123 };
-        const terminalTypesCollection: ITerminalTypes[] = [{ id: 456 }];
+        const terminalTypes: ITerminalTypes = sampleWithRequiredData;
+        const terminalTypesCollection: ITerminalTypes[] = [sampleWithPartialData];
         expectedResult = service.addTerminalTypesToCollectionIfMissing(terminalTypesCollection, terminalTypes);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(terminalTypes);
       });
 
       it('should add only unique TerminalTypes to an array', () => {
-        const terminalTypesArray: ITerminalTypes[] = [{ id: 123 }, { id: 456 }, { id: 99281 }];
-        const terminalTypesCollection: ITerminalTypes[] = [{ id: 123 }];
+        const terminalTypesArray: ITerminalTypes[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const terminalTypesCollection: ITerminalTypes[] = [sampleWithRequiredData];
         expectedResult = service.addTerminalTypesToCollectionIfMissing(terminalTypesCollection, ...terminalTypesArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const terminalTypes: ITerminalTypes = { id: 123 };
-        const terminalTypes2: ITerminalTypes = { id: 456 };
+        const terminalTypes: ITerminalTypes = sampleWithRequiredData;
+        const terminalTypes2: ITerminalTypes = sampleWithPartialData;
         expectedResult = service.addTerminalTypesToCollectionIfMissing([], terminalTypes, terminalTypes2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(terminalTypes);
@@ -181,16 +141,60 @@ describe('TerminalTypes Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const terminalTypes: ITerminalTypes = { id: 123 };
+        const terminalTypes: ITerminalTypes = sampleWithRequiredData;
         expectedResult = service.addTerminalTypesToCollectionIfMissing([], null, terminalTypes, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(terminalTypes);
       });
 
       it('should return initial array if no TerminalTypes is added', () => {
-        const terminalTypesCollection: ITerminalTypes[] = [{ id: 123 }];
+        const terminalTypesCollection: ITerminalTypes[] = [sampleWithRequiredData];
         expectedResult = service.addTerminalTypesToCollectionIfMissing(terminalTypesCollection, undefined, null);
         expect(expectedResult).toEqual(terminalTypesCollection);
+      });
+    });
+
+    describe('compareTerminalTypes', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareTerminalTypes(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareTerminalTypes(entity1, entity2);
+        const compareResult2 = service.compareTerminalTypes(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareTerminalTypes(entity1, entity2);
+        const compareResult2 = service.compareTerminalTypes(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareTerminalTypes(entity1, entity2);
+        const compareResult2 = service.compareTerminalTypes(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

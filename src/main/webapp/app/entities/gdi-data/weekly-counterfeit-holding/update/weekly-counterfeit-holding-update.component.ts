@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IWeeklyCounterfeitHolding, WeeklyCounterfeitHolding } from '../weekly-counterfeit-holding.model';
+import { WeeklyCounterfeitHoldingFormService, WeeklyCounterfeitHoldingFormGroup } from './weekly-counterfeit-holding-form.service';
+import { IWeeklyCounterfeitHolding } from '../weekly-counterfeit-holding.model';
 import { WeeklyCounterfeitHoldingService } from '../service/weekly-counterfeit-holding.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,29 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class WeeklyCounterfeitHoldingUpdateComponent implements OnInit {
   isSaving = false;
+  weeklyCounterfeitHolding: IWeeklyCounterfeitHolding | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    dateConfiscated: [null, [Validators.required]],
-    serialNumber: [null, [Validators.required]],
-    depositorsNames: [null, [Validators.required]],
-    tellersNames: [null, [Validators.required]],
-    dateSubmittedToCBK: [null, [Validators.required]],
-    remarks: [],
-  });
+  editForm: WeeklyCounterfeitHoldingFormGroup = this.weeklyCounterfeitHoldingFormService.createWeeklyCounterfeitHoldingFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected weeklyCounterfeitHoldingService: WeeklyCounterfeitHoldingService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected weeklyCounterfeitHoldingFormService: WeeklyCounterfeitHoldingFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ weeklyCounterfeitHolding }) => {
-      this.updateForm(weeklyCounterfeitHolding);
+      this.weeklyCounterfeitHolding = weeklyCounterfeitHolding;
+      if (weeklyCounterfeitHolding) {
+        this.updateForm(weeklyCounterfeitHolding);
+      }
     });
   }
 
@@ -72,7 +49,7 @@ export class WeeklyCounterfeitHoldingUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -82,8 +59,8 @@ export class WeeklyCounterfeitHoldingUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const weeklyCounterfeitHolding = this.createFromForm();
-    if (weeklyCounterfeitHolding.id !== undefined) {
+    const weeklyCounterfeitHolding = this.weeklyCounterfeitHoldingFormService.getWeeklyCounterfeitHolding(this.editForm);
+    if (weeklyCounterfeitHolding.id !== null) {
       this.subscribeToSaveResponse(this.weeklyCounterfeitHoldingService.update(weeklyCounterfeitHolding));
     } else {
       this.subscribeToSaveResponse(this.weeklyCounterfeitHoldingService.create(weeklyCounterfeitHolding));
@@ -91,10 +68,10 @@ export class WeeklyCounterfeitHoldingUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IWeeklyCounterfeitHolding>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -110,29 +87,7 @@ export class WeeklyCounterfeitHoldingUpdateComponent implements OnInit {
   }
 
   protected updateForm(weeklyCounterfeitHolding: IWeeklyCounterfeitHolding): void {
-    this.editForm.patchValue({
-      id: weeklyCounterfeitHolding.id,
-      reportingDate: weeklyCounterfeitHolding.reportingDate,
-      dateConfiscated: weeklyCounterfeitHolding.dateConfiscated,
-      serialNumber: weeklyCounterfeitHolding.serialNumber,
-      depositorsNames: weeklyCounterfeitHolding.depositorsNames,
-      tellersNames: weeklyCounterfeitHolding.tellersNames,
-      dateSubmittedToCBK: weeklyCounterfeitHolding.dateSubmittedToCBK,
-      remarks: weeklyCounterfeitHolding.remarks,
-    });
-  }
-
-  protected createFromForm(): IWeeklyCounterfeitHolding {
-    return {
-      ...new WeeklyCounterfeitHolding(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      dateConfiscated: this.editForm.get(['dateConfiscated'])!.value,
-      serialNumber: this.editForm.get(['serialNumber'])!.value,
-      depositorsNames: this.editForm.get(['depositorsNames'])!.value,
-      tellersNames: this.editForm.get(['tellersNames'])!.value,
-      dateSubmittedToCBK: this.editForm.get(['dateSubmittedToCBK'])!.value,
-      remarks: this.editForm.get(['remarks'])!.value,
-    };
+    this.weeklyCounterfeitHolding = weeklyCounterfeitHolding;
+    this.weeklyCounterfeitHoldingFormService.resetForm(this.editForm, weeklyCounterfeitHolding);
   }
 }

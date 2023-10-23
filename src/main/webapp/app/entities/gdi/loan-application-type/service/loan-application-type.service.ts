@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ILoanApplicationType, getLoanApplicationTypeIdentifier } from '../loan-application-type.model';
+import { ILoanApplicationType, NewLoanApplicationType } from '../loan-application-type.model';
+
+export type PartialUpdateLoanApplicationType = Partial<ILoanApplicationType> & Pick<ILoanApplicationType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ILoanApplicationType>;
 export type EntityArrayResponseType = HttpResponse<ILoanApplicationType[]>;
@@ -36,21 +20,21 @@ export class LoanApplicationTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(loanApplicationType: ILoanApplicationType): Observable<EntityResponseType> {
+  create(loanApplicationType: NewLoanApplicationType): Observable<EntityResponseType> {
     return this.http.post<ILoanApplicationType>(this.resourceUrl, loanApplicationType, { observe: 'response' });
   }
 
   update(loanApplicationType: ILoanApplicationType): Observable<EntityResponseType> {
     return this.http.put<ILoanApplicationType>(
-      `${this.resourceUrl}/${getLoanApplicationTypeIdentifier(loanApplicationType) as number}`,
+      `${this.resourceUrl}/${this.getLoanApplicationTypeIdentifier(loanApplicationType)}`,
       loanApplicationType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(loanApplicationType: ILoanApplicationType): Observable<EntityResponseType> {
+  partialUpdate(loanApplicationType: PartialUpdateLoanApplicationType): Observable<EntityResponseType> {
     return this.http.patch<ILoanApplicationType>(
-      `${this.resourceUrl}/${getLoanApplicationTypeIdentifier(loanApplicationType) as number}`,
+      `${this.resourceUrl}/${this.getLoanApplicationTypeIdentifier(loanApplicationType)}`,
       loanApplicationType,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class LoanApplicationTypeService {
     return this.http.get<ILoanApplicationType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addLoanApplicationTypeToCollectionIfMissing(
-    loanApplicationTypeCollection: ILoanApplicationType[],
-    ...loanApplicationTypesToCheck: (ILoanApplicationType | null | undefined)[]
-  ): ILoanApplicationType[] {
-    const loanApplicationTypes: ILoanApplicationType[] = loanApplicationTypesToCheck.filter(isPresent);
+  getLoanApplicationTypeIdentifier(loanApplicationType: Pick<ILoanApplicationType, 'id'>): number {
+    return loanApplicationType.id;
+  }
+
+  compareLoanApplicationType(o1: Pick<ILoanApplicationType, 'id'> | null, o2: Pick<ILoanApplicationType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getLoanApplicationTypeIdentifier(o1) === this.getLoanApplicationTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addLoanApplicationTypeToCollectionIfMissing<Type extends Pick<ILoanApplicationType, 'id'>>(
+    loanApplicationTypeCollection: Type[],
+    ...loanApplicationTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const loanApplicationTypes: Type[] = loanApplicationTypesToCheck.filter(isPresent);
     if (loanApplicationTypes.length > 0) {
       const loanApplicationTypeCollectionIdentifiers = loanApplicationTypeCollection.map(
-        loanApplicationTypeItem => getLoanApplicationTypeIdentifier(loanApplicationTypeItem)!
+        loanApplicationTypeItem => this.getLoanApplicationTypeIdentifier(loanApplicationTypeItem)!
       );
       const loanApplicationTypesToAdd = loanApplicationTypes.filter(loanApplicationTypeItem => {
-        const loanApplicationTypeIdentifier = getLoanApplicationTypeIdentifier(loanApplicationTypeItem);
-        if (loanApplicationTypeIdentifier == null || loanApplicationTypeCollectionIdentifiers.includes(loanApplicationTypeIdentifier)) {
+        const loanApplicationTypeIdentifier = this.getLoanApplicationTypeIdentifier(loanApplicationTypeItem);
+        if (loanApplicationTypeCollectionIdentifiers.includes(loanApplicationTypeIdentifier)) {
           return false;
         }
         loanApplicationTypeCollectionIdentifiers.push(loanApplicationTypeIdentifier);

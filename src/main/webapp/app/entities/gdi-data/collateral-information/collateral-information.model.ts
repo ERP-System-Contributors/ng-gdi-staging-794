@@ -1,22 +1,4 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { IBankBranchCode } from 'app/entities/gdi/bank-branch-code/bank-branch-code.model';
 import { ICollateralType } from 'app/entities/gdi/collateral-type/collateral-type.model';
@@ -24,59 +6,29 @@ import { ICountySubCountyCode } from 'app/entities/gdi-data/county-sub-county-co
 import { CollateralInsuredFlagTypes } from 'app/entities/enumerations/collateral-insured-flag-types.model';
 
 export interface ICollateralInformation {
-  id?: number;
-  reportingDate?: dayjs.Dayjs;
-  collateralId?: string;
-  loanContractId?: string;
-  customerId?: string;
+  id: number;
+  reportingDate?: dayjs.Dayjs | null;
+  collateralId?: string | null;
+  loanContractId?: string | null;
+  customerId?: string | null;
   registrationPropertyNumber?: string | null;
-  collateralOMVInCCY?: number;
-  collateralFSVInLCY?: number;
+  collateralOMVInCCY?: number | null;
+  collateralFSVInLCY?: number | null;
   collateralDiscountedValue?: number | null;
-  amountCharged?: number;
+  amountCharged?: number | null;
   collateralDiscountRate?: number | null;
   loanToValueRatio?: number | null;
   nameOfPropertyValuer?: string | null;
   collateralLastValuationDate?: dayjs.Dayjs | null;
-  insuredFlag?: CollateralInsuredFlagTypes;
+  insuredFlag?: CollateralInsuredFlagTypes | null;
   nameOfInsurer?: string | null;
   amountInsured?: number | null;
   insuranceExpiryDate?: dayjs.Dayjs | null;
   guaranteeInsurers?: string | null;
-  bankCode?: IInstitutionCode;
-  branchCode?: IBankBranchCode;
-  collateralType?: ICollateralType;
-  countyCode?: ICountySubCountyCode | null;
+  bankCode?: Pick<IInstitutionCode, 'id' | 'institutionName'> | null;
+  branchCode?: Pick<IBankBranchCode, 'id' | 'branchCode'> | null;
+  collateralType?: Pick<ICollateralType, 'id' | 'collateralType'> | null;
+  countyCode?: Pick<ICountySubCountyCode, 'id' | 'subCountyName'> | null;
 }
 
-export class CollateralInformation implements ICollateralInformation {
-  constructor(
-    public id?: number,
-    public reportingDate?: dayjs.Dayjs,
-    public collateralId?: string,
-    public loanContractId?: string,
-    public customerId?: string,
-    public registrationPropertyNumber?: string | null,
-    public collateralOMVInCCY?: number,
-    public collateralFSVInLCY?: number,
-    public collateralDiscountedValue?: number | null,
-    public amountCharged?: number,
-    public collateralDiscountRate?: number | null,
-    public loanToValueRatio?: number | null,
-    public nameOfPropertyValuer?: string | null,
-    public collateralLastValuationDate?: dayjs.Dayjs | null,
-    public insuredFlag?: CollateralInsuredFlagTypes,
-    public nameOfInsurer?: string | null,
-    public amountInsured?: number | null,
-    public insuranceExpiryDate?: dayjs.Dayjs | null,
-    public guaranteeInsurers?: string | null,
-    public bankCode?: IInstitutionCode,
-    public branchCode?: IBankBranchCode,
-    public collateralType?: ICollateralType,
-    public countyCode?: ICountySubCountyCode | null
-  ) {}
-}
-
-export function getCollateralInformationIdentifier(collateralInformation: ICollateralInformation): number | undefined {
-  return collateralInformation.id;
-}
+export type NewCollateralInformation = Omit<ICollateralInformation, 'id'> & { id: null };

@@ -1,4 +1,7 @@
 {
+  "changelogDate": "20231003131804",
+  "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "precedence",
@@ -36,8 +39,8 @@
     {
       "fieldName": "mandatoryFieldFlag",
       "fieldType": "MandatoryFieldFlagTypes",
-      "fieldValues": "Y,N",
-      "fieldValidateRules": ["required"]
+      "fieldValidateRules": ["required"],
+      "fieldValues": "Y,N"
     },
     {
       "fieldName": "businessValidation",
@@ -58,21 +61,19 @@
       "fieldType": "Integer"
     }
   ],
-  "clientRootFolder": "gdi-data",
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "AccountAttributeMetadata",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "standardInputTemplate",
+      "otherEntityField": "id",
       "otherEntityName": "gdiMasterDataIndex",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "id"
+      "relationshipName": "standardInputTemplate",
+      "relationshipType": "many-to-one"
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "AccountAttributeMetadata",
-  "changelogDate": "20231003131804",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

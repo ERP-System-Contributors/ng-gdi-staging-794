@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-gdi-transaction-data-index-heading" data-cy="GdiTransactionDataIndexCreateUpdateHeading">
@@ -27,13 +8,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_datasetName">Dataset Name</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_datasetName">Dataset Name</label>
           <input
             type="text"
             class="form-control"
@@ -47,8 +28,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_databaseName">Database Name</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_databaseName">Database Name</label>
           <input
             type="text"
             class="form-control"
@@ -64,8 +45,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_updateFrequency">Update Frequency</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_updateFrequency">Update Frequency</label>
           <select
             class="form-control"
             name="updateFrequency"
@@ -88,8 +69,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_datasetBehavior">Dataset Behavior</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_datasetBehavior">Dataset Behavior</label>
           <select
             class="form-control"
             name="datasetBehavior"
@@ -112,8 +93,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_minimumDatarowsPerRequest">Minimum Datarows Per Request</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_minimumDatarowsPerRequest">Minimum Datarows Per Request</label>
           <input
             type="number"
             class="form-control"
@@ -124,8 +105,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_maximumDataRowsPerRequest">Maximum Data Rows Per Request</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_maximumDataRowsPerRequest">Maximum Data Rows Per Request</label>
           <input
             type="number"
             class="form-control"
@@ -136,8 +117,8 @@
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_datasetDescription">Dataset Description</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_datasetDescription">Dataset Description</label>
           <textarea
             class="form-control"
             name="datasetDescription"
@@ -147,20 +128,22 @@
           ></textarea>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_dataTemplate">Data Template</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_dataTemplate">Data Template</label>
           <div>
             <div *ngIf="editForm.get('dataTemplate')!.value" class="form-text text-danger clearfix">
-              <a class="pull-left" (click)="openFile(editForm.get('dataTemplate')!.value, editForm.get('dataTemplateContentType')!.value)"
-                >open</a
+              <a
+                class="pull-start"
+                (click)="openFile(editForm.get('dataTemplate')!.value!, editForm.get('dataTemplateContentType')!.value!)"
+                >Open</a
               ><br />
-              <span class="pull-left"
-                >{{ editForm.get('dataTemplateContentType')!.value }}, {{ byteSize(editForm.get('dataTemplate')!.value) }}</span
+              <span class="pull-start"
+                >{{ editForm.get('dataTemplateContentType')!.value }}, {{ byteSize(editForm.get('dataTemplate')!.value!) }}</span
               >
               <button
                 type="button"
-                (click)="editForm.patchValue({ dataTemplate: null }); editForm.patchValue({ dataTemplateContentType: null })"
-                class="btn btn-secondary btn-xs pull-right"
+                (click)="editForm.patchValue({ dataTemplate: undefined, dataTemplateContentType: undefined })"
+                class="btn btn-secondary btn-xs pull-end"
               >
                 <fa-icon icon="times"></fa-icon>
               </button>
@@ -184,7 +167,7 @@
           />
         </div>
 
-        <div class="form-group">
+        <div class="row mb-3">
           <label for="field_masterDataItems">Master Data Item</label>
           <select
             class="form-control"
@@ -193,11 +176,9 @@
             multiple
             name="masterDataItems"
             formControlName="masterDataItems"
+            [compareWith]="compareGdiMasterDataIndex"
           >
-            <option
-              [ngValue]="getSelectedGdiMasterDataIndex(gdiMasterDataIndexOption, editForm.get('masterDataItems')!.value)"
-              *ngFor="let gdiMasterDataIndexOption of gdiMasterDataIndicesSharedCollection; trackBy: trackGdiMasterDataIndexById"
-            >
+            <option [ngValue]="gdiMasterDataIndexOption" *ngFor="let gdiMasterDataIndexOption of gdiMasterDataIndicesSharedCollection">
               {{ gdiMasterDataIndexOption.entityName }}
             </option>
           </select>

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IInsiderCategoryTypes, getInsiderCategoryTypesIdentifier } from '../insider-category-types.model';
+import { IInsiderCategoryTypes, NewInsiderCategoryTypes } from '../insider-category-types.model';
+
+export type PartialUpdateInsiderCategoryTypes = Partial<IInsiderCategoryTypes> & Pick<IInsiderCategoryTypes, 'id'>;
 
 export type EntityResponseType = HttpResponse<IInsiderCategoryTypes>;
 export type EntityArrayResponseType = HttpResponse<IInsiderCategoryTypes[]>;
@@ -36,21 +20,21 @@ export class InsiderCategoryTypesService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(insiderCategoryTypes: IInsiderCategoryTypes): Observable<EntityResponseType> {
+  create(insiderCategoryTypes: NewInsiderCategoryTypes): Observable<EntityResponseType> {
     return this.http.post<IInsiderCategoryTypes>(this.resourceUrl, insiderCategoryTypes, { observe: 'response' });
   }
 
   update(insiderCategoryTypes: IInsiderCategoryTypes): Observable<EntityResponseType> {
     return this.http.put<IInsiderCategoryTypes>(
-      `${this.resourceUrl}/${getInsiderCategoryTypesIdentifier(insiderCategoryTypes) as number}`,
+      `${this.resourceUrl}/${this.getInsiderCategoryTypesIdentifier(insiderCategoryTypes)}`,
       insiderCategoryTypes,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(insiderCategoryTypes: IInsiderCategoryTypes): Observable<EntityResponseType> {
+  partialUpdate(insiderCategoryTypes: PartialUpdateInsiderCategoryTypes): Observable<EntityResponseType> {
     return this.http.patch<IInsiderCategoryTypes>(
-      `${this.resourceUrl}/${getInsiderCategoryTypesIdentifier(insiderCategoryTypes) as number}`,
+      `${this.resourceUrl}/${this.getInsiderCategoryTypesIdentifier(insiderCategoryTypes)}`,
       insiderCategoryTypes,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class InsiderCategoryTypesService {
     return this.http.get<IInsiderCategoryTypes[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addInsiderCategoryTypesToCollectionIfMissing(
-    insiderCategoryTypesCollection: IInsiderCategoryTypes[],
-    ...insiderCategoryTypesToCheck: (IInsiderCategoryTypes | null | undefined)[]
-  ): IInsiderCategoryTypes[] {
-    const insiderCategoryTypes: IInsiderCategoryTypes[] = insiderCategoryTypesToCheck.filter(isPresent);
+  getInsiderCategoryTypesIdentifier(insiderCategoryTypes: Pick<IInsiderCategoryTypes, 'id'>): number {
+    return insiderCategoryTypes.id;
+  }
+
+  compareInsiderCategoryTypes(o1: Pick<IInsiderCategoryTypes, 'id'> | null, o2: Pick<IInsiderCategoryTypes, 'id'> | null): boolean {
+    return o1 && o2 ? this.getInsiderCategoryTypesIdentifier(o1) === this.getInsiderCategoryTypesIdentifier(o2) : o1 === o2;
+  }
+
+  addInsiderCategoryTypesToCollectionIfMissing<Type extends Pick<IInsiderCategoryTypes, 'id'>>(
+    insiderCategoryTypesCollection: Type[],
+    ...insiderCategoryTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const insiderCategoryTypes: Type[] = insiderCategoryTypesToCheck.filter(isPresent);
     if (insiderCategoryTypes.length > 0) {
       const insiderCategoryTypesCollectionIdentifiers = insiderCategoryTypesCollection.map(
-        insiderCategoryTypesItem => getInsiderCategoryTypesIdentifier(insiderCategoryTypesItem)!
+        insiderCategoryTypesItem => this.getInsiderCategoryTypesIdentifier(insiderCategoryTypesItem)!
       );
       const insiderCategoryTypesToAdd = insiderCategoryTypes.filter(insiderCategoryTypesItem => {
-        const insiderCategoryTypesIdentifier = getInsiderCategoryTypesIdentifier(insiderCategoryTypesItem);
-        if (insiderCategoryTypesIdentifier == null || insiderCategoryTypesCollectionIdentifiers.includes(insiderCategoryTypesIdentifier)) {
+        const insiderCategoryTypesIdentifier = this.getInsiderCategoryTypesIdentifier(insiderCategoryTypesItem);
+        if (insiderCategoryTypesCollectionIdentifiers.includes(insiderCategoryTypesIdentifier)) {
           return false;
         }
         insiderCategoryTypesCollectionIdentifiers.push(insiderCategoryTypesIdentifier);

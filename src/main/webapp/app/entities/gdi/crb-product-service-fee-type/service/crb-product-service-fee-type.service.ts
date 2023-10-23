@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbProductServiceFeeType, getCrbProductServiceFeeTypeIdentifier } from '../crb-product-service-fee-type.model';
+import { ICrbProductServiceFeeType, NewCrbProductServiceFeeType } from '../crb-product-service-fee-type.model';
+
+export type PartialUpdateCrbProductServiceFeeType = Partial<ICrbProductServiceFeeType> & Pick<ICrbProductServiceFeeType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbProductServiceFeeType>;
 export type EntityArrayResponseType = HttpResponse<ICrbProductServiceFeeType[]>;
@@ -36,21 +20,21 @@ export class CrbProductServiceFeeTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbProductServiceFeeType: ICrbProductServiceFeeType): Observable<EntityResponseType> {
+  create(crbProductServiceFeeType: NewCrbProductServiceFeeType): Observable<EntityResponseType> {
     return this.http.post<ICrbProductServiceFeeType>(this.resourceUrl, crbProductServiceFeeType, { observe: 'response' });
   }
 
   update(crbProductServiceFeeType: ICrbProductServiceFeeType): Observable<EntityResponseType> {
     return this.http.put<ICrbProductServiceFeeType>(
-      `${this.resourceUrl}/${getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeType) as number}`,
+      `${this.resourceUrl}/${this.getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeType)}`,
       crbProductServiceFeeType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(crbProductServiceFeeType: ICrbProductServiceFeeType): Observable<EntityResponseType> {
+  partialUpdate(crbProductServiceFeeType: PartialUpdateCrbProductServiceFeeType): Observable<EntityResponseType> {
     return this.http.patch<ICrbProductServiceFeeType>(
-      `${this.resourceUrl}/${getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeType) as number}`,
+      `${this.resourceUrl}/${this.getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeType)}`,
       crbProductServiceFeeType,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CrbProductServiceFeeTypeService {
     return this.http.get<ICrbProductServiceFeeType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbProductServiceFeeTypeToCollectionIfMissing(
-    crbProductServiceFeeTypeCollection: ICrbProductServiceFeeType[],
-    ...crbProductServiceFeeTypesToCheck: (ICrbProductServiceFeeType | null | undefined)[]
-  ): ICrbProductServiceFeeType[] {
-    const crbProductServiceFeeTypes: ICrbProductServiceFeeType[] = crbProductServiceFeeTypesToCheck.filter(isPresent);
+  getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeType: Pick<ICrbProductServiceFeeType, 'id'>): number {
+    return crbProductServiceFeeType.id;
+  }
+
+  compareCrbProductServiceFeeType(
+    o1: Pick<ICrbProductServiceFeeType, 'id'> | null,
+    o2: Pick<ICrbProductServiceFeeType, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCrbProductServiceFeeTypeIdentifier(o1) === this.getCrbProductServiceFeeTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbProductServiceFeeTypeToCollectionIfMissing<Type extends Pick<ICrbProductServiceFeeType, 'id'>>(
+    crbProductServiceFeeTypeCollection: Type[],
+    ...crbProductServiceFeeTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbProductServiceFeeTypes: Type[] = crbProductServiceFeeTypesToCheck.filter(isPresent);
     if (crbProductServiceFeeTypes.length > 0) {
       const crbProductServiceFeeTypeCollectionIdentifiers = crbProductServiceFeeTypeCollection.map(
-        crbProductServiceFeeTypeItem => getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeTypeItem)!
+        crbProductServiceFeeTypeItem => this.getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeTypeItem)!
       );
       const crbProductServiceFeeTypesToAdd = crbProductServiceFeeTypes.filter(crbProductServiceFeeTypeItem => {
-        const crbProductServiceFeeTypeIdentifier = getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeTypeItem);
-        if (
-          crbProductServiceFeeTypeIdentifier == null ||
-          crbProductServiceFeeTypeCollectionIdentifiers.includes(crbProductServiceFeeTypeIdentifier)
-        ) {
+        const crbProductServiceFeeTypeIdentifier = this.getCrbProductServiceFeeTypeIdentifier(crbProductServiceFeeTypeItem);
+        if (crbProductServiceFeeTypeCollectionIdentifiers.includes(crbProductServiceFeeTypeIdentifier)) {
           return false;
         }
         crbProductServiceFeeTypeCollectionIdentifiers.push(crbProductServiceFeeTypeIdentifier);

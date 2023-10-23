@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004070943",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -46,49 +48,48 @@
       "fieldType": "LocalDate"
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "TerminalsAndPOS",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "terminalType",
+      "otherEntityField": "txnTerminalTypeCode",
       "otherEntityName": "terminalTypes",
+      "relationshipName": "terminalType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "txnTerminalTypeCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "terminalFunctionality",
+      "otherEntityField": "terminalFunctionality",
       "otherEntityName": "terminalFunctions",
+      "relationshipName": "terminalFunctionality",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "terminalFunctionality"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "physicalLocation",
+      "otherEntityField": "subCountyCode",
       "otherEntityName": "countySubCountyCode",
+      "relationshipName": "physicalLocation",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "subCountyCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "bankId",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankId",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchId",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchId",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "TerminalsAndPOS",
-  "changelogDate": "20231004070943",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

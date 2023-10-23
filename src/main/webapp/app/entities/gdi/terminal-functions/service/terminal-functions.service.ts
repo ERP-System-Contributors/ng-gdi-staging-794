@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ITerminalFunctions, getTerminalFunctionsIdentifier } from '../terminal-functions.model';
+import { ITerminalFunctions, NewTerminalFunctions } from '../terminal-functions.model';
+
+export type PartialUpdateTerminalFunctions = Partial<ITerminalFunctions> & Pick<ITerminalFunctions, 'id'>;
 
 export type EntityResponseType = HttpResponse<ITerminalFunctions>;
 export type EntityArrayResponseType = HttpResponse<ITerminalFunctions[]>;
@@ -36,21 +20,21 @@ export class TerminalFunctionsService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(terminalFunctions: ITerminalFunctions): Observable<EntityResponseType> {
+  create(terminalFunctions: NewTerminalFunctions): Observable<EntityResponseType> {
     return this.http.post<ITerminalFunctions>(this.resourceUrl, terminalFunctions, { observe: 'response' });
   }
 
   update(terminalFunctions: ITerminalFunctions): Observable<EntityResponseType> {
     return this.http.put<ITerminalFunctions>(
-      `${this.resourceUrl}/${getTerminalFunctionsIdentifier(terminalFunctions) as number}`,
+      `${this.resourceUrl}/${this.getTerminalFunctionsIdentifier(terminalFunctions)}`,
       terminalFunctions,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(terminalFunctions: ITerminalFunctions): Observable<EntityResponseType> {
+  partialUpdate(terminalFunctions: PartialUpdateTerminalFunctions): Observable<EntityResponseType> {
     return this.http.patch<ITerminalFunctions>(
-      `${this.resourceUrl}/${getTerminalFunctionsIdentifier(terminalFunctions) as number}`,
+      `${this.resourceUrl}/${this.getTerminalFunctionsIdentifier(terminalFunctions)}`,
       terminalFunctions,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class TerminalFunctionsService {
     return this.http.get<ITerminalFunctions[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addTerminalFunctionsToCollectionIfMissing(
-    terminalFunctionsCollection: ITerminalFunctions[],
-    ...terminalFunctionsToCheck: (ITerminalFunctions | null | undefined)[]
-  ): ITerminalFunctions[] {
-    const terminalFunctions: ITerminalFunctions[] = terminalFunctionsToCheck.filter(isPresent);
+  getTerminalFunctionsIdentifier(terminalFunctions: Pick<ITerminalFunctions, 'id'>): number {
+    return terminalFunctions.id;
+  }
+
+  compareTerminalFunctions(o1: Pick<ITerminalFunctions, 'id'> | null, o2: Pick<ITerminalFunctions, 'id'> | null): boolean {
+    return o1 && o2 ? this.getTerminalFunctionsIdentifier(o1) === this.getTerminalFunctionsIdentifier(o2) : o1 === o2;
+  }
+
+  addTerminalFunctionsToCollectionIfMissing<Type extends Pick<ITerminalFunctions, 'id'>>(
+    terminalFunctionsCollection: Type[],
+    ...terminalFunctionsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const terminalFunctions: Type[] = terminalFunctionsToCheck.filter(isPresent);
     if (terminalFunctions.length > 0) {
       const terminalFunctionsCollectionIdentifiers = terminalFunctionsCollection.map(
-        terminalFunctionsItem => getTerminalFunctionsIdentifier(terminalFunctionsItem)!
+        terminalFunctionsItem => this.getTerminalFunctionsIdentifier(terminalFunctionsItem)!
       );
       const terminalFunctionsToAdd = terminalFunctions.filter(terminalFunctionsItem => {
-        const terminalFunctionsIdentifier = getTerminalFunctionsIdentifier(terminalFunctionsItem);
-        if (terminalFunctionsIdentifier == null || terminalFunctionsCollectionIdentifiers.includes(terminalFunctionsIdentifier)) {
+        const terminalFunctionsIdentifier = this.getTerminalFunctionsIdentifier(terminalFunctionsItem);
+        if (terminalFunctionsCollectionIdentifiers.includes(terminalFunctionsIdentifier)) {
           return false;
         }
         terminalFunctionsCollectionIdentifiers.push(terminalFunctionsIdentifier);

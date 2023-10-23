@@ -1,7 +1,7 @@
 {
   "changelogDate": "20230914090026",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "agriculturalEnterpriseActivityTypeCode",
@@ -25,5 +25,6 @@
   "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

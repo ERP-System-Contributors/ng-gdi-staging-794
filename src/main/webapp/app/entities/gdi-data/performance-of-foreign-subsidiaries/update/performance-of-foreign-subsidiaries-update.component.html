@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-performance-of-foreign-subsidiaries-heading" data-cy="PerformanceOfForeignSubsidiariesCreateUpdateHeading">
@@ -27,13 +8,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_subsidiaryName">Subsidiary Name</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_subsidiaryName">Subsidiary Name</label>
           <input
             type="text"
             class="form-control"
@@ -51,8 +32,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -64,11 +45,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -79,8 +58,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_subsidiaryId">Subsidiary Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_subsidiaryId">Subsidiary Id</label>
           <input
             type="text"
             class="form-control"
@@ -96,8 +75,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_grossLoansAmount">Gross Loans Amount</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_grossLoansAmount">Gross Loans Amount</label>
           <input
             type="number"
             class="form-control"
@@ -121,8 +100,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_grossNPALoanAmount">Gross NPA Loan Amount</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_grossNPALoanAmount">Gross NPA Loan Amount</label>
           <input
             type="number"
             class="form-control"
@@ -146,8 +125,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_grossAssetsAmount">Gross Assets Amount</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_grossAssetsAmount">Gross Assets Amount</label>
           <input
             type="number"
             class="form-control"
@@ -171,8 +150,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_grossDepositsAmount">Gross Deposits Amount</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_grossDepositsAmount">Gross Deposits Amount</label>
           <input
             type="number"
             class="form-control"
@@ -196,8 +175,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_profitBeforeTax">Profit Before Tax</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_profitBeforeTax">Profit Before Tax</label>
           <input
             type="number"
             class="form-control"
@@ -219,8 +198,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalCapitalAdequacyRatio">Total Capital Adequacy Ratio</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalCapitalAdequacyRatio">Total Capital Adequacy Ratio</label>
           <input
             type="number"
             class="form-control"
@@ -244,8 +223,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_liquidityRatio">Liquidity Ratio</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_liquidityRatio">Liquidity Ratio</label>
           <input
             type="number"
             class="form-control"
@@ -266,8 +245,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_generalProvisions">General Provisions</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_generalProvisions">General Provisions</label>
           <input
             type="number"
             class="form-control"
@@ -291,8 +270,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_specificProvisions">Specific Provisions</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_specificProvisions">Specific Provisions</label>
           <input
             type="number"
             class="form-control"
@@ -316,8 +295,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_interestInSuspenseAmount">Interest In Suspense Amount</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_interestInSuspenseAmount">Interest In Suspense Amount</label>
           <input
             type="number"
             class="form-control"
@@ -341,8 +320,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNumberOfStaff">Total Number Of Staff</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNumberOfStaff">Total Number Of Staff</label>
           <input
             type="number"
             class="form-control"
@@ -369,8 +348,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_numberOfBranches">Number Of Branches</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_numberOfBranches">Number Of Branches</label>
           <input
             type="number"
             class="form-control"
@@ -397,16 +376,18 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -415,24 +396,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_subsidiaryCountryCode">Subsidiary Country Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_subsidiaryCountryCode">Subsidiary Country Code</label>
           <select
             class="form-control"
             id="field_subsidiaryCountryCode"
             data-cy="subsidiaryCountryCode"
             name="subsidiaryCountryCode"
             formControlName="subsidiaryCountryCode"
+            [compareWith]="compareIsoCountryCode"
           >
             <option *ngIf="!editForm.get('subsidiaryCountryCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                isoCountryCodeOption.id === editForm.get('subsidiaryCountryCode')!.value?.id
-                  ? editForm.get('subsidiaryCountryCode')!.value
-                  : isoCountryCodeOption
-              "
-              *ngFor="let isoCountryCodeOption of isoCountryCodesSharedCollection; trackBy: trackIsoCountryCodeById"
-            >
+            <option [ngValue]="isoCountryCodeOption" *ngFor="let isoCountryCodeOption of isoCountryCodesSharedCollection">
               {{ isoCountryCodeOption.countryDescription }}
             </option>
           </select>

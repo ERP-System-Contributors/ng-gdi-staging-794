@@ -1,39 +1,21 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable, of, EMPTY } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { IPartyRelationType, PartyRelationType } from '../party-relation-type.model';
+import { IPartyRelationType } from '../party-relation-type.model';
 import { PartyRelationTypeService } from '../service/party-relation-type.service';
 
 @Injectable({ providedIn: 'root' })
-export class PartyRelationTypeRoutingResolveService implements Resolve<IPartyRelationType> {
+export class PartyRelationTypeRoutingResolveService implements Resolve<IPartyRelationType | null> {
   constructor(protected service: PartyRelationTypeService, protected router: Router) {}
 
-  resolve(route: ActivatedRouteSnapshot): Observable<IPartyRelationType> | Observable<never> {
+  resolve(route: ActivatedRouteSnapshot): Observable<IPartyRelationType | null | never> {
     const id = route.params['id'];
     if (id) {
       return this.service.find(id).pipe(
-        mergeMap((partyRelationType: HttpResponse<PartyRelationType>) => {
+        mergeMap((partyRelationType: HttpResponse<IPartyRelationType>) => {
           if (partyRelationType.body) {
             return of(partyRelationType.body);
           } else {
@@ -43,6 +25,6 @@ export class PartyRelationTypeRoutingResolveService implements Resolve<IPartyRel
         })
       );
     }
-    return of(new PartyRelationType());
+    return of(null);
   }
 }

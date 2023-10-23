@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IBouncedChequeCategories, BouncedChequeCategories } from '../bounced-cheque-categories.model';
+import { BouncedChequeCategoriesFormService, BouncedChequeCategoriesFormGroup } from './bounced-cheque-categories-form.service';
+import { IBouncedChequeCategories } from '../bounced-cheque-categories.model';
 import { BouncedChequeCategoriesService } from '../service/bounced-cheque-categories.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { BouncedChequeCategoriesService } from '../service/bounced-cheque-catego
 })
 export class BouncedChequeCategoriesUpdateComponent implements OnInit {
   isSaving = false;
+  bouncedChequeCategories: IBouncedChequeCategories | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    bouncedChequeCategoryTypeCode: [null, [Validators.required]],
-    bouncedChequeCategoryType: [null, [Validators.required]],
-  });
+  editForm: BouncedChequeCategoriesFormGroup = this.bouncedChequeCategoriesFormService.createBouncedChequeCategoriesFormGroup();
 
   constructor(
     protected bouncedChequeCategoriesService: BouncedChequeCategoriesService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected bouncedChequeCategoriesFormService: BouncedChequeCategoriesFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ bouncedChequeCategories }) => {
-      this.updateForm(bouncedChequeCategories);
+      this.bouncedChequeCategories = bouncedChequeCategories;
+      if (bouncedChequeCategories) {
+        this.updateForm(bouncedChequeCategories);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class BouncedChequeCategoriesUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const bouncedChequeCategories = this.createFromForm();
-    if (bouncedChequeCategories.id !== undefined) {
+    const bouncedChequeCategories = this.bouncedChequeCategoriesFormService.getBouncedChequeCategories(this.editForm);
+    if (bouncedChequeCategories.id !== null) {
       this.subscribeToSaveResponse(this.bouncedChequeCategoriesService.update(bouncedChequeCategories));
     } else {
       this.subscribeToSaveResponse(this.bouncedChequeCategoriesService.create(bouncedChequeCategories));
@@ -66,10 +48,10 @@ export class BouncedChequeCategoriesUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IBouncedChequeCategories>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class BouncedChequeCategoriesUpdateComponent implements OnInit {
   }
 
   protected updateForm(bouncedChequeCategories: IBouncedChequeCategories): void {
-    this.editForm.patchValue({
-      id: bouncedChequeCategories.id,
-      bouncedChequeCategoryTypeCode: bouncedChequeCategories.bouncedChequeCategoryTypeCode,
-      bouncedChequeCategoryType: bouncedChequeCategories.bouncedChequeCategoryType,
-    });
-  }
-
-  protected createFromForm(): IBouncedChequeCategories {
-    return {
-      ...new BouncedChequeCategories(),
-      id: this.editForm.get(['id'])!.value,
-      bouncedChequeCategoryTypeCode: this.editForm.get(['bouncedChequeCategoryTypeCode'])!.value,
-      bouncedChequeCategoryType: this.editForm.get(['bouncedChequeCategoryType'])!.value,
-    };
+    this.bouncedChequeCategories = bouncedChequeCategories;
+    this.bouncedChequeCategoriesFormService.resetForm(this.editForm, bouncedChequeCategories);
   }
 }

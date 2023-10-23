@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004103408",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -19,13 +21,12 @@
       "fieldValidateRulesMin": 0
     }
   ],
-  "relationships": [],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
+  "incrementalChangelog": false,
   "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
   "name": "CardFraudInformation",
-  "changelogDate": "20231004103408",
-  "incrementalChangelog": false
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

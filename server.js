@@ -1,5 +1,5 @@
 /*
- * Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
+ * Erp System - Mark V No 5 (Ehud Series) Client 1.5.2
  * Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,10 +23,10 @@ const path = require('path');
 
 const app = express();
 // Configure the port of the backend server e.g. on unix export ERP_SYSTEM_DEV_PORT=8982
-const SERVER_PORT=process.env.ERP_SYSTEM_DEV_PORT
+const SERVER_PORT = process.env.ERP_SYSTEM_DEV_PORT;
 const PORT = process.env.ERP_CLIENT_DEV_PORT;
-const HOST = "localhost";
-const API_SERVICE_URL = "http://localhost:" + SERVER_PORT;
+const HOST = 'localhost';
+const API_SERVICE_URL = 'http://localhost:' + SERVER_PORT;
 
 // Logging
 app.use(morgan('dev'));
@@ -35,13 +35,16 @@ app.use(morgan('dev'));
 app.use(express.static(__dirname + '/dist'));
 
 // Proxy endpoints
-app.use('/*', createProxyMiddleware({
+app.use(
+  '/*',
+  createProxyMiddleware({
     target: API_SERVICE_URL,
     changeOrigin: true,
   }),
-  function(req, res) {
+  function (req, res) {
     res.sendFile(path.join(__dirname + '/dist/index.html'));
-  });
+  }
+);
 
 // Start the Proxy
 app.listen(PORT, HOST, () => {

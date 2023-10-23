@@ -1,4 +1,7 @@
 {
+  "changelogDate": "20231003130755",
+  "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -57,36 +60,34 @@
       "fieldType": "LocalDate"
     }
   ],
-  "clientRootFolder": "gdi-data",
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "AccountAttribute",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionCode",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchCode",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "accountOwnershipType",
+      "otherEntityField": "accountOwnershipType",
       "otherEntityName": "accountOwnershipType",
+      "relationshipName": "accountOwnershipType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "accountOwnershipType"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "AccountAttribute",
-  "changelogDate": "20231003130755",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

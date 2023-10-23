@@ -1,30 +1,11 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
 <div>
   <h2 id="page-heading" data-cy="ParticularsOfOutletHeading">
     <span>Particulars Of Outlets</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
-        <span>Refresh List</span>
+        <span>Refresh list</span>
       </button>
 
       <button
@@ -43,47 +24,123 @@
 
   <jhi-alert></jhi-alert>
 
-  <div class="row">
+  <form name="searchForm" class="row row-cols-sm-auto align-items-center">
     <div class="col-sm-12">
-      <form name="searchForm" class="form-inline">
-        <div class="input-group w-100 mt-3">
-          <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
+      <div class="input-group w-100 mt-3">
+        <label class="visually-hidden" for="currentSearch">Search for Particulars Of Outlet</label>
+        <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
 
-          <button class="input-group-append btn btn-info" (click)="search(currentSearch)">
-            <fa-icon icon="search"></fa-icon>
-          </button>
+        <button class="btn btn-info" (click)="search(currentSearch)">
+          <fa-icon icon="search"></fa-icon>
+        </button>
 
-          <button class="input-group-append btn btn-danger" (click)="search('')" *ngIf="currentSearch">
-            <fa-icon icon="trash-alt"></fa-icon>
-          </button>
-        </div>
-      </form>
+        <button class="btn btn-danger" (click)="search('')" *ngIf="currentSearch">
+          <fa-icon icon="trash-alt"></fa-icon>
+        </button>
+      </div>
     </div>
-  </div>
+  </form>
+
+  <jhi-filter [filters]="filters"></jhi-filter>
 
   <div class="alert alert-warning" id="no-result" *ngIf="particularsOfOutlets?.length === 0">
-    <span>No particularsOfOutlets found</span>
+    <span>No Particulars Of Outlets found</span>
   </div>
 
-  <div class="table-responsive" id="entities" *ngIf="particularsOfOutlets && particularsOfOutlets.length > 0">
+  <div class="table-responsive table-entities" id="entities" *ngIf="particularsOfOutlets && particularsOfOutlets.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
-          <th scope="col" jhiSortBy="id"><span>ID</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="businessReportingDate"><span>Business Reporting Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="outletName"><span>Outlet Name</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="town"><span>Town</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="iso6709Latitute"><span>Iso 6709 Latitute</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="iso6709Longitude"><span>Iso 6709 Longitude</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="cbkApprovalDate"><span>Cbk Approval Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="outletOpeningDate"><span>Outlet Opening Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="outletClosureDate"><span>Outlet Closure Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="licenseFeePayable"><span>License Fee Payable</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="subCountyCode.subCountyName"><span>Sub County Code</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="bankCode.institutionName"><span>Bank Code</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="outletId.branchCode"><span>Outlet Id</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="typeOfOutlet.outletType"><span>Type Of Outlet</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="outletStatus.branchStatusType"><span>Outlet Status</span> <fa-icon icon="sort"></fa-icon></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id">
+            <div class="d-flex">
+              <span>ID</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="businessReportingDate">
+            <div class="d-flex">
+              <span>Business Reporting Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="outletName">
+            <div class="d-flex">
+              <span>Outlet Name</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="town">
+            <div class="d-flex">
+              <span>Town</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="iso6709Latitute">
+            <div class="d-flex">
+              <span>Iso 6709 Latitute</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="iso6709Longitude">
+            <div class="d-flex">
+              <span>Iso 6709 Longitude</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="cbkApprovalDate">
+            <div class="d-flex">
+              <span>Cbk Approval Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="outletOpeningDate">
+            <div class="d-flex">
+              <span>Outlet Opening Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="outletClosureDate">
+            <div class="d-flex">
+              <span>Outlet Closure Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="licenseFeePayable">
+            <div class="d-flex">
+              <span>License Fee Payable</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="subCountyCode.subCountyName">
+            <div class="d-flex">
+              <span>Sub County Code</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="bankCode.institutionName">
+            <div class="d-flex">
+              <span>Bank Code</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="outletId.branchCode">
+            <div class="d-flex">
+              <span>Outlet Id</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="typeOfOutlet.outletType">
+            <div class="d-flex">
+              <span>Type Of Outlet</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="outletStatus.branchStatusType">
+            <div class="d-flex">
+              <span>Outlet Status</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -103,40 +160,40 @@
           <td>{{ particularsOfOutlet.licenseFeePayable }}</td>
           <td>
             <div *ngIf="particularsOfOutlet.subCountyCode">
-              <a [routerLink]="['/county-sub-county-code', particularsOfOutlet.subCountyCode?.id, 'view']">{{
-                particularsOfOutlet.subCountyCode?.subCountyName
+              <a [routerLink]="['/county-sub-county-code', particularsOfOutlet.subCountyCode.id, 'view']">{{
+                particularsOfOutlet.subCountyCode.subCountyName
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="particularsOfOutlet.bankCode">
-              <a [routerLink]="['/institution-code', particularsOfOutlet.bankCode?.id, 'view']">{{
-                particularsOfOutlet.bankCode?.institutionName
+              <a [routerLink]="['/institution-code', particularsOfOutlet.bankCode.id, 'view']">{{
+                particularsOfOutlet.bankCode.institutionName
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="particularsOfOutlet.outletId">
-              <a [routerLink]="['/bank-branch-code', particularsOfOutlet.outletId?.id, 'view']">{{
-                particularsOfOutlet.outletId?.branchCode
+              <a [routerLink]="['/bank-branch-code', particularsOfOutlet.outletId.id, 'view']">{{
+                particularsOfOutlet.outletId.branchCode
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="particularsOfOutlet.typeOfOutlet">
-              <a [routerLink]="['/outlet-type', particularsOfOutlet.typeOfOutlet?.id, 'view']">{{
-                particularsOfOutlet.typeOfOutlet?.outletType
+              <a [routerLink]="['/outlet-type', particularsOfOutlet.typeOfOutlet.id, 'view']">{{
+                particularsOfOutlet.typeOfOutlet.outletType
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="particularsOfOutlet.outletStatus">
-              <a [routerLink]="['/outlet-status', particularsOfOutlet.outletStatus?.id, 'view']">{{
-                particularsOfOutlet.outletStatus?.branchStatusType
+              <a [routerLink]="['/outlet-status', particularsOfOutlet.outletStatus.id, 'view']">{{
+                particularsOfOutlet.outletStatus.branchStatusType
               }}</a>
             </div>
           </td>
-          <td class="text-right">
+          <td class="text-end">
             <div class="btn-group">
               <button
                 type="submit"
@@ -170,19 +227,19 @@
   </div>
 
   <div *ngIf="particularsOfOutlets && particularsOfOutlets.length > 0">
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <ngb-pagination
         [collectionSize]="totalItems"
-        [(page)]="ngbPaginationPage"
+        [page]="page"
         [pageSize]="itemsPerPage"
         [maxSize]="5"
         [rotate]="true"
         [boundaryLinks]="true"
-        (pageChange)="loadPage($event)"
+        (pageChange)="navigateToPage($event)"
       ></ngb-pagination>
     </div>
   </div>

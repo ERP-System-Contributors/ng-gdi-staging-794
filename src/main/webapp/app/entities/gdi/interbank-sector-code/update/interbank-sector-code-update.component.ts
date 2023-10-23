@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IInterbankSectorCode, InterbankSectorCode } from '../interbank-sector-code.model';
+import { InterbankSectorCodeFormService, InterbankSectorCodeFormGroup } from './interbank-sector-code-form.service';
+import { IInterbankSectorCode } from '../interbank-sector-code.model';
 import { InterbankSectorCodeService } from '../service/interbank-sector-code.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,24 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class InterbankSectorCodeUpdateComponent implements OnInit {
   isSaving = false;
+  interbankSectorCode: IInterbankSectorCode | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    interbankSectorCode: [null, [Validators.required]],
-    interbankSectorCodeDescription: [],
-  });
+  editForm: InterbankSectorCodeFormGroup = this.interbankSectorCodeFormService.createInterbankSectorCodeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected interbankSectorCodeService: InterbankSectorCodeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected interbankSectorCodeFormService: InterbankSectorCodeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ interbankSectorCode }) => {
-      this.updateForm(interbankSectorCode);
+      this.interbankSectorCode = interbankSectorCode;
+      if (interbankSectorCode) {
+        this.updateForm(interbankSectorCode);
+      }
     });
   }
 
@@ -67,7 +49,7 @@ export class InterbankSectorCodeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -77,8 +59,8 @@ export class InterbankSectorCodeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const interbankSectorCode = this.createFromForm();
-    if (interbankSectorCode.id !== undefined) {
+    const interbankSectorCode = this.interbankSectorCodeFormService.getInterbankSectorCode(this.editForm);
+    if (interbankSectorCode.id !== null) {
       this.subscribeToSaveResponse(this.interbankSectorCodeService.update(interbankSectorCode));
     } else {
       this.subscribeToSaveResponse(this.interbankSectorCodeService.create(interbankSectorCode));
@@ -86,10 +68,10 @@ export class InterbankSectorCodeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IInterbankSectorCode>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -105,19 +87,7 @@ export class InterbankSectorCodeUpdateComponent implements OnInit {
   }
 
   protected updateForm(interbankSectorCode: IInterbankSectorCode): void {
-    this.editForm.patchValue({
-      id: interbankSectorCode.id,
-      interbankSectorCode: interbankSectorCode.interbankSectorCode,
-      interbankSectorCodeDescription: interbankSectorCode.interbankSectorCodeDescription,
-    });
-  }
-
-  protected createFromForm(): IInterbankSectorCode {
-    return {
-      ...new InterbankSectorCode(),
-      id: this.editForm.get(['id'])!.value,
-      interbankSectorCode: this.editForm.get(['interbankSectorCode'])!.value,
-      interbankSectorCodeDescription: this.editForm.get(['interbankSectorCodeDescription'])!.value,
-    };
+    this.interbankSectorCode = interbankSectorCode;
+    this.interbankSectorCodeFormService.resetForm(this.editForm, interbankSectorCode);
   }
 }

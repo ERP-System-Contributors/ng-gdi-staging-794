@@ -1,22 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
 jest.mock('app/core/auth/account.service');
 jest.mock('app/login/login.service');
 
@@ -24,6 +5,7 @@ import { ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { Router, Navigation } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { AccountService } from 'app/core/auth/account.service';
@@ -38,31 +20,30 @@ describe('LoginComponent', () => {
   let mockAccountService: AccountService;
   let mockLoginService: LoginService;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        declarations: [LoginComponent],
-        providers: [
-          FormBuilder,
-          AccountService,
-          Router,
-          {
-            provide: LoginService,
-            useValue: {
-              login: jest.fn(() => of({})),
-            },
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule.withRoutes([])],
+      declarations: [LoginComponent],
+      providers: [
+        FormBuilder,
+        AccountService,
+        {
+          provide: LoginService,
+          useValue: {
+            login: jest.fn(() => of({})),
           },
-        ],
-      })
-        .overrideTemplate(LoginComponent, '')
-        .compileComponents();
+        },
+      ],
     })
-  );
+      .overrideTemplate(LoginComponent, '')
+      .compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(LoginComponent);
     comp = fixture.componentInstance;
     mockRouter = TestBed.inject(Router);
+    jest.spyOn(mockRouter, 'navigate').mockImplementation(() => Promise.resolve(true));
     mockLoginService = TestBed.inject(LoginService);
     mockAccountService = TestBed.inject(AccountService);
   });

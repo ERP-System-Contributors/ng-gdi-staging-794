@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20230816131238",
   "clientRootFolder": "system",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "monthNumber",
@@ -22,43 +24,42 @@
       "fieldValidateRules": ["required", "unique"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "FiscalMonth",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "fiscalYear",
+      "otherEntityField": "fiscalYearCode",
       "otherEntityName": "fiscalYear",
+      "relationshipName": "fiscalYear",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "fiscalYearCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "placeholder",
-      "otherEntityName": "placeholder",
-      "relationshipType": "many-to-many",
       "otherEntityField": "description",
+      "otherEntityName": "placeholder",
+      "otherEntityRelationshipName": "fiscalMonth",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalMonth"
+      "relationshipName": "placeholder",
+      "relationshipType": "many-to-many"
     },
     {
-      "relationshipName": "universallyUniqueMapping",
-      "otherEntityName": "universallyUniqueMapping",
-      "relationshipType": "many-to-many",
       "otherEntityField": "universalKey",
+      "otherEntityName": "universallyUniqueMapping",
+      "otherEntityRelationshipName": "fiscalMonth",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalMonth"
+      "relationshipName": "universallyUniqueMapping",
+      "relationshipType": "many-to-many"
     },
     {
-      "relationshipName": "fiscalQuarter",
+      "otherEntityField": "fiscalQuarterCode",
       "otherEntityName": "fiscalQuarter",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "fiscalQuarterCode"
+      "relationshipName": "fiscalQuarter",
+      "relationshipType": "many-to-one"
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "FiscalMonth",
-  "changelogDate": "20230816131238",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

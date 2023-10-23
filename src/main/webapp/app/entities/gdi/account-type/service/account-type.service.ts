@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IAccountType, getAccountTypeIdentifier } from '../account-type.model';
+import { IAccountType, NewAccountType } from '../account-type.model';
+
+export type PartialUpdateAccountType = Partial<IAccountType> & Pick<IAccountType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAccountType>;
 export type EntityArrayResponseType = HttpResponse<IAccountType[]>;
@@ -36,18 +20,18 @@ export class AccountTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(accountType: IAccountType): Observable<EntityResponseType> {
+  create(accountType: NewAccountType): Observable<EntityResponseType> {
     return this.http.post<IAccountType>(this.resourceUrl, accountType, { observe: 'response' });
   }
 
   update(accountType: IAccountType): Observable<EntityResponseType> {
-    return this.http.put<IAccountType>(`${this.resourceUrl}/${getAccountTypeIdentifier(accountType) as number}`, accountType, {
+    return this.http.put<IAccountType>(`${this.resourceUrl}/${this.getAccountTypeIdentifier(accountType)}`, accountType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(accountType: IAccountType): Observable<EntityResponseType> {
-    return this.http.patch<IAccountType>(`${this.resourceUrl}/${getAccountTypeIdentifier(accountType) as number}`, accountType, {
+  partialUpdate(accountType: PartialUpdateAccountType): Observable<EntityResponseType> {
+    return this.http.patch<IAccountType>(`${this.resourceUrl}/${this.getAccountTypeIdentifier(accountType)}`, accountType, {
       observe: 'response',
     });
   }
@@ -70,16 +54,26 @@ export class AccountTypeService {
     return this.http.get<IAccountType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAccountTypeToCollectionIfMissing(
-    accountTypeCollection: IAccountType[],
-    ...accountTypesToCheck: (IAccountType | null | undefined)[]
-  ): IAccountType[] {
-    const accountTypes: IAccountType[] = accountTypesToCheck.filter(isPresent);
+  getAccountTypeIdentifier(accountType: Pick<IAccountType, 'id'>): number {
+    return accountType.id;
+  }
+
+  compareAccountType(o1: Pick<IAccountType, 'id'> | null, o2: Pick<IAccountType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getAccountTypeIdentifier(o1) === this.getAccountTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addAccountTypeToCollectionIfMissing<Type extends Pick<IAccountType, 'id'>>(
+    accountTypeCollection: Type[],
+    ...accountTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const accountTypes: Type[] = accountTypesToCheck.filter(isPresent);
     if (accountTypes.length > 0) {
-      const accountTypeCollectionIdentifiers = accountTypeCollection.map(accountTypeItem => getAccountTypeIdentifier(accountTypeItem)!);
+      const accountTypeCollectionIdentifiers = accountTypeCollection.map(
+        accountTypeItem => this.getAccountTypeIdentifier(accountTypeItem)!
+      );
       const accountTypesToAdd = accountTypes.filter(accountTypeItem => {
-        const accountTypeIdentifier = getAccountTypeIdentifier(accountTypeItem);
-        if (accountTypeIdentifier == null || accountTypeCollectionIdentifiers.includes(accountTypeIdentifier)) {
+        const accountTypeIdentifier = this.getAccountTypeIdentifier(accountTypeItem);
+        if (accountTypeCollectionIdentifiers.includes(accountTypeIdentifier)) {
           return false;
         }
         accountTypeCollectionIdentifiers.push(accountTypeIdentifier);

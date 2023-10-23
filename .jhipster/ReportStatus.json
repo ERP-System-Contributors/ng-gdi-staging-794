@@ -35,5 +35,6 @@
       "relationshipType": "many-to-one"
     }
   ],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

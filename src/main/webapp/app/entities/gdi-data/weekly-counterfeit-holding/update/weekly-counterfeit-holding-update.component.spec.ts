@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { WeeklyCounterfeitHoldingFormService } from './weekly-counterfeit-holding-form.service';
 import { WeeklyCounterfeitHoldingService } from '../service/weekly-counterfeit-holding.service';
-import { IWeeklyCounterfeitHolding, WeeklyCounterfeitHolding } from '../weekly-counterfeit-holding.model';
+import { IWeeklyCounterfeitHolding } from '../weekly-counterfeit-holding.model';
 
 import { WeeklyCounterfeitHoldingUpdateComponent } from './weekly-counterfeit-holding-update.component';
 
@@ -34,19 +16,29 @@ describe('WeeklyCounterfeitHolding Management Update Component', () => {
   let comp: WeeklyCounterfeitHoldingUpdateComponent;
   let fixture: ComponentFixture<WeeklyCounterfeitHoldingUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let weeklyCounterfeitHoldingFormService: WeeklyCounterfeitHoldingFormService;
   let weeklyCounterfeitHoldingService: WeeklyCounterfeitHoldingService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [WeeklyCounterfeitHoldingUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(WeeklyCounterfeitHoldingUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(WeeklyCounterfeitHoldingUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    weeklyCounterfeitHoldingFormService = TestBed.inject(WeeklyCounterfeitHoldingFormService);
     weeklyCounterfeitHoldingService = TestBed.inject(WeeklyCounterfeitHoldingService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('WeeklyCounterfeitHolding Management Update Component', () => {
       activatedRoute.data = of({ weeklyCounterfeitHolding });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(weeklyCounterfeitHolding));
+      expect(comp.weeklyCounterfeitHolding).toEqual(weeklyCounterfeitHolding);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCounterfeitHolding>>();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCounterfeitHolding>>();
       const weeklyCounterfeitHolding = { id: 123 };
+      jest.spyOn(weeklyCounterfeitHoldingFormService, 'getWeeklyCounterfeitHolding').mockReturnValue(weeklyCounterfeitHolding);
       jest.spyOn(weeklyCounterfeitHoldingService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ weeklyCounterfeitHolding });
@@ -80,18 +73,20 @@ describe('WeeklyCounterfeitHolding Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(weeklyCounterfeitHoldingFormService.getWeeklyCounterfeitHolding).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(weeklyCounterfeitHoldingService.update).toHaveBeenCalledWith(weeklyCounterfeitHolding);
+      expect(weeklyCounterfeitHoldingService.update).toHaveBeenCalledWith(expect.objectContaining(weeklyCounterfeitHolding));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCounterfeitHolding>>();
-      const weeklyCounterfeitHolding = new WeeklyCounterfeitHolding();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCounterfeitHolding>>();
+      const weeklyCounterfeitHolding = { id: 123 };
+      jest.spyOn(weeklyCounterfeitHoldingFormService, 'getWeeklyCounterfeitHolding').mockReturnValue({ id: null });
       jest.spyOn(weeklyCounterfeitHoldingService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ weeklyCounterfeitHolding });
+      activatedRoute.data = of({ weeklyCounterfeitHolding: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('WeeklyCounterfeitHolding Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(weeklyCounterfeitHoldingService.create).toHaveBeenCalledWith(weeklyCounterfeitHolding);
+      expect(weeklyCounterfeitHoldingFormService.getWeeklyCounterfeitHolding).toHaveBeenCalled();
+      expect(weeklyCounterfeitHoldingService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCounterfeitHolding>>();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCounterfeitHolding>>();
       const weeklyCounterfeitHolding = { id: 123 };
       jest.spyOn(weeklyCounterfeitHoldingService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('WeeklyCounterfeitHolding Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(weeklyCounterfeitHoldingService.update).toHaveBeenCalledWith(weeklyCounterfeitHolding);
+      expect(weeklyCounterfeitHoldingService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

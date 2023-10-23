@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IParticularsOfOutlet, ParticularsOfOutlet } from '../particulars-of-outlet.model';
+import { ParticularsOfOutletFormService, ParticularsOfOutletFormGroup } from './particulars-of-outlet-form.service';
+import { IParticularsOfOutlet } from '../particulars-of-outlet.model';
 import { ParticularsOfOutletService } from '../service/particulars-of-outlet.service';
 import { ICountySubCountyCode } from 'app/entities/gdi-data/county-sub-county-code/county-sub-county-code.model';
 import { CountySubCountyCodeService } from 'app/entities/gdi-data/county-sub-county-code/service/county-sub-county-code.service';
@@ -42,6 +24,7 @@ import { OutletStatusService } from 'app/entities/gdi/outlet-status/service/outl
 })
 export class ParticularsOfOutletUpdateComponent implements OnInit {
   isSaving = false;
+  particularsOfOutlet: IParticularsOfOutlet | null = null;
 
   countySubCountyCodesSharedCollection: ICountySubCountyCode[] = [];
   institutionCodesSharedCollection: IInstitutionCode[] = [];
@@ -49,38 +32,39 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
   outletTypesSharedCollection: IOutletType[] = [];
   outletStatusesSharedCollection: IOutletStatus[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    businessReportingDate: [null, [Validators.required]],
-    outletName: [null, [Validators.required]],
-    town: [null, [Validators.required]],
-    iso6709Latitute: [null, [Validators.required]],
-    iso6709Longitude: [null, [Validators.required]],
-    cbkApprovalDate: [null, [Validators.required]],
-    outletOpeningDate: [null, [Validators.required]],
-    outletClosureDate: [],
-    licenseFeePayable: [null, [Validators.required]],
-    subCountyCode: [null, Validators.required],
-    bankCode: [null, Validators.required],
-    outletId: [null, Validators.required],
-    typeOfOutlet: [null, Validators.required],
-    outletStatus: [null, Validators.required],
-  });
+  editForm: ParticularsOfOutletFormGroup = this.particularsOfOutletFormService.createParticularsOfOutletFormGroup();
 
   constructor(
     protected particularsOfOutletService: ParticularsOfOutletService,
+    protected particularsOfOutletFormService: ParticularsOfOutletFormService,
     protected countySubCountyCodeService: CountySubCountyCodeService,
     protected institutionCodeService: InstitutionCodeService,
     protected bankBranchCodeService: BankBranchCodeService,
     protected outletTypeService: OutletTypeService,
     protected outletStatusService: OutletStatusService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareCountySubCountyCode = (o1: ICountySubCountyCode | null, o2: ICountySubCountyCode | null): boolean =>
+    this.countySubCountyCodeService.compareCountySubCountyCode(o1, o2);
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareBankBranchCode = (o1: IBankBranchCode | null, o2: IBankBranchCode | null): boolean =>
+    this.bankBranchCodeService.compareBankBranchCode(o1, o2);
+
+  compareOutletType = (o1: IOutletType | null, o2: IOutletType | null): boolean => this.outletTypeService.compareOutletType(o1, o2);
+
+  compareOutletStatus = (o1: IOutletStatus | null, o2: IOutletStatus | null): boolean =>
+    this.outletStatusService.compareOutletStatus(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ particularsOfOutlet }) => {
-      this.updateForm(particularsOfOutlet);
+      this.particularsOfOutlet = particularsOfOutlet;
+      if (particularsOfOutlet) {
+        this.updateForm(particularsOfOutlet);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -92,39 +76,19 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const particularsOfOutlet = this.createFromForm();
-    if (particularsOfOutlet.id !== undefined) {
+    const particularsOfOutlet = this.particularsOfOutletFormService.getParticularsOfOutlet(this.editForm);
+    if (particularsOfOutlet.id !== null) {
       this.subscribeToSaveResponse(this.particularsOfOutletService.update(particularsOfOutlet));
     } else {
       this.subscribeToSaveResponse(this.particularsOfOutletService.create(particularsOfOutlet));
     }
   }
 
-  trackCountySubCountyCodeById(index: number, item: ICountySubCountyCode): number {
-    return item.id!;
-  }
-
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackBankBranchCodeById(index: number, item: IBankBranchCode): number {
-    return item.id!;
-  }
-
-  trackOutletTypeById(index: number, item: IOutletType): number {
-    return item.id!;
-  }
-
-  trackOutletStatusById(index: number, item: IOutletStatus): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IParticularsOfOutlet>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -140,41 +104,27 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
   }
 
   protected updateForm(particularsOfOutlet: IParticularsOfOutlet): void {
-    this.editForm.patchValue({
-      id: particularsOfOutlet.id,
-      businessReportingDate: particularsOfOutlet.businessReportingDate,
-      outletName: particularsOfOutlet.outletName,
-      town: particularsOfOutlet.town,
-      iso6709Latitute: particularsOfOutlet.iso6709Latitute,
-      iso6709Longitude: particularsOfOutlet.iso6709Longitude,
-      cbkApprovalDate: particularsOfOutlet.cbkApprovalDate,
-      outletOpeningDate: particularsOfOutlet.outletOpeningDate,
-      outletClosureDate: particularsOfOutlet.outletClosureDate,
-      licenseFeePayable: particularsOfOutlet.licenseFeePayable,
-      subCountyCode: particularsOfOutlet.subCountyCode,
-      bankCode: particularsOfOutlet.bankCode,
-      outletId: particularsOfOutlet.outletId,
-      typeOfOutlet: particularsOfOutlet.typeOfOutlet,
-      outletStatus: particularsOfOutlet.outletStatus,
-    });
+    this.particularsOfOutlet = particularsOfOutlet;
+    this.particularsOfOutletFormService.resetForm(this.editForm, particularsOfOutlet);
 
-    this.countySubCountyCodesSharedCollection = this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
-      this.countySubCountyCodesSharedCollection,
-      particularsOfOutlet.subCountyCode
-    );
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.countySubCountyCodesSharedCollection =
+      this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
+        this.countySubCountyCodesSharedCollection,
+        particularsOfOutlet.subCountyCode
+      );
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       particularsOfOutlet.bankCode
     );
-    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(
+    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
       this.bankBranchCodesSharedCollection,
       particularsOfOutlet.outletId
     );
-    this.outletTypesSharedCollection = this.outletTypeService.addOutletTypeToCollectionIfMissing(
+    this.outletTypesSharedCollection = this.outletTypeService.addOutletTypeToCollectionIfMissing<IOutletType>(
       this.outletTypesSharedCollection,
       particularsOfOutlet.typeOfOutlet
     );
-    this.outletStatusesSharedCollection = this.outletStatusService.addOutletStatusToCollectionIfMissing(
+    this.outletStatusesSharedCollection = this.outletStatusService.addOutletStatusToCollectionIfMissing<IOutletStatus>(
       this.outletStatusesSharedCollection,
       particularsOfOutlet.outletStatus
     );
@@ -186,9 +136,9 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICountySubCountyCode[]>) => res.body ?? []))
       .pipe(
         map((countySubCountyCodes: ICountySubCountyCode[]) =>
-          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
+          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
             countySubCountyCodes,
-            this.editForm.get('subCountyCode')!.value
+            this.particularsOfOutlet?.subCountyCode
           )
         )
       )
@@ -199,7 +149,10 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.particularsOfOutlet?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -209,7 +162,10 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankBranchCode[]>) => res.body ?? []))
       .pipe(
         map((bankBranchCodes: IBankBranchCode[]) =>
-          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(bankBranchCodes, this.editForm.get('outletId')!.value)
+          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
+            bankBranchCodes,
+            this.particularsOfOutlet?.outletId
+          )
         )
       )
       .subscribe((bankBranchCodes: IBankBranchCode[]) => (this.bankBranchCodesSharedCollection = bankBranchCodes));
@@ -219,7 +175,7 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IOutletType[]>) => res.body ?? []))
       .pipe(
         map((outletTypes: IOutletType[]) =>
-          this.outletTypeService.addOutletTypeToCollectionIfMissing(outletTypes, this.editForm.get('typeOfOutlet')!.value)
+          this.outletTypeService.addOutletTypeToCollectionIfMissing<IOutletType>(outletTypes, this.particularsOfOutlet?.typeOfOutlet)
         )
       )
       .subscribe((outletTypes: IOutletType[]) => (this.outletTypesSharedCollection = outletTypes));
@@ -229,30 +185,12 @@ export class ParticularsOfOutletUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IOutletStatus[]>) => res.body ?? []))
       .pipe(
         map((outletStatuses: IOutletStatus[]) =>
-          this.outletStatusService.addOutletStatusToCollectionIfMissing(outletStatuses, this.editForm.get('outletStatus')!.value)
+          this.outletStatusService.addOutletStatusToCollectionIfMissing<IOutletStatus>(
+            outletStatuses,
+            this.particularsOfOutlet?.outletStatus
+          )
         )
       )
       .subscribe((outletStatuses: IOutletStatus[]) => (this.outletStatusesSharedCollection = outletStatuses));
-  }
-
-  protected createFromForm(): IParticularsOfOutlet {
-    return {
-      ...new ParticularsOfOutlet(),
-      id: this.editForm.get(['id'])!.value,
-      businessReportingDate: this.editForm.get(['businessReportingDate'])!.value,
-      outletName: this.editForm.get(['outletName'])!.value,
-      town: this.editForm.get(['town'])!.value,
-      iso6709Latitute: this.editForm.get(['iso6709Latitute'])!.value,
-      iso6709Longitude: this.editForm.get(['iso6709Longitude'])!.value,
-      cbkApprovalDate: this.editForm.get(['cbkApprovalDate'])!.value,
-      outletOpeningDate: this.editForm.get(['outletOpeningDate'])!.value,
-      outletClosureDate: this.editForm.get(['outletClosureDate'])!.value,
-      licenseFeePayable: this.editForm.get(['licenseFeePayable'])!.value,
-      subCountyCode: this.editForm.get(['subCountyCode'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      outletId: this.editForm.get(['outletId'])!.value,
-      typeOfOutlet: this.editForm.get(['typeOfOutlet'])!.value,
-      outletStatus: this.editForm.get(['outletStatus'])!.value,
-    };
   }
 }

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ITerminalTypes, getTerminalTypesIdentifier } from '../terminal-types.model';
+import { ITerminalTypes, NewTerminalTypes } from '../terminal-types.model';
+
+export type PartialUpdateTerminalTypes = Partial<ITerminalTypes> & Pick<ITerminalTypes, 'id'>;
 
 export type EntityResponseType = HttpResponse<ITerminalTypes>;
 export type EntityArrayResponseType = HttpResponse<ITerminalTypes[]>;
@@ -36,18 +20,18 @@ export class TerminalTypesService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(terminalTypes: ITerminalTypes): Observable<EntityResponseType> {
+  create(terminalTypes: NewTerminalTypes): Observable<EntityResponseType> {
     return this.http.post<ITerminalTypes>(this.resourceUrl, terminalTypes, { observe: 'response' });
   }
 
   update(terminalTypes: ITerminalTypes): Observable<EntityResponseType> {
-    return this.http.put<ITerminalTypes>(`${this.resourceUrl}/${getTerminalTypesIdentifier(terminalTypes) as number}`, terminalTypes, {
+    return this.http.put<ITerminalTypes>(`${this.resourceUrl}/${this.getTerminalTypesIdentifier(terminalTypes)}`, terminalTypes, {
       observe: 'response',
     });
   }
 
-  partialUpdate(terminalTypes: ITerminalTypes): Observable<EntityResponseType> {
-    return this.http.patch<ITerminalTypes>(`${this.resourceUrl}/${getTerminalTypesIdentifier(terminalTypes) as number}`, terminalTypes, {
+  partialUpdate(terminalTypes: PartialUpdateTerminalTypes): Observable<EntityResponseType> {
+    return this.http.patch<ITerminalTypes>(`${this.resourceUrl}/${this.getTerminalTypesIdentifier(terminalTypes)}`, terminalTypes, {
       observe: 'response',
     });
   }
@@ -70,18 +54,26 @@ export class TerminalTypesService {
     return this.http.get<ITerminalTypes[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addTerminalTypesToCollectionIfMissing(
-    terminalTypesCollection: ITerminalTypes[],
-    ...terminalTypesToCheck: (ITerminalTypes | null | undefined)[]
-  ): ITerminalTypes[] {
-    const terminalTypes: ITerminalTypes[] = terminalTypesToCheck.filter(isPresent);
+  getTerminalTypesIdentifier(terminalTypes: Pick<ITerminalTypes, 'id'>): number {
+    return terminalTypes.id;
+  }
+
+  compareTerminalTypes(o1: Pick<ITerminalTypes, 'id'> | null, o2: Pick<ITerminalTypes, 'id'> | null): boolean {
+    return o1 && o2 ? this.getTerminalTypesIdentifier(o1) === this.getTerminalTypesIdentifier(o2) : o1 === o2;
+  }
+
+  addTerminalTypesToCollectionIfMissing<Type extends Pick<ITerminalTypes, 'id'>>(
+    terminalTypesCollection: Type[],
+    ...terminalTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const terminalTypes: Type[] = terminalTypesToCheck.filter(isPresent);
     if (terminalTypes.length > 0) {
       const terminalTypesCollectionIdentifiers = terminalTypesCollection.map(
-        terminalTypesItem => getTerminalTypesIdentifier(terminalTypesItem)!
+        terminalTypesItem => this.getTerminalTypesIdentifier(terminalTypesItem)!
       );
       const terminalTypesToAdd = terminalTypes.filter(terminalTypesItem => {
-        const terminalTypesIdentifier = getTerminalTypesIdentifier(terminalTypesItem);
-        if (terminalTypesIdentifier == null || terminalTypesCollectionIdentifiers.includes(terminalTypesIdentifier)) {
+        const terminalTypesIdentifier = this.getTerminalTypesIdentifier(terminalTypesItem);
+        if (terminalTypesCollectionIdentifiers.includes(terminalTypesIdentifier)) {
           return false;
         }
         terminalTypesCollectionIdentifiers.push(terminalTypesIdentifier);

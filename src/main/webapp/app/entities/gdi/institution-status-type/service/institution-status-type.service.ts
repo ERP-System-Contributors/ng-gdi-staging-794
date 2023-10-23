@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IInstitutionStatusType, getInstitutionStatusTypeIdentifier } from '../institution-status-type.model';
+import { IInstitutionStatusType, NewInstitutionStatusType } from '../institution-status-type.model';
+
+export type PartialUpdateInstitutionStatusType = Partial<IInstitutionStatusType> & Pick<IInstitutionStatusType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IInstitutionStatusType>;
 export type EntityArrayResponseType = HttpResponse<IInstitutionStatusType[]>;
@@ -36,21 +20,21 @@ export class InstitutionStatusTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(institutionStatusType: IInstitutionStatusType): Observable<EntityResponseType> {
+  create(institutionStatusType: NewInstitutionStatusType): Observable<EntityResponseType> {
     return this.http.post<IInstitutionStatusType>(this.resourceUrl, institutionStatusType, { observe: 'response' });
   }
 
   update(institutionStatusType: IInstitutionStatusType): Observable<EntityResponseType> {
     return this.http.put<IInstitutionStatusType>(
-      `${this.resourceUrl}/${getInstitutionStatusTypeIdentifier(institutionStatusType) as number}`,
+      `${this.resourceUrl}/${this.getInstitutionStatusTypeIdentifier(institutionStatusType)}`,
       institutionStatusType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(institutionStatusType: IInstitutionStatusType): Observable<EntityResponseType> {
+  partialUpdate(institutionStatusType: PartialUpdateInstitutionStatusType): Observable<EntityResponseType> {
     return this.http.patch<IInstitutionStatusType>(
-      `${this.resourceUrl}/${getInstitutionStatusTypeIdentifier(institutionStatusType) as number}`,
+      `${this.resourceUrl}/${this.getInstitutionStatusTypeIdentifier(institutionStatusType)}`,
       institutionStatusType,
       { observe: 'response' }
     );
@@ -74,21 +58,26 @@ export class InstitutionStatusTypeService {
     return this.http.get<IInstitutionStatusType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addInstitutionStatusTypeToCollectionIfMissing(
-    institutionStatusTypeCollection: IInstitutionStatusType[],
-    ...institutionStatusTypesToCheck: (IInstitutionStatusType | null | undefined)[]
-  ): IInstitutionStatusType[] {
-    const institutionStatusTypes: IInstitutionStatusType[] = institutionStatusTypesToCheck.filter(isPresent);
+  getInstitutionStatusTypeIdentifier(institutionStatusType: Pick<IInstitutionStatusType, 'id'>): number {
+    return institutionStatusType.id;
+  }
+
+  compareInstitutionStatusType(o1: Pick<IInstitutionStatusType, 'id'> | null, o2: Pick<IInstitutionStatusType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getInstitutionStatusTypeIdentifier(o1) === this.getInstitutionStatusTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addInstitutionStatusTypeToCollectionIfMissing<Type extends Pick<IInstitutionStatusType, 'id'>>(
+    institutionStatusTypeCollection: Type[],
+    ...institutionStatusTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const institutionStatusTypes: Type[] = institutionStatusTypesToCheck.filter(isPresent);
     if (institutionStatusTypes.length > 0) {
       const institutionStatusTypeCollectionIdentifiers = institutionStatusTypeCollection.map(
-        institutionStatusTypeItem => getInstitutionStatusTypeIdentifier(institutionStatusTypeItem)!
+        institutionStatusTypeItem => this.getInstitutionStatusTypeIdentifier(institutionStatusTypeItem)!
       );
       const institutionStatusTypesToAdd = institutionStatusTypes.filter(institutionStatusTypeItem => {
-        const institutionStatusTypeIdentifier = getInstitutionStatusTypeIdentifier(institutionStatusTypeItem);
-        if (
-          institutionStatusTypeIdentifier == null ||
-          institutionStatusTypeCollectionIdentifiers.includes(institutionStatusTypeIdentifier)
-        ) {
+        const institutionStatusTypeIdentifier = this.getInstitutionStatusTypeIdentifier(institutionStatusTypeItem);
+        if (institutionStatusTypeCollectionIdentifiers.includes(institutionStatusTypeIdentifier)) {
           return false;
         }
         institutionStatusTypeCollectionIdentifiers.push(institutionStatusTypeIdentifier);

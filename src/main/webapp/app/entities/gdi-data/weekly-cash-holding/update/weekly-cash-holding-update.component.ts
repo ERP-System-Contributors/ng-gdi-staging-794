@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IWeeklyCashHolding, WeeklyCashHolding } from '../weekly-cash-holding.model';
+import { WeeklyCashHoldingFormService, WeeklyCashHoldingFormGroup } from './weekly-cash-holding-form.service';
+import { IWeeklyCashHolding } from '../weekly-cash-holding.model';
 import { WeeklyCashHoldingService } from '../service/weekly-cash-holding.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -40,36 +22,43 @@ import { KenyanCurrencyDenominationService } from 'app/entities/gdi/kenyan-curre
 })
 export class WeeklyCashHoldingUpdateComponent implements OnInit {
   isSaving = false;
+  weeklyCashHolding: IWeeklyCashHolding | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   bankBranchCodesSharedCollection: IBankBranchCode[] = [];
   countySubCountyCodesSharedCollection: ICountySubCountyCode[] = [];
   kenyanCurrencyDenominationsSharedCollection: IKenyanCurrencyDenomination[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    fitUnits: [null, [Validators.required]],
-    unfitUnits: [null, [Validators.required]],
-    bankCode: [null, Validators.required],
-    branchId: [null, Validators.required],
-    subCountyCode: [null, Validators.required],
-    denomination: [null, Validators.required],
-  });
+  editForm: WeeklyCashHoldingFormGroup = this.weeklyCashHoldingFormService.createWeeklyCashHoldingFormGroup();
 
   constructor(
     protected weeklyCashHoldingService: WeeklyCashHoldingService,
+    protected weeklyCashHoldingFormService: WeeklyCashHoldingFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected bankBranchCodeService: BankBranchCodeService,
     protected countySubCountyCodeService: CountySubCountyCodeService,
     protected kenyanCurrencyDenominationService: KenyanCurrencyDenominationService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareBankBranchCode = (o1: IBankBranchCode | null, o2: IBankBranchCode | null): boolean =>
+    this.bankBranchCodeService.compareBankBranchCode(o1, o2);
+
+  compareCountySubCountyCode = (o1: ICountySubCountyCode | null, o2: ICountySubCountyCode | null): boolean =>
+    this.countySubCountyCodeService.compareCountySubCountyCode(o1, o2);
+
+  compareKenyanCurrencyDenomination = (o1: IKenyanCurrencyDenomination | null, o2: IKenyanCurrencyDenomination | null): boolean =>
+    this.kenyanCurrencyDenominationService.compareKenyanCurrencyDenomination(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ weeklyCashHolding }) => {
-      this.updateForm(weeklyCashHolding);
+      this.weeklyCashHolding = weeklyCashHolding;
+      if (weeklyCashHolding) {
+        this.updateForm(weeklyCashHolding);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -81,35 +70,19 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const weeklyCashHolding = this.createFromForm();
-    if (weeklyCashHolding.id !== undefined) {
+    const weeklyCashHolding = this.weeklyCashHoldingFormService.getWeeklyCashHolding(this.editForm);
+    if (weeklyCashHolding.id !== null) {
       this.subscribeToSaveResponse(this.weeklyCashHoldingService.update(weeklyCashHolding));
     } else {
       this.subscribeToSaveResponse(this.weeklyCashHoldingService.create(weeklyCashHolding));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackBankBranchCodeById(index: number, item: IBankBranchCode): number {
-    return item.id!;
-  }
-
-  trackCountySubCountyCodeById(index: number, item: ICountySubCountyCode): number {
-    return item.id!;
-  }
-
-  trackKenyanCurrencyDenominationById(index: number, item: IKenyanCurrencyDenomination): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IWeeklyCashHolding>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -125,31 +98,24 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
   }
 
   protected updateForm(weeklyCashHolding: IWeeklyCashHolding): void {
-    this.editForm.patchValue({
-      id: weeklyCashHolding.id,
-      reportingDate: weeklyCashHolding.reportingDate,
-      fitUnits: weeklyCashHolding.fitUnits,
-      unfitUnits: weeklyCashHolding.unfitUnits,
-      bankCode: weeklyCashHolding.bankCode,
-      branchId: weeklyCashHolding.branchId,
-      subCountyCode: weeklyCashHolding.subCountyCode,
-      denomination: weeklyCashHolding.denomination,
-    });
+    this.weeklyCashHolding = weeklyCashHolding;
+    this.weeklyCashHoldingFormService.resetForm(this.editForm, weeklyCashHolding);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       weeklyCashHolding.bankCode
     );
-    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(
+    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
       this.bankBranchCodesSharedCollection,
       weeklyCashHolding.branchId
     );
-    this.countySubCountyCodesSharedCollection = this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
-      this.countySubCountyCodesSharedCollection,
-      weeklyCashHolding.subCountyCode
-    );
+    this.countySubCountyCodesSharedCollection =
+      this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
+        this.countySubCountyCodesSharedCollection,
+        weeklyCashHolding.subCountyCode
+      );
     this.kenyanCurrencyDenominationsSharedCollection =
-      this.kenyanCurrencyDenominationService.addKenyanCurrencyDenominationToCollectionIfMissing(
+      this.kenyanCurrencyDenominationService.addKenyanCurrencyDenominationToCollectionIfMissing<IKenyanCurrencyDenomination>(
         this.kenyanCurrencyDenominationsSharedCollection,
         weeklyCashHolding.denomination
       );
@@ -161,7 +127,10 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.weeklyCashHolding?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -171,7 +140,10 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankBranchCode[]>) => res.body ?? []))
       .pipe(
         map((bankBranchCodes: IBankBranchCode[]) =>
-          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(bankBranchCodes, this.editForm.get('branchId')!.value)
+          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
+            bankBranchCodes,
+            this.weeklyCashHolding?.branchId
+          )
         )
       )
       .subscribe((bankBranchCodes: IBankBranchCode[]) => (this.bankBranchCodesSharedCollection = bankBranchCodes));
@@ -181,9 +153,9 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICountySubCountyCode[]>) => res.body ?? []))
       .pipe(
         map((countySubCountyCodes: ICountySubCountyCode[]) =>
-          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
+          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
             countySubCountyCodes,
-            this.editForm.get('subCountyCode')!.value
+            this.weeklyCashHolding?.subCountyCode
           )
         )
       )
@@ -194,9 +166,9 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IKenyanCurrencyDenomination[]>) => res.body ?? []))
       .pipe(
         map((kenyanCurrencyDenominations: IKenyanCurrencyDenomination[]) =>
-          this.kenyanCurrencyDenominationService.addKenyanCurrencyDenominationToCollectionIfMissing(
+          this.kenyanCurrencyDenominationService.addKenyanCurrencyDenominationToCollectionIfMissing<IKenyanCurrencyDenomination>(
             kenyanCurrencyDenominations,
-            this.editForm.get('denomination')!.value
+            this.weeklyCashHolding?.denomination
           )
         )
       )
@@ -204,19 +176,5 @@ export class WeeklyCashHoldingUpdateComponent implements OnInit {
         (kenyanCurrencyDenominations: IKenyanCurrencyDenomination[]) =>
           (this.kenyanCurrencyDenominationsSharedCollection = kenyanCurrencyDenominations)
       );
-  }
-
-  protected createFromForm(): IWeeklyCashHolding {
-    return {
-      ...new WeeklyCashHolding(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      fitUnits: this.editForm.get(['fitUnits'])!.value,
-      unfitUnits: this.editForm.get(['unfitUnits'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      branchId: this.editForm.get(['branchId'])!.value,
-      subCountyCode: this.editForm.get(['subCountyCode'])!.value,
-      denomination: this.editForm.get(['denomination'])!.value,
-    };
   }
 }

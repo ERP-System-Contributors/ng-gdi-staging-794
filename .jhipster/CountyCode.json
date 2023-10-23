@@ -1,7 +1,7 @@
 {
   "changelogDate": "20220301131552",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "countyCode",
@@ -27,7 +27,7 @@
   "incrementalChangelog": false,
   "jpaMetamodelFiltering": true,
   "name": "CountyCode",
-  "pagination": "infinite-scroll",
+  "pagination": "pagination",
   "readOnly": false,
   "relationships": [
     {
@@ -39,5 +39,6 @@
       "relationshipType": "many-to-many"
     }
   ],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

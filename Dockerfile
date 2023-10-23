@@ -17,7 +17,7 @@
 #
 
 # Stage 1
-FROM node:14.15.0-alpine AS compile-image
+FROM node:16.20-alpine AS compile-image
 
 WORKDIR /opt/app
 # Enable the line below for in-container npm configurations

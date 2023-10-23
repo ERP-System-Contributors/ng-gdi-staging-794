@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { ICreditCardFacility, CreditCardFacility } from '../credit-card-facility.model';
+import { CreditCardFacilityFormService, CreditCardFacilityFormGroup } from './credit-card-facility-form.service';
+import { ICreditCardFacility } from '../credit-card-facility.model';
 import { CreditCardFacilityService } from '../service/credit-card-facility.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -38,38 +20,38 @@ import { IsoCurrencyCodeService } from 'app/entities/gdi/iso-currency-code/servi
 })
 export class CreditCardFacilityUpdateComponent implements OnInit {
   isSaving = false;
+  creditCardFacility: ICreditCardFacility | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   creditCardOwnershipsSharedCollection: ICreditCardOwnership[] = [];
   isoCurrencyCodesSharedCollection: IIsoCurrencyCode[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    totalNumberOfActiveCreditCards: [null, [Validators.required, Validators.min(0)]],
-    totalCreditCardLimitsInCCY: [null, [Validators.required, Validators.min(0)]],
-    totalCreditCardLimitsInLCY: [null, [Validators.required, Validators.min(0)]],
-    totalCreditCardAmountUtilisedInCCY: [null, [Validators.required, Validators.min(0)]],
-    totalCreditCardAmountUtilisedInLcy: [null, [Validators.required, Validators.min(0)]],
-    totalNPACreditCardAmountInFCY: [null, [Validators.required, Validators.min(0)]],
-    totalNPACreditCardAmountInLCY: [null, [Validators.required, Validators.min(0)]],
-    bankCode: [null, Validators.required],
-    customerCategory: [null, Validators.required],
-    currencyCode: [null, Validators.required],
-  });
+  editForm: CreditCardFacilityFormGroup = this.creditCardFacilityFormService.createCreditCardFacilityFormGroup();
 
   constructor(
     protected creditCardFacilityService: CreditCardFacilityService,
+    protected creditCardFacilityFormService: CreditCardFacilityFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected creditCardOwnershipService: CreditCardOwnershipService,
     protected isoCurrencyCodeService: IsoCurrencyCodeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareCreditCardOwnership = (o1: ICreditCardOwnership | null, o2: ICreditCardOwnership | null): boolean =>
+    this.creditCardOwnershipService.compareCreditCardOwnership(o1, o2);
+
+  compareIsoCurrencyCode = (o1: IIsoCurrencyCode | null, o2: IIsoCurrencyCode | null): boolean =>
+    this.isoCurrencyCodeService.compareIsoCurrencyCode(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ creditCardFacility }) => {
-      this.updateForm(creditCardFacility);
+      this.creditCardFacility = creditCardFacility;
+      if (creditCardFacility) {
+        this.updateForm(creditCardFacility);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -81,31 +63,19 @@ export class CreditCardFacilityUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const creditCardFacility = this.createFromForm();
-    if (creditCardFacility.id !== undefined) {
+    const creditCardFacility = this.creditCardFacilityFormService.getCreditCardFacility(this.editForm);
+    if (creditCardFacility.id !== null) {
       this.subscribeToSaveResponse(this.creditCardFacilityService.update(creditCardFacility));
     } else {
       this.subscribeToSaveResponse(this.creditCardFacilityService.create(creditCardFacility));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackCreditCardOwnershipById(index: number, item: ICreditCardOwnership): number {
-    return item.id!;
-  }
-
-  trackIsoCurrencyCodeById(index: number, item: IIsoCurrencyCode): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICreditCardFacility>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -121,30 +91,19 @@ export class CreditCardFacilityUpdateComponent implements OnInit {
   }
 
   protected updateForm(creditCardFacility: ICreditCardFacility): void {
-    this.editForm.patchValue({
-      id: creditCardFacility.id,
-      reportingDate: creditCardFacility.reportingDate,
-      totalNumberOfActiveCreditCards: creditCardFacility.totalNumberOfActiveCreditCards,
-      totalCreditCardLimitsInCCY: creditCardFacility.totalCreditCardLimitsInCCY,
-      totalCreditCardLimitsInLCY: creditCardFacility.totalCreditCardLimitsInLCY,
-      totalCreditCardAmountUtilisedInCCY: creditCardFacility.totalCreditCardAmountUtilisedInCCY,
-      totalCreditCardAmountUtilisedInLcy: creditCardFacility.totalCreditCardAmountUtilisedInLcy,
-      totalNPACreditCardAmountInFCY: creditCardFacility.totalNPACreditCardAmountInFCY,
-      totalNPACreditCardAmountInLCY: creditCardFacility.totalNPACreditCardAmountInLCY,
-      bankCode: creditCardFacility.bankCode,
-      customerCategory: creditCardFacility.customerCategory,
-      currencyCode: creditCardFacility.currencyCode,
-    });
+    this.creditCardFacility = creditCardFacility;
+    this.creditCardFacilityFormService.resetForm(this.editForm, creditCardFacility);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       creditCardFacility.bankCode
     );
-    this.creditCardOwnershipsSharedCollection = this.creditCardOwnershipService.addCreditCardOwnershipToCollectionIfMissing(
-      this.creditCardOwnershipsSharedCollection,
-      creditCardFacility.customerCategory
-    );
-    this.isoCurrencyCodesSharedCollection = this.isoCurrencyCodeService.addIsoCurrencyCodeToCollectionIfMissing(
+    this.creditCardOwnershipsSharedCollection =
+      this.creditCardOwnershipService.addCreditCardOwnershipToCollectionIfMissing<ICreditCardOwnership>(
+        this.creditCardOwnershipsSharedCollection,
+        creditCardFacility.customerCategory
+      );
+    this.isoCurrencyCodesSharedCollection = this.isoCurrencyCodeService.addIsoCurrencyCodeToCollectionIfMissing<IIsoCurrencyCode>(
       this.isoCurrencyCodesSharedCollection,
       creditCardFacility.currencyCode
     );
@@ -156,7 +115,10 @@ export class CreditCardFacilityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.creditCardFacility?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -166,9 +128,9 @@ export class CreditCardFacilityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICreditCardOwnership[]>) => res.body ?? []))
       .pipe(
         map((creditCardOwnerships: ICreditCardOwnership[]) =>
-          this.creditCardOwnershipService.addCreditCardOwnershipToCollectionIfMissing(
+          this.creditCardOwnershipService.addCreditCardOwnershipToCollectionIfMissing<ICreditCardOwnership>(
             creditCardOwnerships,
-            this.editForm.get('customerCategory')!.value
+            this.creditCardFacility?.customerCategory
           )
         )
       )
@@ -179,27 +141,12 @@ export class CreditCardFacilityUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IIsoCurrencyCode[]>) => res.body ?? []))
       .pipe(
         map((isoCurrencyCodes: IIsoCurrencyCode[]) =>
-          this.isoCurrencyCodeService.addIsoCurrencyCodeToCollectionIfMissing(isoCurrencyCodes, this.editForm.get('currencyCode')!.value)
+          this.isoCurrencyCodeService.addIsoCurrencyCodeToCollectionIfMissing<IIsoCurrencyCode>(
+            isoCurrencyCodes,
+            this.creditCardFacility?.currencyCode
+          )
         )
       )
       .subscribe((isoCurrencyCodes: IIsoCurrencyCode[]) => (this.isoCurrencyCodesSharedCollection = isoCurrencyCodes));
-  }
-
-  protected createFromForm(): ICreditCardFacility {
-    return {
-      ...new CreditCardFacility(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      totalNumberOfActiveCreditCards: this.editForm.get(['totalNumberOfActiveCreditCards'])!.value,
-      totalCreditCardLimitsInCCY: this.editForm.get(['totalCreditCardLimitsInCCY'])!.value,
-      totalCreditCardLimitsInLCY: this.editForm.get(['totalCreditCardLimitsInLCY'])!.value,
-      totalCreditCardAmountUtilisedInCCY: this.editForm.get(['totalCreditCardAmountUtilisedInCCY'])!.value,
-      totalCreditCardAmountUtilisedInLcy: this.editForm.get(['totalCreditCardAmountUtilisedInLcy'])!.value,
-      totalNPACreditCardAmountInFCY: this.editForm.get(['totalNPACreditCardAmountInFCY'])!.value,
-      totalNPACreditCardAmountInLCY: this.editForm.get(['totalNPACreditCardAmountInLCY'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      customerCategory: this.editForm.get(['customerCategory'])!.value,
-      currencyCode: this.editForm.get(['currencyCode'])!.value,
-    };
   }
 }

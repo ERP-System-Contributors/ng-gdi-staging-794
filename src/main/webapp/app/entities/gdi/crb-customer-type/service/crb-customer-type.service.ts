@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbCustomerType, getCrbCustomerTypeIdentifier } from '../crb-customer-type.model';
+import { ICrbCustomerType, NewCrbCustomerType } from '../crb-customer-type.model';
+
+export type PartialUpdateCrbCustomerType = Partial<ICrbCustomerType> & Pick<ICrbCustomerType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbCustomerType>;
 export type EntityArrayResponseType = HttpResponse<ICrbCustomerType[]>;
@@ -36,24 +20,20 @@ export class CrbCustomerTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbCustomerType: ICrbCustomerType): Observable<EntityResponseType> {
+  create(crbCustomerType: NewCrbCustomerType): Observable<EntityResponseType> {
     return this.http.post<ICrbCustomerType>(this.resourceUrl, crbCustomerType, { observe: 'response' });
   }
 
   update(crbCustomerType: ICrbCustomerType): Observable<EntityResponseType> {
-    return this.http.put<ICrbCustomerType>(
-      `${this.resourceUrl}/${getCrbCustomerTypeIdentifier(crbCustomerType) as number}`,
-      crbCustomerType,
-      { observe: 'response' }
-    );
+    return this.http.put<ICrbCustomerType>(`${this.resourceUrl}/${this.getCrbCustomerTypeIdentifier(crbCustomerType)}`, crbCustomerType, {
+      observe: 'response',
+    });
   }
 
-  partialUpdate(crbCustomerType: ICrbCustomerType): Observable<EntityResponseType> {
-    return this.http.patch<ICrbCustomerType>(
-      `${this.resourceUrl}/${getCrbCustomerTypeIdentifier(crbCustomerType) as number}`,
-      crbCustomerType,
-      { observe: 'response' }
-    );
+  partialUpdate(crbCustomerType: PartialUpdateCrbCustomerType): Observable<EntityResponseType> {
+    return this.http.patch<ICrbCustomerType>(`${this.resourceUrl}/${this.getCrbCustomerTypeIdentifier(crbCustomerType)}`, crbCustomerType, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -74,18 +54,26 @@ export class CrbCustomerTypeService {
     return this.http.get<ICrbCustomerType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbCustomerTypeToCollectionIfMissing(
-    crbCustomerTypeCollection: ICrbCustomerType[],
-    ...crbCustomerTypesToCheck: (ICrbCustomerType | null | undefined)[]
-  ): ICrbCustomerType[] {
-    const crbCustomerTypes: ICrbCustomerType[] = crbCustomerTypesToCheck.filter(isPresent);
+  getCrbCustomerTypeIdentifier(crbCustomerType: Pick<ICrbCustomerType, 'id'>): number {
+    return crbCustomerType.id;
+  }
+
+  compareCrbCustomerType(o1: Pick<ICrbCustomerType, 'id'> | null, o2: Pick<ICrbCustomerType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCrbCustomerTypeIdentifier(o1) === this.getCrbCustomerTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbCustomerTypeToCollectionIfMissing<Type extends Pick<ICrbCustomerType, 'id'>>(
+    crbCustomerTypeCollection: Type[],
+    ...crbCustomerTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbCustomerTypes: Type[] = crbCustomerTypesToCheck.filter(isPresent);
     if (crbCustomerTypes.length > 0) {
       const crbCustomerTypeCollectionIdentifiers = crbCustomerTypeCollection.map(
-        crbCustomerTypeItem => getCrbCustomerTypeIdentifier(crbCustomerTypeItem)!
+        crbCustomerTypeItem => this.getCrbCustomerTypeIdentifier(crbCustomerTypeItem)!
       );
       const crbCustomerTypesToAdd = crbCustomerTypes.filter(crbCustomerTypeItem => {
-        const crbCustomerTypeIdentifier = getCrbCustomerTypeIdentifier(crbCustomerTypeItem);
-        if (crbCustomerTypeIdentifier == null || crbCustomerTypeCollectionIdentifiers.includes(crbCustomerTypeIdentifier)) {
+        const crbCustomerTypeIdentifier = this.getCrbCustomerTypeIdentifier(crbCustomerTypeItem);
+        if (crbCustomerTypeCollectionIdentifiers.includes(crbCustomerTypeIdentifier)) {
           return false;
         }
         crbCustomerTypeCollectionIdentifiers.push(crbCustomerTypeIdentifier);

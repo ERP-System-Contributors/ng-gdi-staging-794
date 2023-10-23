@@ -1,12 +1,14 @@
 {
+  "changelogDate": "20231004062159",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "subCountyCode",
       "fieldType": "String",
       "fieldValidateRules": ["required", "unique", "minlength", "maxlength", "pattern"],
-      "fieldValidateRulesMinlength": "4",
       "fieldValidateRulesMaxlength": "4",
+      "fieldValidateRulesMinlength": "4",
       "fieldValidateRulesPattern": "^\\d{4}$"
     },
     {
@@ -18,8 +20,8 @@
       "fieldName": "countyCode",
       "fieldType": "String",
       "fieldValidateRules": ["required", "minlength", "maxlength", "pattern"],
-      "fieldValidateRulesMinlength": "2",
       "fieldValidateRulesMaxlength": "2",
+      "fieldValidateRulesMinlength": "2",
       "fieldValidateRulesPattern": "^\\d{2}$"
     },
     {
@@ -28,13 +30,12 @@
       "fieldValidateRules": ["required"]
     }
   ],
-  "relationships": [],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
+  "incrementalChangelog": false,
   "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
   "name": "CountySubCountyCode",
-  "changelogDate": "20231004062159",
-  "incrementalChangelog": false
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

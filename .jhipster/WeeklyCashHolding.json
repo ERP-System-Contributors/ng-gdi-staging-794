@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004061118",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -17,42 +19,41 @@
       "fieldValidateRules": ["required"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "WeeklyCashHolding",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchId",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchId",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "subCountyCode",
+      "otherEntityField": "subCountyName",
       "otherEntityName": "countySubCountyCode",
+      "relationshipName": "subCountyCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "subCountyName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "denomination",
+      "otherEntityField": "currencyDenominationType",
       "otherEntityName": "kenyanCurrencyDenomination",
+      "relationshipName": "denomination",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "currencyDenominationType"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "WeeklyCashHolding",
-  "changelogDate": "20231004061118",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

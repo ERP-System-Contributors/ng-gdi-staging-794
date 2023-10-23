@@ -1,33 +1,23 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { SourceOrPurposeOfRemittancFlag } from 'app/entities/enumerations/source-or-purpose-of-remittanc-flag.model';
-import { ISourceRemittancePurposeType, SourceRemittancePurposeType } from '../source-remittance-purpose-type.model';
+import { ISourceRemittancePurposeType } from '../source-remittance-purpose-type.model';
+import {
+  sampleWithRequiredData,
+  sampleWithNewData,
+  sampleWithPartialData,
+  sampleWithFullData,
+} from '../source-remittance-purpose-type.test-samples';
 
 import { SourceRemittancePurposeTypeService } from './source-remittance-purpose-type.service';
+
+const requireRestSample: ISourceRemittancePurposeType = {
+  ...sampleWithRequiredData,
+};
 
 describe('SourceRemittancePurposeType Service', () => {
   let service: SourceRemittancePurposeTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: ISourceRemittancePurposeType;
   let expectedResult: ISourceRemittancePurposeType | ISourceRemittancePurposeType[] | boolean | null;
 
   beforeEach(() => {
@@ -37,38 +27,27 @@ describe('SourceRemittancePurposeType Service', () => {
     expectedResult = null;
     service = TestBed.inject(SourceRemittancePurposeTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      sourceOrPurposeTypeCode: 'AAAAAAA',
-      sourceOrPurposeOfRemittanceFlag: SourceOrPurposeOfRemittancFlag.PURPOSE_OF_REMITTANCE,
-      sourceOrPurposeOfRemittanceType: 'AAAAAAA',
-      remittancePurposeTypeDetails: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a SourceRemittancePurposeType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const sourceRemittancePurposeType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new SourceRemittancePurposeType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(sourceRemittancePurposeType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -76,20 +55,11 @@ describe('SourceRemittancePurposeType Service', () => {
     });
 
     it('should update a SourceRemittancePurposeType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          sourceOrPurposeTypeCode: 'BBBBBB',
-          sourceOrPurposeOfRemittanceFlag: 'BBBBBB',
-          sourceOrPurposeOfRemittanceType: 'BBBBBB',
-          remittancePurposeTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const sourceRemittancePurposeType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(sourceRemittancePurposeType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -97,17 +67,9 @@ describe('SourceRemittancePurposeType Service', () => {
     });
 
     it('should partial update a SourceRemittancePurposeType', () => {
-      const patchObject = Object.assign(
-        {
-          sourceOrPurposeOfRemittanceFlag: 'BBBBBB',
-          sourceOrPurposeOfRemittanceType: 'BBBBBB',
-        },
-        new SourceRemittancePurposeType()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -117,50 +79,43 @@ describe('SourceRemittancePurposeType Service', () => {
     });
 
     it('should return a list of SourceRemittancePurposeType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          sourceOrPurposeTypeCode: 'BBBBBB',
-          sourceOrPurposeOfRemittanceFlag: 'BBBBBB',
-          sourceOrPurposeOfRemittanceType: 'BBBBBB',
-          remittancePurposeTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a SourceRemittancePurposeType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addSourceRemittancePurposeTypeToCollectionIfMissing', () => {
       it('should add a SourceRemittancePurposeType to an empty array', () => {
-        const sourceRemittancePurposeType: ISourceRemittancePurposeType = { id: 123 };
+        const sourceRemittancePurposeType: ISourceRemittancePurposeType = sampleWithRequiredData;
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing([], sourceRemittancePurposeType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(sourceRemittancePurposeType);
       });
 
       it('should not add a SourceRemittancePurposeType to an array that contains it', () => {
-        const sourceRemittancePurposeType: ISourceRemittancePurposeType = { id: 123 };
+        const sourceRemittancePurposeType: ISourceRemittancePurposeType = sampleWithRequiredData;
         const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [
           {
             ...sourceRemittancePurposeType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing(
           sourceRemittancePurposeTypeCollection,
@@ -170,8 +125,8 @@ describe('SourceRemittancePurposeType Service', () => {
       });
 
       it("should add a SourceRemittancePurposeType to an array that doesn't contain it", () => {
-        const sourceRemittancePurposeType: ISourceRemittancePurposeType = { id: 123 };
-        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [{ id: 456 }];
+        const sourceRemittancePurposeType: ISourceRemittancePurposeType = sampleWithRequiredData;
+        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [sampleWithPartialData];
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing(
           sourceRemittancePurposeTypeCollection,
           sourceRemittancePurposeType
@@ -181,8 +136,12 @@ describe('SourceRemittancePurposeType Service', () => {
       });
 
       it('should add only unique SourceRemittancePurposeType to an array', () => {
-        const sourceRemittancePurposeTypeArray: ISourceRemittancePurposeType[] = [{ id: 123 }, { id: 456 }, { id: 69988 }];
-        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [{ id: 123 }];
+        const sourceRemittancePurposeTypeArray: ISourceRemittancePurposeType[] = [
+          sampleWithRequiredData,
+          sampleWithPartialData,
+          sampleWithFullData,
+        ];
+        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [sampleWithRequiredData];
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing(
           sourceRemittancePurposeTypeCollection,
           ...sourceRemittancePurposeTypeArray
@@ -191,8 +150,8 @@ describe('SourceRemittancePurposeType Service', () => {
       });
 
       it('should accept varargs', () => {
-        const sourceRemittancePurposeType: ISourceRemittancePurposeType = { id: 123 };
-        const sourceRemittancePurposeType2: ISourceRemittancePurposeType = { id: 456 };
+        const sourceRemittancePurposeType: ISourceRemittancePurposeType = sampleWithRequiredData;
+        const sourceRemittancePurposeType2: ISourceRemittancePurposeType = sampleWithPartialData;
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing(
           [],
           sourceRemittancePurposeType,
@@ -204,20 +163,64 @@ describe('SourceRemittancePurposeType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const sourceRemittancePurposeType: ISourceRemittancePurposeType = { id: 123 };
+        const sourceRemittancePurposeType: ISourceRemittancePurposeType = sampleWithRequiredData;
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing([], null, sourceRemittancePurposeType, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(sourceRemittancePurposeType);
       });
 
       it('should return initial array if no SourceRemittancePurposeType is added', () => {
-        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [{ id: 123 }];
+        const sourceRemittancePurposeTypeCollection: ISourceRemittancePurposeType[] = [sampleWithRequiredData];
         expectedResult = service.addSourceRemittancePurposeTypeToCollectionIfMissing(
           sourceRemittancePurposeTypeCollection,
           undefined,
           null
         );
         expect(expectedResult).toEqual(sourceRemittancePurposeTypeCollection);
+      });
+    });
+
+    describe('compareSourceRemittancePurposeType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareSourceRemittancePurposeType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareSourceRemittancePurposeType(entity1, entity2);
+        const compareResult2 = service.compareSourceRemittancePurposeType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareSourceRemittancePurposeType(entity1, entity2);
+        const compareResult2 = service.compareSourceRemittancePurposeType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareSourceRemittancePurposeType(entity1, entity2);
+        const compareResult2 = service.compareSourceRemittancePurposeType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

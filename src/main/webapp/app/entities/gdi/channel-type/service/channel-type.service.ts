@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IChannelType, getChannelTypeIdentifier } from '../channel-type.model';
+import { IChannelType, NewChannelType } from '../channel-type.model';
+
+export type PartialUpdateChannelType = Partial<IChannelType> & Pick<IChannelType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IChannelType>;
 export type EntityArrayResponseType = HttpResponse<IChannelType[]>;
@@ -36,18 +20,18 @@ export class ChannelTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(channelType: IChannelType): Observable<EntityResponseType> {
+  create(channelType: NewChannelType): Observable<EntityResponseType> {
     return this.http.post<IChannelType>(this.resourceUrl, channelType, { observe: 'response' });
   }
 
   update(channelType: IChannelType): Observable<EntityResponseType> {
-    return this.http.put<IChannelType>(`${this.resourceUrl}/${getChannelTypeIdentifier(channelType) as number}`, channelType, {
+    return this.http.put<IChannelType>(`${this.resourceUrl}/${this.getChannelTypeIdentifier(channelType)}`, channelType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(channelType: IChannelType): Observable<EntityResponseType> {
-    return this.http.patch<IChannelType>(`${this.resourceUrl}/${getChannelTypeIdentifier(channelType) as number}`, channelType, {
+  partialUpdate(channelType: PartialUpdateChannelType): Observable<EntityResponseType> {
+    return this.http.patch<IChannelType>(`${this.resourceUrl}/${this.getChannelTypeIdentifier(channelType)}`, channelType, {
       observe: 'response',
     });
   }
@@ -70,16 +54,26 @@ export class ChannelTypeService {
     return this.http.get<IChannelType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addChannelTypeToCollectionIfMissing(
-    channelTypeCollection: IChannelType[],
-    ...channelTypesToCheck: (IChannelType | null | undefined)[]
-  ): IChannelType[] {
-    const channelTypes: IChannelType[] = channelTypesToCheck.filter(isPresent);
+  getChannelTypeIdentifier(channelType: Pick<IChannelType, 'id'>): number {
+    return channelType.id;
+  }
+
+  compareChannelType(o1: Pick<IChannelType, 'id'> | null, o2: Pick<IChannelType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getChannelTypeIdentifier(o1) === this.getChannelTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addChannelTypeToCollectionIfMissing<Type extends Pick<IChannelType, 'id'>>(
+    channelTypeCollection: Type[],
+    ...channelTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const channelTypes: Type[] = channelTypesToCheck.filter(isPresent);
     if (channelTypes.length > 0) {
-      const channelTypeCollectionIdentifiers = channelTypeCollection.map(channelTypeItem => getChannelTypeIdentifier(channelTypeItem)!);
+      const channelTypeCollectionIdentifiers = channelTypeCollection.map(
+        channelTypeItem => this.getChannelTypeIdentifier(channelTypeItem)!
+      );
       const channelTypesToAdd = channelTypes.filter(channelTypeItem => {
-        const channelTypeIdentifier = getChannelTypeIdentifier(channelTypeItem);
-        if (channelTypeIdentifier == null || channelTypeCollectionIdentifiers.includes(channelTypeIdentifier)) {
+        const channelTypeIdentifier = this.getChannelTypeIdentifier(channelTypeItem);
+        if (channelTypeCollectionIdentifiers.includes(channelTypeIdentifier)) {
           return false;
         }
         channelTypeCollectionIdentifiers.push(channelTypeIdentifier);

@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <div *ngIf="cardUsageInformation">
       <h2 data-cy="cardUsageInformationDetailsHeading"><span>Card Usage Information</span></h2>
@@ -56,54 +37,54 @@
         <dt><span>Bank Code</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.bankCode">
-            <a [routerLink]="['/institution-code', cardUsageInformation.bankCode?.id, 'view']">{{
-              cardUsageInformation.bankCode?.institutionName
+            <a [routerLink]="['/institution-code', cardUsageInformation.bankCode.id, 'view']">{{
+              cardUsageInformation.bankCode.institutionName
             }}</a>
           </div>
         </dd>
         <dt><span>Card Type</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.cardType">
-            <a [routerLink]="['/card-types', cardUsageInformation.cardType?.id, 'view']">{{ cardUsageInformation.cardType?.cardType }}</a>
+            <a [routerLink]="['/card-types', cardUsageInformation.cardType.id, 'view']">{{ cardUsageInformation.cardType.cardType }}</a>
           </div>
         </dd>
         <dt><span>Card Brand</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.cardBrand">
-            <a [routerLink]="['/card-brand-type', cardUsageInformation.cardBrand?.id, 'view']">{{
-              cardUsageInformation.cardBrand?.cardBrandType
+            <a [routerLink]="['/card-brand-type', cardUsageInformation.cardBrand.id, 'view']">{{
+              cardUsageInformation.cardBrand.cardBrandType
             }}</a>
           </div>
         </dd>
         <dt><span>Card Category Type</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.cardCategoryType">
-            <a [routerLink]="['/card-category-type', cardUsageInformation.cardCategoryType?.id, 'view']">{{
-              cardUsageInformation.cardCategoryType?.cardCategoryDescription
+            <a [routerLink]="['/card-category-type', cardUsageInformation.cardCategoryType.id, 'view']">{{
+              cardUsageInformation.cardCategoryType.cardCategoryDescription
             }}</a>
           </div>
         </dd>
         <dt><span>Transaction Type</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.transactionType">
-            <a [routerLink]="['/bank-transaction-type', cardUsageInformation.transactionType?.id, 'view']">{{
-              cardUsageInformation.transactionType?.transactionTypeDetails
+            <a [routerLink]="['/bank-transaction-type', cardUsageInformation.transactionType.id, 'view']">{{
+              cardUsageInformation.transactionType.transactionTypeDetails
             }}</a>
           </div>
         </dd>
         <dt><span>Channel Type</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.channelType">
-            <a [routerLink]="['/channel-type', cardUsageInformation.channelType?.id, 'view']">{{
-              cardUsageInformation.channelType?.channelTypes
+            <a [routerLink]="['/channel-type', cardUsageInformation.channelType.id, 'view']">{{
+              cardUsageInformation.channelType.channelTypes
             }}</a>
           </div>
         </dd>
         <dt><span>Card State</span></dt>
         <dd>
           <div *ngIf="cardUsageInformation.cardState">
-            <a [routerLink]="['/card-state', cardUsageInformation.cardState?.id, 'view']">{{
-              cardUsageInformation.cardState?.cardStateFlagDetails
+            <a [routerLink]="['/card-state', cardUsageInformation.cardState.id, 'view']">{{
+              cardUsageInformation.cardState.cardStateFlagDetails
             }}</a>
           </div>
         </dd>

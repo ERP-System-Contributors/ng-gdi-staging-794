@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { FinancialDerivativeTypeCodeFormService } from './financial-derivative-type-code-form.service';
 import { FinancialDerivativeTypeCodeService } from '../service/financial-derivative-type-code.service';
-import { IFinancialDerivativeTypeCode, FinancialDerivativeTypeCode } from '../financial-derivative-type-code.model';
+import { IFinancialDerivativeTypeCode } from '../financial-derivative-type-code.model';
 
 import { FinancialDerivativeTypeCodeUpdateComponent } from './financial-derivative-type-code-update.component';
 
@@ -34,19 +16,29 @@ describe('FinancialDerivativeTypeCode Management Update Component', () => {
   let comp: FinancialDerivativeTypeCodeUpdateComponent;
   let fixture: ComponentFixture<FinancialDerivativeTypeCodeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let financialDerivativeTypeCodeFormService: FinancialDerivativeTypeCodeFormService;
   let financialDerivativeTypeCodeService: FinancialDerivativeTypeCodeService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [FinancialDerivativeTypeCodeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(FinancialDerivativeTypeCodeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(FinancialDerivativeTypeCodeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    financialDerivativeTypeCodeFormService = TestBed.inject(FinancialDerivativeTypeCodeFormService);
     financialDerivativeTypeCodeService = TestBed.inject(FinancialDerivativeTypeCodeService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('FinancialDerivativeTypeCode Management Update Component', () => {
       activatedRoute.data = of({ financialDerivativeTypeCode });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(financialDerivativeTypeCode));
+      expect(comp.financialDerivativeTypeCode).toEqual(financialDerivativeTypeCode);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FinancialDerivativeTypeCode>>();
+      const saveSubject = new Subject<HttpResponse<IFinancialDerivativeTypeCode>>();
       const financialDerivativeTypeCode = { id: 123 };
+      jest.spyOn(financialDerivativeTypeCodeFormService, 'getFinancialDerivativeTypeCode').mockReturnValue(financialDerivativeTypeCode);
       jest.spyOn(financialDerivativeTypeCodeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ financialDerivativeTypeCode });
@@ -80,18 +73,20 @@ describe('FinancialDerivativeTypeCode Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(financialDerivativeTypeCodeFormService.getFinancialDerivativeTypeCode).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(financialDerivativeTypeCodeService.update).toHaveBeenCalledWith(financialDerivativeTypeCode);
+      expect(financialDerivativeTypeCodeService.update).toHaveBeenCalledWith(expect.objectContaining(financialDerivativeTypeCode));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FinancialDerivativeTypeCode>>();
-      const financialDerivativeTypeCode = new FinancialDerivativeTypeCode();
+      const saveSubject = new Subject<HttpResponse<IFinancialDerivativeTypeCode>>();
+      const financialDerivativeTypeCode = { id: 123 };
+      jest.spyOn(financialDerivativeTypeCodeFormService, 'getFinancialDerivativeTypeCode').mockReturnValue({ id: null });
       jest.spyOn(financialDerivativeTypeCodeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ financialDerivativeTypeCode });
+      activatedRoute.data = of({ financialDerivativeTypeCode: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('FinancialDerivativeTypeCode Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(financialDerivativeTypeCodeService.create).toHaveBeenCalledWith(financialDerivativeTypeCode);
+      expect(financialDerivativeTypeCodeFormService.getFinancialDerivativeTypeCode).toHaveBeenCalled();
+      expect(financialDerivativeTypeCodeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FinancialDerivativeTypeCode>>();
+      const saveSubject = new Subject<HttpResponse<IFinancialDerivativeTypeCode>>();
       const financialDerivativeTypeCode = { id: 123 };
       jest.spyOn(financialDerivativeTypeCodeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('FinancialDerivativeTypeCode Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(financialDerivativeTypeCodeService.update).toHaveBeenCalledWith(financialDerivativeTypeCode);
+      expect(financialDerivativeTypeCodeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

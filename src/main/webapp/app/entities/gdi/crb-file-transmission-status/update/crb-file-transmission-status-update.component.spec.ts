@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CrbFileTransmissionStatusFormService } from './crb-file-transmission-status-form.service';
 import { CrbFileTransmissionStatusService } from '../service/crb-file-transmission-status.service';
-import { ICrbFileTransmissionStatus, CrbFileTransmissionStatus } from '../crb-file-transmission-status.model';
+import { ICrbFileTransmissionStatus } from '../crb-file-transmission-status.model';
 
 import { CrbFileTransmissionStatusUpdateComponent } from './crb-file-transmission-status-update.component';
 
@@ -34,19 +16,29 @@ describe('CrbFileTransmissionStatus Management Update Component', () => {
   let comp: CrbFileTransmissionStatusUpdateComponent;
   let fixture: ComponentFixture<CrbFileTransmissionStatusUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let crbFileTransmissionStatusFormService: CrbFileTransmissionStatusFormService;
   let crbFileTransmissionStatusService: CrbFileTransmissionStatusService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CrbFileTransmissionStatusUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CrbFileTransmissionStatusUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CrbFileTransmissionStatusUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    crbFileTransmissionStatusFormService = TestBed.inject(CrbFileTransmissionStatusFormService);
     crbFileTransmissionStatusService = TestBed.inject(CrbFileTransmissionStatusService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('CrbFileTransmissionStatus Management Update Component', () => {
       activatedRoute.data = of({ crbFileTransmissionStatus });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(crbFileTransmissionStatus));
+      expect(comp.crbFileTransmissionStatus).toEqual(crbFileTransmissionStatus);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbFileTransmissionStatus>>();
+      const saveSubject = new Subject<HttpResponse<ICrbFileTransmissionStatus>>();
       const crbFileTransmissionStatus = { id: 123 };
+      jest.spyOn(crbFileTransmissionStatusFormService, 'getCrbFileTransmissionStatus').mockReturnValue(crbFileTransmissionStatus);
       jest.spyOn(crbFileTransmissionStatusService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ crbFileTransmissionStatus });
@@ -80,18 +73,20 @@ describe('CrbFileTransmissionStatus Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(crbFileTransmissionStatusFormService.getCrbFileTransmissionStatus).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(crbFileTransmissionStatusService.update).toHaveBeenCalledWith(crbFileTransmissionStatus);
+      expect(crbFileTransmissionStatusService.update).toHaveBeenCalledWith(expect.objectContaining(crbFileTransmissionStatus));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbFileTransmissionStatus>>();
-      const crbFileTransmissionStatus = new CrbFileTransmissionStatus();
+      const saveSubject = new Subject<HttpResponse<ICrbFileTransmissionStatus>>();
+      const crbFileTransmissionStatus = { id: 123 };
+      jest.spyOn(crbFileTransmissionStatusFormService, 'getCrbFileTransmissionStatus').mockReturnValue({ id: null });
       jest.spyOn(crbFileTransmissionStatusService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ crbFileTransmissionStatus });
+      activatedRoute.data = of({ crbFileTransmissionStatus: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('CrbFileTransmissionStatus Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(crbFileTransmissionStatusService.create).toHaveBeenCalledWith(crbFileTransmissionStatus);
+      expect(crbFileTransmissionStatusFormService.getCrbFileTransmissionStatus).toHaveBeenCalled();
+      expect(crbFileTransmissionStatusService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbFileTransmissionStatus>>();
+      const saveSubject = new Subject<HttpResponse<ICrbFileTransmissionStatus>>();
       const crbFileTransmissionStatus = { id: 123 };
       jest.spyOn(crbFileTransmissionStatusService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('CrbFileTransmissionStatus Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(crbFileTransmissionStatusService.update).toHaveBeenCalledWith(crbFileTransmissionStatus);
+      expect(crbFileTransmissionStatusService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

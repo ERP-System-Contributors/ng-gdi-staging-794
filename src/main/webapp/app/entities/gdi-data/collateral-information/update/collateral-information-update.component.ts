@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { ICollateralInformation, CollateralInformation } from '../collateral-information.model';
+import { CollateralInformationFormService, CollateralInformationFormGroup } from './collateral-information-form.service';
+import { ICollateralInformation } from '../collateral-information.model';
 import { CollateralInformationService } from '../service/collateral-information.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -41,6 +23,7 @@ import { CollateralInsuredFlagTypes } from 'app/entities/enumerations/collateral
 })
 export class CollateralInformationUpdateComponent implements OnInit {
   isSaving = false;
+  collateralInformation: ICollateralInformation | null = null;
   collateralInsuredFlagTypesValues = Object.keys(CollateralInsuredFlagTypes);
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
@@ -48,45 +31,36 @@ export class CollateralInformationUpdateComponent implements OnInit {
   collateralTypesSharedCollection: ICollateralType[] = [];
   countySubCountyCodesSharedCollection: ICountySubCountyCode[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    collateralId: [null, [Validators.required]],
-    loanContractId: [null, [Validators.required, Validators.pattern('^\\d{15}$')]],
-    customerId: [null, [Validators.required]],
-    registrationPropertyNumber: [],
-    collateralOMVInCCY: [null, [Validators.required, Validators.min(0)]],
-    collateralFSVInLCY: [null, [Validators.required, Validators.min(0)]],
-    collateralDiscountedValue: [null, [Validators.min(0)]],
-    amountCharged: [null, [Validators.required, Validators.min(0)]],
-    collateralDiscountRate: [null, [Validators.min(0)]],
-    loanToValueRatio: [null, [Validators.min(0)]],
-    nameOfPropertyValuer: [],
-    collateralLastValuationDate: [],
-    insuredFlag: [null, [Validators.required]],
-    nameOfInsurer: [],
-    amountInsured: [null, [Validators.min(0)]],
-    insuranceExpiryDate: [],
-    guaranteeInsurers: [],
-    bankCode: [null, Validators.required],
-    branchCode: [null, Validators.required],
-    collateralType: [null, Validators.required],
-    countyCode: [],
-  });
+  editForm: CollateralInformationFormGroup = this.collateralInformationFormService.createCollateralInformationFormGroup();
 
   constructor(
     protected collateralInformationService: CollateralInformationService,
+    protected collateralInformationFormService: CollateralInformationFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected bankBranchCodeService: BankBranchCodeService,
     protected collateralTypeService: CollateralTypeService,
     protected countySubCountyCodeService: CountySubCountyCodeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareBankBranchCode = (o1: IBankBranchCode | null, o2: IBankBranchCode | null): boolean =>
+    this.bankBranchCodeService.compareBankBranchCode(o1, o2);
+
+  compareCollateralType = (o1: ICollateralType | null, o2: ICollateralType | null): boolean =>
+    this.collateralTypeService.compareCollateralType(o1, o2);
+
+  compareCountySubCountyCode = (o1: ICountySubCountyCode | null, o2: ICountySubCountyCode | null): boolean =>
+    this.countySubCountyCodeService.compareCountySubCountyCode(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ collateralInformation }) => {
-      this.updateForm(collateralInformation);
+      this.collateralInformation = collateralInformation;
+      if (collateralInformation) {
+        this.updateForm(collateralInformation);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -98,35 +72,19 @@ export class CollateralInformationUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const collateralInformation = this.createFromForm();
-    if (collateralInformation.id !== undefined) {
+    const collateralInformation = this.collateralInformationFormService.getCollateralInformation(this.editForm);
+    if (collateralInformation.id !== null) {
       this.subscribeToSaveResponse(this.collateralInformationService.update(collateralInformation));
     } else {
       this.subscribeToSaveResponse(this.collateralInformationService.create(collateralInformation));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackBankBranchCodeById(index: number, item: IBankBranchCode): number {
-    return item.id!;
-  }
-
-  trackCollateralTypeById(index: number, item: ICollateralType): number {
-    return item.id!;
-  }
-
-  trackCountySubCountyCodeById(index: number, item: ICountySubCountyCode): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICollateralInformation>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -142,48 +100,26 @@ export class CollateralInformationUpdateComponent implements OnInit {
   }
 
   protected updateForm(collateralInformation: ICollateralInformation): void {
-    this.editForm.patchValue({
-      id: collateralInformation.id,
-      reportingDate: collateralInformation.reportingDate,
-      collateralId: collateralInformation.collateralId,
-      loanContractId: collateralInformation.loanContractId,
-      customerId: collateralInformation.customerId,
-      registrationPropertyNumber: collateralInformation.registrationPropertyNumber,
-      collateralOMVInCCY: collateralInformation.collateralOMVInCCY,
-      collateralFSVInLCY: collateralInformation.collateralFSVInLCY,
-      collateralDiscountedValue: collateralInformation.collateralDiscountedValue,
-      amountCharged: collateralInformation.amountCharged,
-      collateralDiscountRate: collateralInformation.collateralDiscountRate,
-      loanToValueRatio: collateralInformation.loanToValueRatio,
-      nameOfPropertyValuer: collateralInformation.nameOfPropertyValuer,
-      collateralLastValuationDate: collateralInformation.collateralLastValuationDate,
-      insuredFlag: collateralInformation.insuredFlag,
-      nameOfInsurer: collateralInformation.nameOfInsurer,
-      amountInsured: collateralInformation.amountInsured,
-      insuranceExpiryDate: collateralInformation.insuranceExpiryDate,
-      guaranteeInsurers: collateralInformation.guaranteeInsurers,
-      bankCode: collateralInformation.bankCode,
-      branchCode: collateralInformation.branchCode,
-      collateralType: collateralInformation.collateralType,
-      countyCode: collateralInformation.countyCode,
-    });
+    this.collateralInformation = collateralInformation;
+    this.collateralInformationFormService.resetForm(this.editForm, collateralInformation);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       collateralInformation.bankCode
     );
-    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(
+    this.bankBranchCodesSharedCollection = this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
       this.bankBranchCodesSharedCollection,
       collateralInformation.branchCode
     );
-    this.collateralTypesSharedCollection = this.collateralTypeService.addCollateralTypeToCollectionIfMissing(
+    this.collateralTypesSharedCollection = this.collateralTypeService.addCollateralTypeToCollectionIfMissing<ICollateralType>(
       this.collateralTypesSharedCollection,
       collateralInformation.collateralType
     );
-    this.countySubCountyCodesSharedCollection = this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
-      this.countySubCountyCodesSharedCollection,
-      collateralInformation.countyCode
-    );
+    this.countySubCountyCodesSharedCollection =
+      this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
+        this.countySubCountyCodesSharedCollection,
+        collateralInformation.countyCode
+      );
   }
 
   protected loadRelationshipsOptions(): void {
@@ -192,7 +128,10 @@ export class CollateralInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.collateralInformation?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -202,7 +141,10 @@ export class CollateralInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankBranchCode[]>) => res.body ?? []))
       .pipe(
         map((bankBranchCodes: IBankBranchCode[]) =>
-          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing(bankBranchCodes, this.editForm.get('branchCode')!.value)
+          this.bankBranchCodeService.addBankBranchCodeToCollectionIfMissing<IBankBranchCode>(
+            bankBranchCodes,
+            this.collateralInformation?.branchCode
+          )
         )
       )
       .subscribe((bankBranchCodes: IBankBranchCode[]) => (this.bankBranchCodesSharedCollection = bankBranchCodes));
@@ -212,7 +154,10 @@ export class CollateralInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICollateralType[]>) => res.body ?? []))
       .pipe(
         map((collateralTypes: ICollateralType[]) =>
-          this.collateralTypeService.addCollateralTypeToCollectionIfMissing(collateralTypes, this.editForm.get('collateralType')!.value)
+          this.collateralTypeService.addCollateralTypeToCollectionIfMissing<ICollateralType>(
+            collateralTypes,
+            this.collateralInformation?.collateralType
+          )
         )
       )
       .subscribe((collateralTypes: ICollateralType[]) => (this.collateralTypesSharedCollection = collateralTypes));
@@ -222,41 +167,12 @@ export class CollateralInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICountySubCountyCode[]>) => res.body ?? []))
       .pipe(
         map((countySubCountyCodes: ICountySubCountyCode[]) =>
-          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing(
+          this.countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing<ICountySubCountyCode>(
             countySubCountyCodes,
-            this.editForm.get('countyCode')!.value
+            this.collateralInformation?.countyCode
           )
         )
       )
       .subscribe((countySubCountyCodes: ICountySubCountyCode[]) => (this.countySubCountyCodesSharedCollection = countySubCountyCodes));
-  }
-
-  protected createFromForm(): ICollateralInformation {
-    return {
-      ...new CollateralInformation(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      collateralId: this.editForm.get(['collateralId'])!.value,
-      loanContractId: this.editForm.get(['loanContractId'])!.value,
-      customerId: this.editForm.get(['customerId'])!.value,
-      registrationPropertyNumber: this.editForm.get(['registrationPropertyNumber'])!.value,
-      collateralOMVInCCY: this.editForm.get(['collateralOMVInCCY'])!.value,
-      collateralFSVInLCY: this.editForm.get(['collateralFSVInLCY'])!.value,
-      collateralDiscountedValue: this.editForm.get(['collateralDiscountedValue'])!.value,
-      amountCharged: this.editForm.get(['amountCharged'])!.value,
-      collateralDiscountRate: this.editForm.get(['collateralDiscountRate'])!.value,
-      loanToValueRatio: this.editForm.get(['loanToValueRatio'])!.value,
-      nameOfPropertyValuer: this.editForm.get(['nameOfPropertyValuer'])!.value,
-      collateralLastValuationDate: this.editForm.get(['collateralLastValuationDate'])!.value,
-      insuredFlag: this.editForm.get(['insuredFlag'])!.value,
-      nameOfInsurer: this.editForm.get(['nameOfInsurer'])!.value,
-      amountInsured: this.editForm.get(['amountInsured'])!.value,
-      insuranceExpiryDate: this.editForm.get(['insuranceExpiryDate'])!.value,
-      guaranteeInsurers: this.editForm.get(['guaranteeInsurers'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      branchCode: this.editForm.get(['branchCode'])!.value,
-      collateralType: this.editForm.get(['collateralType'])!.value,
-      countyCode: this.editForm.get(['countyCode'])!.value,
-    };
   }
 }

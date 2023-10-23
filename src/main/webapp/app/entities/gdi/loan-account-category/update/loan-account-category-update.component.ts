@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ILoanAccountCategory, LoanAccountCategory } from '../loan-account-category.model';
+import { LoanAccountCategoryFormService, LoanAccountCategoryFormGroup } from './loan-account-category-form.service';
+import { ILoanAccountCategory } from '../loan-account-category.model';
 import { LoanAccountCategoryService } from '../service/loan-account-category.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -36,27 +18,25 @@ import { LoanAccountMutationTypes } from 'app/entities/enumerations/loan-account
 })
 export class LoanAccountCategoryUpdateComponent implements OnInit {
   isSaving = false;
+  loanAccountCategory: ILoanAccountCategory | null = null;
   loanAccountMutationTypesValues = Object.keys(LoanAccountMutationTypes);
 
-  editForm = this.fb.group({
-    id: [],
-    loanAccountMutationCode: [null, [Validators.required]],
-    loanAccountMutationType: [null, [Validators.required]],
-    loanAccountMutationDetails: [null, [Validators.required]],
-    loanAccountMutationDescription: [],
-  });
+  editForm: LoanAccountCategoryFormGroup = this.loanAccountCategoryFormService.createLoanAccountCategoryFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected loanAccountCategoryService: LoanAccountCategoryService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected loanAccountCategoryFormService: LoanAccountCategoryFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ loanAccountCategory }) => {
-      this.updateForm(loanAccountCategory);
+      this.loanAccountCategory = loanAccountCategory;
+      if (loanAccountCategory) {
+        this.updateForm(loanAccountCategory);
+      }
     });
   }
 
@@ -71,7 +51,7 @@ export class LoanAccountCategoryUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -81,8 +61,8 @@ export class LoanAccountCategoryUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const loanAccountCategory = this.createFromForm();
-    if (loanAccountCategory.id !== undefined) {
+    const loanAccountCategory = this.loanAccountCategoryFormService.getLoanAccountCategory(this.editForm);
+    if (loanAccountCategory.id !== null) {
       this.subscribeToSaveResponse(this.loanAccountCategoryService.update(loanAccountCategory));
     } else {
       this.subscribeToSaveResponse(this.loanAccountCategoryService.create(loanAccountCategory));
@@ -90,10 +70,10 @@ export class LoanAccountCategoryUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ILoanAccountCategory>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -109,23 +89,7 @@ export class LoanAccountCategoryUpdateComponent implements OnInit {
   }
 
   protected updateForm(loanAccountCategory: ILoanAccountCategory): void {
-    this.editForm.patchValue({
-      id: loanAccountCategory.id,
-      loanAccountMutationCode: loanAccountCategory.loanAccountMutationCode,
-      loanAccountMutationType: loanAccountCategory.loanAccountMutationType,
-      loanAccountMutationDetails: loanAccountCategory.loanAccountMutationDetails,
-      loanAccountMutationDescription: loanAccountCategory.loanAccountMutationDescription,
-    });
-  }
-
-  protected createFromForm(): ILoanAccountCategory {
-    return {
-      ...new LoanAccountCategory(),
-      id: this.editForm.get(['id'])!.value,
-      loanAccountMutationCode: this.editForm.get(['loanAccountMutationCode'])!.value,
-      loanAccountMutationType: this.editForm.get(['loanAccountMutationType'])!.value,
-      loanAccountMutationDetails: this.editForm.get(['loanAccountMutationDetails'])!.value,
-      loanAccountMutationDescription: this.editForm.get(['loanAccountMutationDescription'])!.value,
-    };
+    this.loanAccountCategory = loanAccountCategory;
+    this.loanAccountCategoryFormService.resetForm(this.editForm, loanAccountCategory);
   }
 }

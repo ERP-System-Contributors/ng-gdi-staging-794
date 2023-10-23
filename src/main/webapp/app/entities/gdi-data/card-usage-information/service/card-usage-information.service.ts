@@ -1,33 +1,27 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICardUsageInformation, getCardUsageInformationIdentifier } from '../card-usage-information.model';
+import { ICardUsageInformation, NewCardUsageInformation } from '../card-usage-information.model';
+
+export type PartialUpdateCardUsageInformation = Partial<ICardUsageInformation> & Pick<ICardUsageInformation, 'id'>;
+
+type RestOf<T extends ICardUsageInformation | NewCardUsageInformation> = Omit<T, 'reportingDate'> & {
+  reportingDate?: string | null;
+};
+
+export type RestCardUsageInformation = RestOf<ICardUsageInformation>;
+
+export type NewRestCardUsageInformation = RestOf<NewCardUsageInformation>;
+
+export type PartialUpdateRestCardUsageInformation = RestOf<PartialUpdateCardUsageInformation>;
 
 export type EntityResponseType = HttpResponse<ICardUsageInformation>;
 export type EntityArrayResponseType = HttpResponse<ICardUsageInformation[]>;
@@ -39,42 +33,42 @@ export class CardUsageInformationService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(cardUsageInformation: ICardUsageInformation): Observable<EntityResponseType> {
+  create(cardUsageInformation: NewCardUsageInformation): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardUsageInformation);
     return this.http
-      .post<ICardUsageInformation>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestCardUsageInformation>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(cardUsageInformation: ICardUsageInformation): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardUsageInformation);
     return this.http
-      .put<ICardUsageInformation>(`${this.resourceUrl}/${getCardUsageInformationIdentifier(cardUsageInformation) as number}`, copy, {
+      .put<RestCardUsageInformation>(`${this.resourceUrl}/${this.getCardUsageInformationIdentifier(cardUsageInformation)}`, copy, {
         observe: 'response',
       })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(cardUsageInformation: ICardUsageInformation): Observable<EntityResponseType> {
+  partialUpdate(cardUsageInformation: PartialUpdateCardUsageInformation): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(cardUsageInformation);
     return this.http
-      .patch<ICardUsageInformation>(`${this.resourceUrl}/${getCardUsageInformationIdentifier(cardUsageInformation) as number}`, copy, {
+      .patch<RestCardUsageInformation>(`${this.resourceUrl}/${this.getCardUsageInformationIdentifier(cardUsageInformation)}`, copy, {
         observe: 'response',
       })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<ICardUsageInformation>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestCardUsageInformation>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<ICardUsageInformation[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestCardUsageInformation[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -84,22 +78,30 @@ export class CardUsageInformationService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<ICardUsageInformation[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestCardUsageInformation[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addCardUsageInformationToCollectionIfMissing(
-    cardUsageInformationCollection: ICardUsageInformation[],
-    ...cardUsageInformationsToCheck: (ICardUsageInformation | null | undefined)[]
-  ): ICardUsageInformation[] {
-    const cardUsageInformations: ICardUsageInformation[] = cardUsageInformationsToCheck.filter(isPresent);
+  getCardUsageInformationIdentifier(cardUsageInformation: Pick<ICardUsageInformation, 'id'>): number {
+    return cardUsageInformation.id;
+  }
+
+  compareCardUsageInformation(o1: Pick<ICardUsageInformation, 'id'> | null, o2: Pick<ICardUsageInformation, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCardUsageInformationIdentifier(o1) === this.getCardUsageInformationIdentifier(o2) : o1 === o2;
+  }
+
+  addCardUsageInformationToCollectionIfMissing<Type extends Pick<ICardUsageInformation, 'id'>>(
+    cardUsageInformationCollection: Type[],
+    ...cardUsageInformationsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const cardUsageInformations: Type[] = cardUsageInformationsToCheck.filter(isPresent);
     if (cardUsageInformations.length > 0) {
       const cardUsageInformationCollectionIdentifiers = cardUsageInformationCollection.map(
-        cardUsageInformationItem => getCardUsageInformationIdentifier(cardUsageInformationItem)!
+        cardUsageInformationItem => this.getCardUsageInformationIdentifier(cardUsageInformationItem)!
       );
       const cardUsageInformationsToAdd = cardUsageInformations.filter(cardUsageInformationItem => {
-        const cardUsageInformationIdentifier = getCardUsageInformationIdentifier(cardUsageInformationItem);
-        if (cardUsageInformationIdentifier == null || cardUsageInformationCollectionIdentifiers.includes(cardUsageInformationIdentifier)) {
+        const cardUsageInformationIdentifier = this.getCardUsageInformationIdentifier(cardUsageInformationItem);
+        if (cardUsageInformationCollectionIdentifiers.includes(cardUsageInformationIdentifier)) {
           return false;
         }
         cardUsageInformationCollectionIdentifiers.push(cardUsageInformationIdentifier);
@@ -110,25 +112,31 @@ export class CardUsageInformationService {
     return cardUsageInformationCollection;
   }
 
-  protected convertDateFromClient(cardUsageInformation: ICardUsageInformation): ICardUsageInformation {
-    return Object.assign({}, cardUsageInformation, {
-      reportingDate: cardUsageInformation.reportingDate?.isValid() ? cardUsageInformation.reportingDate.format(DATE_FORMAT) : undefined,
+  protected convertDateFromClient<T extends ICardUsageInformation | NewCardUsageInformation | PartialUpdateCardUsageInformation>(
+    cardUsageInformation: T
+  ): RestOf<T> {
+    return {
+      ...cardUsageInformation,
+      reportingDate: cardUsageInformation.reportingDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restCardUsageInformation: RestCardUsageInformation): ICardUsageInformation {
+    return {
+      ...restCardUsageInformation,
+      reportingDate: restCardUsageInformation.reportingDate ? dayjs(restCardUsageInformation.reportingDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestCardUsageInformation>): HttpResponse<ICardUsageInformation> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.reportingDate = res.body.reportingDate ? dayjs(res.body.reportingDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((cardUsageInformation: ICardUsageInformation) => {
-        cardUsageInformation.reportingDate = cardUsageInformation.reportingDate ? dayjs(cardUsageInformation.reportingDate) : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestCardUsageInformation[]>): HttpResponse<ICardUsageInformation[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

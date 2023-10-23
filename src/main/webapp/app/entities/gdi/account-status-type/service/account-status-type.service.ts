@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IAccountStatusType, getAccountStatusTypeIdentifier } from '../account-status-type.model';
+import { IAccountStatusType, NewAccountStatusType } from '../account-status-type.model';
+
+export type PartialUpdateAccountStatusType = Partial<IAccountStatusType> & Pick<IAccountStatusType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAccountStatusType>;
 export type EntityArrayResponseType = HttpResponse<IAccountStatusType[]>;
@@ -36,21 +20,21 @@ export class AccountStatusTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(accountStatusType: IAccountStatusType): Observable<EntityResponseType> {
+  create(accountStatusType: NewAccountStatusType): Observable<EntityResponseType> {
     return this.http.post<IAccountStatusType>(this.resourceUrl, accountStatusType, { observe: 'response' });
   }
 
   update(accountStatusType: IAccountStatusType): Observable<EntityResponseType> {
     return this.http.put<IAccountStatusType>(
-      `${this.resourceUrl}/${getAccountStatusTypeIdentifier(accountStatusType) as number}`,
+      `${this.resourceUrl}/${this.getAccountStatusTypeIdentifier(accountStatusType)}`,
       accountStatusType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(accountStatusType: IAccountStatusType): Observable<EntityResponseType> {
+  partialUpdate(accountStatusType: PartialUpdateAccountStatusType): Observable<EntityResponseType> {
     return this.http.patch<IAccountStatusType>(
-      `${this.resourceUrl}/${getAccountStatusTypeIdentifier(accountStatusType) as number}`,
+      `${this.resourceUrl}/${this.getAccountStatusTypeIdentifier(accountStatusType)}`,
       accountStatusType,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class AccountStatusTypeService {
     return this.http.get<IAccountStatusType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAccountStatusTypeToCollectionIfMissing(
-    accountStatusTypeCollection: IAccountStatusType[],
-    ...accountStatusTypesToCheck: (IAccountStatusType | null | undefined)[]
-  ): IAccountStatusType[] {
-    const accountStatusTypes: IAccountStatusType[] = accountStatusTypesToCheck.filter(isPresent);
+  getAccountStatusTypeIdentifier(accountStatusType: Pick<IAccountStatusType, 'id'>): number {
+    return accountStatusType.id;
+  }
+
+  compareAccountStatusType(o1: Pick<IAccountStatusType, 'id'> | null, o2: Pick<IAccountStatusType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getAccountStatusTypeIdentifier(o1) === this.getAccountStatusTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addAccountStatusTypeToCollectionIfMissing<Type extends Pick<IAccountStatusType, 'id'>>(
+    accountStatusTypeCollection: Type[],
+    ...accountStatusTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const accountStatusTypes: Type[] = accountStatusTypesToCheck.filter(isPresent);
     if (accountStatusTypes.length > 0) {
       const accountStatusTypeCollectionIdentifiers = accountStatusTypeCollection.map(
-        accountStatusTypeItem => getAccountStatusTypeIdentifier(accountStatusTypeItem)!
+        accountStatusTypeItem => this.getAccountStatusTypeIdentifier(accountStatusTypeItem)!
       );
       const accountStatusTypesToAdd = accountStatusTypes.filter(accountStatusTypeItem => {
-        const accountStatusTypeIdentifier = getAccountStatusTypeIdentifier(accountStatusTypeItem);
-        if (accountStatusTypeIdentifier == null || accountStatusTypeCollectionIdentifiers.includes(accountStatusTypeIdentifier)) {
+        const accountStatusTypeIdentifier = this.getAccountStatusTypeIdentifier(accountStatusTypeItem);
+        if (accountStatusTypeCollectionIdentifiers.includes(accountStatusTypeIdentifier)) {
           return false;
         }
         accountStatusTypeCollectionIdentifiers.push(accountStatusTypeIdentifier);

@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CardAcquiringTransactionFormService } from './card-acquiring-transaction-form.service';
 import { CardAcquiringTransactionService } from '../service/card-acquiring-transaction.service';
-import { ICardAcquiringTransaction, CardAcquiringTransaction } from '../card-acquiring-transaction.model';
+import { ICardAcquiringTransaction } from '../card-acquiring-transaction.model';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
 import { IChannelType } from 'app/entities/gdi/channel-type/channel-type.model';
@@ -44,6 +26,7 @@ describe('CardAcquiringTransaction Management Update Component', () => {
   let comp: CardAcquiringTransactionUpdateComponent;
   let fixture: ComponentFixture<CardAcquiringTransactionUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let cardAcquiringTransactionFormService: CardAcquiringTransactionFormService;
   let cardAcquiringTransactionService: CardAcquiringTransactionService;
   let institutionCodeService: InstitutionCodeService;
   let channelTypeService: ChannelTypeService;
@@ -53,15 +36,24 @@ describe('CardAcquiringTransaction Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CardAcquiringTransactionUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CardAcquiringTransactionUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CardAcquiringTransactionUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    cardAcquiringTransactionFormService = TestBed.inject(CardAcquiringTransactionFormService);
     cardAcquiringTransactionService = TestBed.inject(CardAcquiringTransactionService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
     channelTypeService = TestBed.inject(ChannelTypeService);
@@ -90,7 +82,7 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -110,7 +102,10 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       comp.ngOnInit();
 
       expect(channelTypeService.query).toHaveBeenCalled();
-      expect(channelTypeService.addChannelTypeToCollectionIfMissing).toHaveBeenCalledWith(channelTypeCollection, ...additionalChannelTypes);
+      expect(channelTypeService.addChannelTypeToCollectionIfMissing).toHaveBeenCalledWith(
+        channelTypeCollection,
+        ...additionalChannelTypes.map(expect.objectContaining)
+      );
       expect(comp.channelTypesSharedCollection).toEqual(expectedCollection);
     });
 
@@ -131,7 +126,7 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       expect(cardBrandTypeService.query).toHaveBeenCalled();
       expect(cardBrandTypeService.addCardBrandTypeToCollectionIfMissing).toHaveBeenCalledWith(
         cardBrandTypeCollection,
-        ...additionalCardBrandTypes
+        ...additionalCardBrandTypes.map(expect.objectContaining)
       );
       expect(comp.cardBrandTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -153,7 +148,7 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       expect(isoCurrencyCodeService.query).toHaveBeenCalled();
       expect(isoCurrencyCodeService.addIsoCurrencyCodeToCollectionIfMissing).toHaveBeenCalledWith(
         isoCurrencyCodeCollection,
-        ...additionalIsoCurrencyCodes
+        ...additionalIsoCurrencyCodes.map(expect.objectContaining)
       );
       expect(comp.isoCurrencyCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -175,7 +170,7 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       expect(cardCategoryTypeService.query).toHaveBeenCalled();
       expect(cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing).toHaveBeenCalledWith(
         cardCategoryTypeCollection,
-        ...additionalCardCategoryTypes
+        ...additionalCardCategoryTypes.map(expect.objectContaining)
       );
       expect(comp.cardCategoryTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -196,20 +191,21 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       activatedRoute.data = of({ cardAcquiringTransaction });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(cardAcquiringTransaction));
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.channelTypesSharedCollection).toContain(channelType);
       expect(comp.cardBrandTypesSharedCollection).toContain(cardBrandType);
       expect(comp.isoCurrencyCodesSharedCollection).toContain(currencyOfTransaction);
       expect(comp.cardCategoryTypesSharedCollection).toContain(cardIssuerCategory);
+      expect(comp.cardAcquiringTransaction).toEqual(cardAcquiringTransaction);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardAcquiringTransaction>>();
+      const saveSubject = new Subject<HttpResponse<ICardAcquiringTransaction>>();
       const cardAcquiringTransaction = { id: 123 };
+      jest.spyOn(cardAcquiringTransactionFormService, 'getCardAcquiringTransaction').mockReturnValue(cardAcquiringTransaction);
       jest.spyOn(cardAcquiringTransactionService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ cardAcquiringTransaction });
@@ -222,18 +218,20 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(cardAcquiringTransactionFormService.getCardAcquiringTransaction).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(cardAcquiringTransactionService.update).toHaveBeenCalledWith(cardAcquiringTransaction);
+      expect(cardAcquiringTransactionService.update).toHaveBeenCalledWith(expect.objectContaining(cardAcquiringTransaction));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardAcquiringTransaction>>();
-      const cardAcquiringTransaction = new CardAcquiringTransaction();
+      const saveSubject = new Subject<HttpResponse<ICardAcquiringTransaction>>();
+      const cardAcquiringTransaction = { id: 123 };
+      jest.spyOn(cardAcquiringTransactionFormService, 'getCardAcquiringTransaction').mockReturnValue({ id: null });
       jest.spyOn(cardAcquiringTransactionService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ cardAcquiringTransaction });
+      activatedRoute.data = of({ cardAcquiringTransaction: null });
       comp.ngOnInit();
 
       // WHEN
@@ -243,14 +241,15 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(cardAcquiringTransactionService.create).toHaveBeenCalledWith(cardAcquiringTransaction);
+      expect(cardAcquiringTransactionFormService.getCardAcquiringTransaction).toHaveBeenCalled();
+      expect(cardAcquiringTransactionService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardAcquiringTransaction>>();
+      const saveSubject = new Subject<HttpResponse<ICardAcquiringTransaction>>();
       const cardAcquiringTransaction = { id: 123 };
       jest.spyOn(cardAcquiringTransactionService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -263,50 +262,60 @@ describe('CardAcquiringTransaction Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(cardAcquiringTransactionService.update).toHaveBeenCalledWith(cardAcquiringTransaction);
+      expect(cardAcquiringTransactionService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackChannelTypeById', () => {
-      it('Should return tracked ChannelType primary key', () => {
+    describe('compareChannelType', () => {
+      it('Should forward to channelTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackChannelTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(channelTypeService, 'compareChannelType');
+        comp.compareChannelType(entity, entity2);
+        expect(channelTypeService.compareChannelType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardBrandTypeById', () => {
-      it('Should return tracked CardBrandType primary key', () => {
+    describe('compareCardBrandType', () => {
+      it('Should forward to cardBrandTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardBrandTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardBrandTypeService, 'compareCardBrandType');
+        comp.compareCardBrandType(entity, entity2);
+        expect(cardBrandTypeService.compareCardBrandType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackIsoCurrencyCodeById', () => {
-      it('Should return tracked IsoCurrencyCode primary key', () => {
+    describe('compareIsoCurrencyCode', () => {
+      it('Should forward to isoCurrencyCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackIsoCurrencyCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(isoCurrencyCodeService, 'compareIsoCurrencyCode');
+        comp.compareIsoCurrencyCode(entity, entity2);
+        expect(isoCurrencyCodeService.compareIsoCurrencyCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardCategoryTypeById', () => {
-      it('Should return tracked CardCategoryType primary key', () => {
+    describe('compareCardCategoryType', () => {
+      it('Should forward to cardCategoryTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardCategoryTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardCategoryTypeService, 'compareCardCategoryType');
+        comp.compareCardCategoryType(entity, entity2);
+        expect(cardCategoryTypeService.compareCardCategoryType).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

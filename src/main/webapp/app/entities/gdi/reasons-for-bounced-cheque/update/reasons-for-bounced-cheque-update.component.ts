@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IReasonsForBouncedCheque, ReasonsForBouncedCheque } from '../reasons-for-bounced-cheque.model';
+import { ReasonsForBouncedChequeFormService, ReasonsForBouncedChequeFormGroup } from './reasons-for-bounced-cheque-form.service';
+import { IReasonsForBouncedCheque } from '../reasons-for-bounced-cheque.model';
 import { ReasonsForBouncedChequeService } from '../service/reasons-for-bounced-cheque.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { ReasonsForBouncedChequeService } from '../service/reasons-for-bounced-c
 })
 export class ReasonsForBouncedChequeUpdateComponent implements OnInit {
   isSaving = false;
+  reasonsForBouncedCheque: IReasonsForBouncedCheque | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    bouncedChequeReasonsTypeCode: [null, [Validators.required]],
-    bouncedChequeReasonsType: [],
-  });
+  editForm: ReasonsForBouncedChequeFormGroup = this.reasonsForBouncedChequeFormService.createReasonsForBouncedChequeFormGroup();
 
   constructor(
     protected reasonsForBouncedChequeService: ReasonsForBouncedChequeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected reasonsForBouncedChequeFormService: ReasonsForBouncedChequeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ reasonsForBouncedCheque }) => {
-      this.updateForm(reasonsForBouncedCheque);
+      this.reasonsForBouncedCheque = reasonsForBouncedCheque;
+      if (reasonsForBouncedCheque) {
+        this.updateForm(reasonsForBouncedCheque);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class ReasonsForBouncedChequeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const reasonsForBouncedCheque = this.createFromForm();
-    if (reasonsForBouncedCheque.id !== undefined) {
+    const reasonsForBouncedCheque = this.reasonsForBouncedChequeFormService.getReasonsForBouncedCheque(this.editForm);
+    if (reasonsForBouncedCheque.id !== null) {
       this.subscribeToSaveResponse(this.reasonsForBouncedChequeService.update(reasonsForBouncedCheque));
     } else {
       this.subscribeToSaveResponse(this.reasonsForBouncedChequeService.create(reasonsForBouncedCheque));
@@ -66,10 +48,10 @@ export class ReasonsForBouncedChequeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IReasonsForBouncedCheque>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class ReasonsForBouncedChequeUpdateComponent implements OnInit {
   }
 
   protected updateForm(reasonsForBouncedCheque: IReasonsForBouncedCheque): void {
-    this.editForm.patchValue({
-      id: reasonsForBouncedCheque.id,
-      bouncedChequeReasonsTypeCode: reasonsForBouncedCheque.bouncedChequeReasonsTypeCode,
-      bouncedChequeReasonsType: reasonsForBouncedCheque.bouncedChequeReasonsType,
-    });
-  }
-
-  protected createFromForm(): IReasonsForBouncedCheque {
-    return {
-      ...new ReasonsForBouncedCheque(),
-      id: this.editForm.get(['id'])!.value,
-      bouncedChequeReasonsTypeCode: this.editForm.get(['bouncedChequeReasonsTypeCode'])!.value,
-      bouncedChequeReasonsType: this.editForm.get(['bouncedChequeReasonsType'])!.value,
-    };
+    this.reasonsForBouncedCheque = reasonsForBouncedCheque;
+    this.reasonsForBouncedChequeFormService.resetForm(this.editForm, reasonsForBouncedCheque);
   }
 }

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICounterpartyType, getCounterpartyTypeIdentifier } from '../counterparty-type.model';
+import { ICounterpartyType, NewCounterpartyType } from '../counterparty-type.model';
+
+export type PartialUpdateCounterpartyType = Partial<ICounterpartyType> & Pick<ICounterpartyType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICounterpartyType>;
 export type EntityArrayResponseType = HttpResponse<ICounterpartyType[]>;
@@ -36,21 +20,21 @@ export class CounterpartyTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(counterpartyType: ICounterpartyType): Observable<EntityResponseType> {
+  create(counterpartyType: NewCounterpartyType): Observable<EntityResponseType> {
     return this.http.post<ICounterpartyType>(this.resourceUrl, counterpartyType, { observe: 'response' });
   }
 
   update(counterpartyType: ICounterpartyType): Observable<EntityResponseType> {
     return this.http.put<ICounterpartyType>(
-      `${this.resourceUrl}/${getCounterpartyTypeIdentifier(counterpartyType) as number}`,
+      `${this.resourceUrl}/${this.getCounterpartyTypeIdentifier(counterpartyType)}`,
       counterpartyType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(counterpartyType: ICounterpartyType): Observable<EntityResponseType> {
+  partialUpdate(counterpartyType: PartialUpdateCounterpartyType): Observable<EntityResponseType> {
     return this.http.patch<ICounterpartyType>(
-      `${this.resourceUrl}/${getCounterpartyTypeIdentifier(counterpartyType) as number}`,
+      `${this.resourceUrl}/${this.getCounterpartyTypeIdentifier(counterpartyType)}`,
       counterpartyType,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class CounterpartyTypeService {
     return this.http.get<ICounterpartyType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCounterpartyTypeToCollectionIfMissing(
-    counterpartyTypeCollection: ICounterpartyType[],
-    ...counterpartyTypesToCheck: (ICounterpartyType | null | undefined)[]
-  ): ICounterpartyType[] {
-    const counterpartyTypes: ICounterpartyType[] = counterpartyTypesToCheck.filter(isPresent);
+  getCounterpartyTypeIdentifier(counterpartyType: Pick<ICounterpartyType, 'id'>): number {
+    return counterpartyType.id;
+  }
+
+  compareCounterpartyType(o1: Pick<ICounterpartyType, 'id'> | null, o2: Pick<ICounterpartyType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCounterpartyTypeIdentifier(o1) === this.getCounterpartyTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCounterpartyTypeToCollectionIfMissing<Type extends Pick<ICounterpartyType, 'id'>>(
+    counterpartyTypeCollection: Type[],
+    ...counterpartyTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const counterpartyTypes: Type[] = counterpartyTypesToCheck.filter(isPresent);
     if (counterpartyTypes.length > 0) {
       const counterpartyTypeCollectionIdentifiers = counterpartyTypeCollection.map(
-        counterpartyTypeItem => getCounterpartyTypeIdentifier(counterpartyTypeItem)!
+        counterpartyTypeItem => this.getCounterpartyTypeIdentifier(counterpartyTypeItem)!
       );
       const counterpartyTypesToAdd = counterpartyTypes.filter(counterpartyTypeItem => {
-        const counterpartyTypeIdentifier = getCounterpartyTypeIdentifier(counterpartyTypeItem);
-        if (counterpartyTypeIdentifier == null || counterpartyTypeCollectionIdentifiers.includes(counterpartyTypeIdentifier)) {
+        const counterpartyTypeIdentifier = this.getCounterpartyTypeIdentifier(counterpartyTypeItem);
+        if (counterpartyTypeCollectionIdentifiers.includes(counterpartyTypeIdentifier)) {
           return false;
         }
         counterpartyTypeCollectionIdentifiers.push(counterpartyTypeIdentifier);

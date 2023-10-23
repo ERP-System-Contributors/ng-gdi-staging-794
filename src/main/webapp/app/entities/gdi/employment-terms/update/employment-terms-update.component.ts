@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IEmploymentTerms, EmploymentTerms } from '../employment-terms.model';
+import { EmploymentTermsFormService, EmploymentTermsFormGroup } from './employment-terms-form.service';
+import { IEmploymentTerms } from '../employment-terms.model';
 import { EmploymentTermsService } from '../service/employment-terms.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { EmploymentTermsService } from '../service/employment-terms.service';
 })
 export class EmploymentTermsUpdateComponent implements OnInit {
   isSaving = false;
+  employmentTerms: IEmploymentTerms | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    employmentTermsCode: [null, [Validators.required]],
-    employmentTermsStatus: [null, [Validators.required]],
-  });
+  editForm: EmploymentTermsFormGroup = this.employmentTermsFormService.createEmploymentTermsFormGroup();
 
   constructor(
     protected employmentTermsService: EmploymentTermsService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected employmentTermsFormService: EmploymentTermsFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ employmentTerms }) => {
-      this.updateForm(employmentTerms);
+      this.employmentTerms = employmentTerms;
+      if (employmentTerms) {
+        this.updateForm(employmentTerms);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class EmploymentTermsUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const employmentTerms = this.createFromForm();
-    if (employmentTerms.id !== undefined) {
+    const employmentTerms = this.employmentTermsFormService.getEmploymentTerms(this.editForm);
+    if (employmentTerms.id !== null) {
       this.subscribeToSaveResponse(this.employmentTermsService.update(employmentTerms));
     } else {
       this.subscribeToSaveResponse(this.employmentTermsService.create(employmentTerms));
@@ -66,10 +48,10 @@ export class EmploymentTermsUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IEmploymentTerms>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class EmploymentTermsUpdateComponent implements OnInit {
   }
 
   protected updateForm(employmentTerms: IEmploymentTerms): void {
-    this.editForm.patchValue({
-      id: employmentTerms.id,
-      employmentTermsCode: employmentTerms.employmentTermsCode,
-      employmentTermsStatus: employmentTerms.employmentTermsStatus,
-    });
-  }
-
-  protected createFromForm(): IEmploymentTerms {
-    return {
-      ...new EmploymentTerms(),
-      id: this.editForm.get(['id'])!.value,
-      employmentTermsCode: this.editForm.get(['employmentTermsCode'])!.value,
-      employmentTermsStatus: this.editForm.get(['employmentTermsStatus'])!.value,
-    };
+    this.employmentTerms = employmentTerms;
+    this.employmentTermsFormService.resetForm(this.editForm, employmentTerms);
   }
 }

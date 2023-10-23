@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbComplaintStatusType, getCrbComplaintStatusTypeIdentifier } from '../crb-complaint-status-type.model';
+import { ICrbComplaintStatusType, NewCrbComplaintStatusType } from '../crb-complaint-status-type.model';
+
+export type PartialUpdateCrbComplaintStatusType = Partial<ICrbComplaintStatusType> & Pick<ICrbComplaintStatusType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbComplaintStatusType>;
 export type EntityArrayResponseType = HttpResponse<ICrbComplaintStatusType[]>;
@@ -36,21 +20,21 @@ export class CrbComplaintStatusTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbComplaintStatusType: ICrbComplaintStatusType): Observable<EntityResponseType> {
+  create(crbComplaintStatusType: NewCrbComplaintStatusType): Observable<EntityResponseType> {
     return this.http.post<ICrbComplaintStatusType>(this.resourceUrl, crbComplaintStatusType, { observe: 'response' });
   }
 
   update(crbComplaintStatusType: ICrbComplaintStatusType): Observable<EntityResponseType> {
     return this.http.put<ICrbComplaintStatusType>(
-      `${this.resourceUrl}/${getCrbComplaintStatusTypeIdentifier(crbComplaintStatusType) as number}`,
+      `${this.resourceUrl}/${this.getCrbComplaintStatusTypeIdentifier(crbComplaintStatusType)}`,
       crbComplaintStatusType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(crbComplaintStatusType: ICrbComplaintStatusType): Observable<EntityResponseType> {
+  partialUpdate(crbComplaintStatusType: PartialUpdateCrbComplaintStatusType): Observable<EntityResponseType> {
     return this.http.patch<ICrbComplaintStatusType>(
-      `${this.resourceUrl}/${getCrbComplaintStatusTypeIdentifier(crbComplaintStatusType) as number}`,
+      `${this.resourceUrl}/${this.getCrbComplaintStatusTypeIdentifier(crbComplaintStatusType)}`,
       crbComplaintStatusType,
       { observe: 'response' }
     );
@@ -74,21 +58,26 @@ export class CrbComplaintStatusTypeService {
     return this.http.get<ICrbComplaintStatusType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbComplaintStatusTypeToCollectionIfMissing(
-    crbComplaintStatusTypeCollection: ICrbComplaintStatusType[],
-    ...crbComplaintStatusTypesToCheck: (ICrbComplaintStatusType | null | undefined)[]
-  ): ICrbComplaintStatusType[] {
-    const crbComplaintStatusTypes: ICrbComplaintStatusType[] = crbComplaintStatusTypesToCheck.filter(isPresent);
+  getCrbComplaintStatusTypeIdentifier(crbComplaintStatusType: Pick<ICrbComplaintStatusType, 'id'>): number {
+    return crbComplaintStatusType.id;
+  }
+
+  compareCrbComplaintStatusType(o1: Pick<ICrbComplaintStatusType, 'id'> | null, o2: Pick<ICrbComplaintStatusType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCrbComplaintStatusTypeIdentifier(o1) === this.getCrbComplaintStatusTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbComplaintStatusTypeToCollectionIfMissing<Type extends Pick<ICrbComplaintStatusType, 'id'>>(
+    crbComplaintStatusTypeCollection: Type[],
+    ...crbComplaintStatusTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbComplaintStatusTypes: Type[] = crbComplaintStatusTypesToCheck.filter(isPresent);
     if (crbComplaintStatusTypes.length > 0) {
       const crbComplaintStatusTypeCollectionIdentifiers = crbComplaintStatusTypeCollection.map(
-        crbComplaintStatusTypeItem => getCrbComplaintStatusTypeIdentifier(crbComplaintStatusTypeItem)!
+        crbComplaintStatusTypeItem => this.getCrbComplaintStatusTypeIdentifier(crbComplaintStatusTypeItem)!
       );
       const crbComplaintStatusTypesToAdd = crbComplaintStatusTypes.filter(crbComplaintStatusTypeItem => {
-        const crbComplaintStatusTypeIdentifier = getCrbComplaintStatusTypeIdentifier(crbComplaintStatusTypeItem);
-        if (
-          crbComplaintStatusTypeIdentifier == null ||
-          crbComplaintStatusTypeCollectionIdentifiers.includes(crbComplaintStatusTypeIdentifier)
-        ) {
+        const crbComplaintStatusTypeIdentifier = this.getCrbComplaintStatusTypeIdentifier(crbComplaintStatusTypeItem);
+        if (crbComplaintStatusTypeCollectionIdentifiers.includes(crbComplaintStatusTypeIdentifier)) {
           return false;
         }
         crbComplaintStatusTypeCollectionIdentifiers.push(crbComplaintStatusTypeIdentifier);

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ILoanRepaymentFrequency, getLoanRepaymentFrequencyIdentifier } from '../loan-repayment-frequency.model';
+import { ILoanRepaymentFrequency, NewLoanRepaymentFrequency } from '../loan-repayment-frequency.model';
+
+export type PartialUpdateLoanRepaymentFrequency = Partial<ILoanRepaymentFrequency> & Pick<ILoanRepaymentFrequency, 'id'>;
 
 export type EntityResponseType = HttpResponse<ILoanRepaymentFrequency>;
 export type EntityArrayResponseType = HttpResponse<ILoanRepaymentFrequency[]>;
@@ -36,21 +20,21 @@ export class LoanRepaymentFrequencyService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(loanRepaymentFrequency: ILoanRepaymentFrequency): Observable<EntityResponseType> {
+  create(loanRepaymentFrequency: NewLoanRepaymentFrequency): Observable<EntityResponseType> {
     return this.http.post<ILoanRepaymentFrequency>(this.resourceUrl, loanRepaymentFrequency, { observe: 'response' });
   }
 
   update(loanRepaymentFrequency: ILoanRepaymentFrequency): Observable<EntityResponseType> {
     return this.http.put<ILoanRepaymentFrequency>(
-      `${this.resourceUrl}/${getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequency) as number}`,
+      `${this.resourceUrl}/${this.getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequency)}`,
       loanRepaymentFrequency,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(loanRepaymentFrequency: ILoanRepaymentFrequency): Observable<EntityResponseType> {
+  partialUpdate(loanRepaymentFrequency: PartialUpdateLoanRepaymentFrequency): Observable<EntityResponseType> {
     return this.http.patch<ILoanRepaymentFrequency>(
-      `${this.resourceUrl}/${getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequency) as number}`,
+      `${this.resourceUrl}/${this.getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequency)}`,
       loanRepaymentFrequency,
       { observe: 'response' }
     );
@@ -74,21 +58,26 @@ export class LoanRepaymentFrequencyService {
     return this.http.get<ILoanRepaymentFrequency[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addLoanRepaymentFrequencyToCollectionIfMissing(
-    loanRepaymentFrequencyCollection: ILoanRepaymentFrequency[],
-    ...loanRepaymentFrequenciesToCheck: (ILoanRepaymentFrequency | null | undefined)[]
-  ): ILoanRepaymentFrequency[] {
-    const loanRepaymentFrequencies: ILoanRepaymentFrequency[] = loanRepaymentFrequenciesToCheck.filter(isPresent);
+  getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequency: Pick<ILoanRepaymentFrequency, 'id'>): number {
+    return loanRepaymentFrequency.id;
+  }
+
+  compareLoanRepaymentFrequency(o1: Pick<ILoanRepaymentFrequency, 'id'> | null, o2: Pick<ILoanRepaymentFrequency, 'id'> | null): boolean {
+    return o1 && o2 ? this.getLoanRepaymentFrequencyIdentifier(o1) === this.getLoanRepaymentFrequencyIdentifier(o2) : o1 === o2;
+  }
+
+  addLoanRepaymentFrequencyToCollectionIfMissing<Type extends Pick<ILoanRepaymentFrequency, 'id'>>(
+    loanRepaymentFrequencyCollection: Type[],
+    ...loanRepaymentFrequenciesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const loanRepaymentFrequencies: Type[] = loanRepaymentFrequenciesToCheck.filter(isPresent);
     if (loanRepaymentFrequencies.length > 0) {
       const loanRepaymentFrequencyCollectionIdentifiers = loanRepaymentFrequencyCollection.map(
-        loanRepaymentFrequencyItem => getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequencyItem)!
+        loanRepaymentFrequencyItem => this.getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequencyItem)!
       );
       const loanRepaymentFrequenciesToAdd = loanRepaymentFrequencies.filter(loanRepaymentFrequencyItem => {
-        const loanRepaymentFrequencyIdentifier = getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequencyItem);
-        if (
-          loanRepaymentFrequencyIdentifier == null ||
-          loanRepaymentFrequencyCollectionIdentifiers.includes(loanRepaymentFrequencyIdentifier)
-        ) {
+        const loanRepaymentFrequencyIdentifier = this.getLoanRepaymentFrequencyIdentifier(loanRepaymentFrequencyItem);
+        if (loanRepaymentFrequencyCollectionIdentifiers.includes(loanRepaymentFrequencyIdentifier)) {
           return false;
         }
         loanRepaymentFrequencyCollectionIdentifiers.push(loanRepaymentFrequencyIdentifier);

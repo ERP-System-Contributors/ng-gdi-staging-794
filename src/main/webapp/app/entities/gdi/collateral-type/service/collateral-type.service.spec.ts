@@ -1,32 +1,18 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { ICollateralType, CollateralType } from '../collateral-type.model';
+import { ICollateralType } from '../collateral-type.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../collateral-type.test-samples';
 
 import { CollateralTypeService } from './collateral-type.service';
+
+const requireRestSample: ICollateralType = {
+  ...sampleWithRequiredData,
+};
 
 describe('CollateralType Service', () => {
   let service: CollateralTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: ICollateralType;
   let expectedResult: ICollateralType | ICollateralType[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +22,27 @@ describe('CollateralType Service', () => {
     expectedResult = null;
     service = TestBed.inject(CollateralTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      collateralTypeCode: 'AAAAAAA',
-      collateralType: 'AAAAAAA',
-      collateralTypeDescription: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a CollateralType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const collateralType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new CollateralType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(collateralType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +50,11 @@ describe('CollateralType Service', () => {
     });
 
     it('should update a CollateralType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          collateralTypeCode: 'BBBBBB',
-          collateralType: 'BBBBBB',
-          collateralTypeDescription: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const collateralType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(collateralType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,17 +62,9 @@ describe('CollateralType Service', () => {
     });
 
     it('should partial update a CollateralType', () => {
-      const patchObject = Object.assign(
-        {
-          collateralTypeCode: 'BBBBBB',
-          collateralType: 'BBBBBB',
-        },
-        new CollateralType()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -114,72 +74,66 @@ describe('CollateralType Service', () => {
     });
 
     it('should return a list of CollateralType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          collateralTypeCode: 'BBBBBB',
-          collateralType: 'BBBBBB',
-          collateralTypeDescription: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a CollateralType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addCollateralTypeToCollectionIfMissing', () => {
       it('should add a CollateralType to an empty array', () => {
-        const collateralType: ICollateralType = { id: 123 };
+        const collateralType: ICollateralType = sampleWithRequiredData;
         expectedResult = service.addCollateralTypeToCollectionIfMissing([], collateralType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(collateralType);
       });
 
       it('should not add a CollateralType to an array that contains it', () => {
-        const collateralType: ICollateralType = { id: 123 };
+        const collateralType: ICollateralType = sampleWithRequiredData;
         const collateralTypeCollection: ICollateralType[] = [
           {
             ...collateralType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addCollateralTypeToCollectionIfMissing(collateralTypeCollection, collateralType);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a CollateralType to an array that doesn't contain it", () => {
-        const collateralType: ICollateralType = { id: 123 };
-        const collateralTypeCollection: ICollateralType[] = [{ id: 456 }];
+        const collateralType: ICollateralType = sampleWithRequiredData;
+        const collateralTypeCollection: ICollateralType[] = [sampleWithPartialData];
         expectedResult = service.addCollateralTypeToCollectionIfMissing(collateralTypeCollection, collateralType);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(collateralType);
       });
 
       it('should add only unique CollateralType to an array', () => {
-        const collateralTypeArray: ICollateralType[] = [{ id: 123 }, { id: 456 }, { id: 87044 }];
-        const collateralTypeCollection: ICollateralType[] = [{ id: 123 }];
+        const collateralTypeArray: ICollateralType[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const collateralTypeCollection: ICollateralType[] = [sampleWithRequiredData];
         expectedResult = service.addCollateralTypeToCollectionIfMissing(collateralTypeCollection, ...collateralTypeArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const collateralType: ICollateralType = { id: 123 };
-        const collateralType2: ICollateralType = { id: 456 };
+        const collateralType: ICollateralType = sampleWithRequiredData;
+        const collateralType2: ICollateralType = sampleWithPartialData;
         expectedResult = service.addCollateralTypeToCollectionIfMissing([], collateralType, collateralType2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(collateralType);
@@ -187,16 +141,60 @@ describe('CollateralType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const collateralType: ICollateralType = { id: 123 };
+        const collateralType: ICollateralType = sampleWithRequiredData;
         expectedResult = service.addCollateralTypeToCollectionIfMissing([], null, collateralType, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(collateralType);
       });
 
       it('should return initial array if no CollateralType is added', () => {
-        const collateralTypeCollection: ICollateralType[] = [{ id: 123 }];
+        const collateralTypeCollection: ICollateralType[] = [sampleWithRequiredData];
         expectedResult = service.addCollateralTypeToCollectionIfMissing(collateralTypeCollection, undefined, null);
         expect(expectedResult).toEqual(collateralTypeCollection);
+      });
+    });
+
+    describe('compareCollateralType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareCollateralType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareCollateralType(entity1, entity2);
+        const compareResult2 = service.compareCollateralType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareCollateralType(entity1, entity2);
+        const compareResult2 = service.compareCollateralType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareCollateralType(entity1, entity2);
+        const compareResult2 = service.compareCollateralType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231003140605",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "businessReportingDay",
@@ -37,28 +39,27 @@
       "fieldValidateRules": ["required"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "ExchangeRate",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "institutionCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "institutionCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "currencyCode",
+      "otherEntityField": "alphabeticCode",
       "otherEntityName": "isoCurrencyCode",
+      "relationshipName": "currencyCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "alphabeticCode"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "ExchangeRate",
-  "changelogDate": "20231003140605",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

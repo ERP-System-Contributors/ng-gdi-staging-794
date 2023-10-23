@@ -1,26 +1,7 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
 jest.mock('app/core/auth/state-storage.service');
-jest.mock('app/core/tracker/tracker.service');
 
 import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { NgxWebstorageModule } from 'ngx-webstorage';
@@ -28,7 +9,6 @@ import { NgxWebstorageModule } from 'ngx-webstorage';
 import { Account } from 'app/core/auth/account.model';
 import { Authority } from 'app/config/authority.constants';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { TrackerService } from 'app/core/tracker/tracker.service';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 
 import { AccountService } from './account.service';
@@ -52,12 +32,11 @@ describe('Account Service', () => {
   let httpMock: HttpTestingController;
   let mockStorageService: StateStorageService;
   let mockRouter: Router;
-  let mockTrackerService: TrackerService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, NgxWebstorageModule.forRoot()],
-      providers: [TrackerService, StateStorageService, Router],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([]), NgxWebstorageModule.forRoot()],
+      providers: [StateStorageService],
     });
 
     service = TestBed.inject(AccountService);
@@ -65,7 +44,7 @@ describe('Account Service', () => {
     httpMock = TestBed.inject(HttpTestingController);
     mockStorageService = TestBed.inject(StateStorageService);
     mockRouter = TestBed.inject(Router);
-    mockTrackerService = TestBed.inject(TrackerService);
+    jest.spyOn(mockRouter, 'navigateByUrl').mockImplementation(() => Promise.resolve(true));
   });
 
   afterEach(() => {
@@ -99,8 +78,6 @@ describe('Account Service', () => {
       // THEN
       expect(userIdentity).toBeNull();
       expect(service.isAuthenticated()).toBe(false);
-      expect(mockTrackerService.disconnect).toHaveBeenCalled();
-      expect(mockTrackerService.connect).not.toHaveBeenCalled();
     });
 
     it('authenticationState should emit the same account as was in input parameter', () => {
@@ -115,8 +92,6 @@ describe('Account Service', () => {
       // THEN
       expect(userIdentity).toEqual(expectedResult);
       expect(service.isAuthenticated()).toBe(true);
-      expect(mockTrackerService.connect).toHaveBeenCalled();
-      expect(mockTrackerService.disconnect).not.toHaveBeenCalled();
     });
   });
 

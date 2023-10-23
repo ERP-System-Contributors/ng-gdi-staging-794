@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CollateralInformationFormService } from './collateral-information-form.service';
 import { CollateralInformationService } from '../service/collateral-information.service';
-import { ICollateralInformation, CollateralInformation } from '../collateral-information.model';
+import { ICollateralInformation } from '../collateral-information.model';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
 import { IBankBranchCode } from 'app/entities/gdi/bank-branch-code/bank-branch-code.model';
@@ -42,6 +24,7 @@ describe('CollateralInformation Management Update Component', () => {
   let comp: CollateralInformationUpdateComponent;
   let fixture: ComponentFixture<CollateralInformationUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let collateralInformationFormService: CollateralInformationFormService;
   let collateralInformationService: CollateralInformationService;
   let institutionCodeService: InstitutionCodeService;
   let bankBranchCodeService: BankBranchCodeService;
@@ -50,15 +33,24 @@ describe('CollateralInformation Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CollateralInformationUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CollateralInformationUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CollateralInformationUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    collateralInformationFormService = TestBed.inject(CollateralInformationFormService);
     collateralInformationService = TestBed.inject(CollateralInformationService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
     bankBranchCodeService = TestBed.inject(BankBranchCodeService);
@@ -86,7 +78,7 @@ describe('CollateralInformation Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -108,7 +100,7 @@ describe('CollateralInformation Management Update Component', () => {
       expect(bankBranchCodeService.query).toHaveBeenCalled();
       expect(bankBranchCodeService.addBankBranchCodeToCollectionIfMissing).toHaveBeenCalledWith(
         bankBranchCodeCollection,
-        ...additionalBankBranchCodes
+        ...additionalBankBranchCodes.map(expect.objectContaining)
       );
       expect(comp.bankBranchCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -130,7 +122,7 @@ describe('CollateralInformation Management Update Component', () => {
       expect(collateralTypeService.query).toHaveBeenCalled();
       expect(collateralTypeService.addCollateralTypeToCollectionIfMissing).toHaveBeenCalledWith(
         collateralTypeCollection,
-        ...additionalCollateralTypes
+        ...additionalCollateralTypes.map(expect.objectContaining)
       );
       expect(comp.collateralTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -152,7 +144,7 @@ describe('CollateralInformation Management Update Component', () => {
       expect(countySubCountyCodeService.query).toHaveBeenCalled();
       expect(countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing).toHaveBeenCalledWith(
         countySubCountyCodeCollection,
-        ...additionalCountySubCountyCodes
+        ...additionalCountySubCountyCodes.map(expect.objectContaining)
       );
       expect(comp.countySubCountyCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -171,19 +163,20 @@ describe('CollateralInformation Management Update Component', () => {
       activatedRoute.data = of({ collateralInformation });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(collateralInformation));
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.bankBranchCodesSharedCollection).toContain(branchCode);
       expect(comp.collateralTypesSharedCollection).toContain(collateralType);
       expect(comp.countySubCountyCodesSharedCollection).toContain(countyCode);
+      expect(comp.collateralInformation).toEqual(collateralInformation);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CollateralInformation>>();
+      const saveSubject = new Subject<HttpResponse<ICollateralInformation>>();
       const collateralInformation = { id: 123 };
+      jest.spyOn(collateralInformationFormService, 'getCollateralInformation').mockReturnValue(collateralInformation);
       jest.spyOn(collateralInformationService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ collateralInformation });
@@ -196,18 +189,20 @@ describe('CollateralInformation Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(collateralInformationFormService.getCollateralInformation).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(collateralInformationService.update).toHaveBeenCalledWith(collateralInformation);
+      expect(collateralInformationService.update).toHaveBeenCalledWith(expect.objectContaining(collateralInformation));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CollateralInformation>>();
-      const collateralInformation = new CollateralInformation();
+      const saveSubject = new Subject<HttpResponse<ICollateralInformation>>();
+      const collateralInformation = { id: 123 };
+      jest.spyOn(collateralInformationFormService, 'getCollateralInformation').mockReturnValue({ id: null });
       jest.spyOn(collateralInformationService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ collateralInformation });
+      activatedRoute.data = of({ collateralInformation: null });
       comp.ngOnInit();
 
       // WHEN
@@ -217,14 +212,15 @@ describe('CollateralInformation Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(collateralInformationService.create).toHaveBeenCalledWith(collateralInformation);
+      expect(collateralInformationFormService.getCollateralInformation).toHaveBeenCalled();
+      expect(collateralInformationService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CollateralInformation>>();
+      const saveSubject = new Subject<HttpResponse<ICollateralInformation>>();
       const collateralInformation = { id: 123 };
       jest.spyOn(collateralInformationService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -237,42 +233,50 @@ describe('CollateralInformation Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(collateralInformationService.update).toHaveBeenCalledWith(collateralInformation);
+      expect(collateralInformationService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackBankBranchCodeById', () => {
-      it('Should return tracked BankBranchCode primary key', () => {
+    describe('compareBankBranchCode', () => {
+      it('Should forward to bankBranchCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackBankBranchCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(bankBranchCodeService, 'compareBankBranchCode');
+        comp.compareBankBranchCode(entity, entity2);
+        expect(bankBranchCodeService.compareBankBranchCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCollateralTypeById', () => {
-      it('Should return tracked CollateralType primary key', () => {
+    describe('compareCollateralType', () => {
+      it('Should forward to collateralTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCollateralTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(collateralTypeService, 'compareCollateralType');
+        comp.compareCollateralType(entity, entity2);
+        expect(collateralTypeService.compareCollateralType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCountySubCountyCodeById', () => {
-      it('Should return tracked CountySubCountyCode primary key', () => {
+    describe('compareCountySubCountyCode', () => {
+      it('Should forward to countySubCountyCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCountySubCountyCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(countySubCountyCodeService, 'compareCountySubCountyCode');
+        comp.compareCountySubCountyCode(entity, entity2);
+        expect(countySubCountyCodeService.compareCountySubCountyCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

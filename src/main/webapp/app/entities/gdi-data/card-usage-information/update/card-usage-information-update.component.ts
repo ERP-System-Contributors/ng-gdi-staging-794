@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { ICardUsageInformation, CardUsageInformation } from '../card-usage-information.model';
+import { CardUsageInformationFormService, CardUsageInformationFormGroup } from './card-usage-information-form.service';
+import { ICardUsageInformation } from '../card-usage-information.model';
 import { CardUsageInformationService } from '../service/card-usage-information.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -46,6 +28,7 @@ import { CardStateService } from 'app/entities/gdi-data/card-state/service/card-
 })
 export class CardUsageInformationUpdateComponent implements OnInit {
   isSaving = false;
+  cardUsageInformation: ICardUsageInformation | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   cardTypesSharedCollection: ICardTypes[] = [];
@@ -55,24 +38,11 @@ export class CardUsageInformationUpdateComponent implements OnInit {
   channelTypesSharedCollection: IChannelType[] = [];
   cardStatesSharedCollection: ICardState[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    totalNumberOfLiveCards: [null, [Validators.required, Validators.min(0)]],
-    totalActiveCards: [null, [Validators.required, Validators.min(0)]],
-    totalNumberOfTransactionsDone: [null, [Validators.required, Validators.min(0)]],
-    totalValueOfTransactionsDoneInLCY: [null, [Validators.required, Validators.min(0)]],
-    bankCode: [null, Validators.required],
-    cardType: [null, Validators.required],
-    cardBrand: [null, Validators.required],
-    cardCategoryType: [null, Validators.required],
-    transactionType: [null, Validators.required],
-    channelType: [null, Validators.required],
-    cardState: [null, Validators.required],
-  });
+  editForm: CardUsageInformationFormGroup = this.cardUsageInformationFormService.createCardUsageInformationFormGroup();
 
   constructor(
     protected cardUsageInformationService: CardUsageInformationService,
+    protected cardUsageInformationFormService: CardUsageInformationFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected cardTypesService: CardTypesService,
     protected cardBrandTypeService: CardBrandTypeService,
@@ -80,13 +50,33 @@ export class CardUsageInformationUpdateComponent implements OnInit {
     protected bankTransactionTypeService: BankTransactionTypeService,
     protected channelTypeService: ChannelTypeService,
     protected cardStateService: CardStateService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareCardTypes = (o1: ICardTypes | null, o2: ICardTypes | null): boolean => this.cardTypesService.compareCardTypes(o1, o2);
+
+  compareCardBrandType = (o1: ICardBrandType | null, o2: ICardBrandType | null): boolean =>
+    this.cardBrandTypeService.compareCardBrandType(o1, o2);
+
+  compareCardCategoryType = (o1: ICardCategoryType | null, o2: ICardCategoryType | null): boolean =>
+    this.cardCategoryTypeService.compareCardCategoryType(o1, o2);
+
+  compareBankTransactionType = (o1: IBankTransactionType | null, o2: IBankTransactionType | null): boolean =>
+    this.bankTransactionTypeService.compareBankTransactionType(o1, o2);
+
+  compareChannelType = (o1: IChannelType | null, o2: IChannelType | null): boolean => this.channelTypeService.compareChannelType(o1, o2);
+
+  compareCardState = (o1: ICardState | null, o2: ICardState | null): boolean => this.cardStateService.compareCardState(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ cardUsageInformation }) => {
-      this.updateForm(cardUsageInformation);
+      this.cardUsageInformation = cardUsageInformation;
+      if (cardUsageInformation) {
+        this.updateForm(cardUsageInformation);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -98,47 +88,19 @@ export class CardUsageInformationUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const cardUsageInformation = this.createFromForm();
-    if (cardUsageInformation.id !== undefined) {
+    const cardUsageInformation = this.cardUsageInformationFormService.getCardUsageInformation(this.editForm);
+    if (cardUsageInformation.id !== null) {
       this.subscribeToSaveResponse(this.cardUsageInformationService.update(cardUsageInformation));
     } else {
       this.subscribeToSaveResponse(this.cardUsageInformationService.create(cardUsageInformation));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackCardTypesById(index: number, item: ICardTypes): number {
-    return item.id!;
-  }
-
-  trackCardBrandTypeById(index: number, item: ICardBrandType): number {
-    return item.id!;
-  }
-
-  trackCardCategoryTypeById(index: number, item: ICardCategoryType): number {
-    return item.id!;
-  }
-
-  trackBankTransactionTypeById(index: number, item: IBankTransactionType): number {
-    return item.id!;
-  }
-
-  trackChannelTypeById(index: number, item: IChannelType): number {
-    return item.id!;
-  }
-
-  trackCardStateById(index: number, item: ICardState): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICardUsageInformation>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -154,47 +116,35 @@ export class CardUsageInformationUpdateComponent implements OnInit {
   }
 
   protected updateForm(cardUsageInformation: ICardUsageInformation): void {
-    this.editForm.patchValue({
-      id: cardUsageInformation.id,
-      reportingDate: cardUsageInformation.reportingDate,
-      totalNumberOfLiveCards: cardUsageInformation.totalNumberOfLiveCards,
-      totalActiveCards: cardUsageInformation.totalActiveCards,
-      totalNumberOfTransactionsDone: cardUsageInformation.totalNumberOfTransactionsDone,
-      totalValueOfTransactionsDoneInLCY: cardUsageInformation.totalValueOfTransactionsDoneInLCY,
-      bankCode: cardUsageInformation.bankCode,
-      cardType: cardUsageInformation.cardType,
-      cardBrand: cardUsageInformation.cardBrand,
-      cardCategoryType: cardUsageInformation.cardCategoryType,
-      transactionType: cardUsageInformation.transactionType,
-      channelType: cardUsageInformation.channelType,
-      cardState: cardUsageInformation.cardState,
-    });
+    this.cardUsageInformation = cardUsageInformation;
+    this.cardUsageInformationFormService.resetForm(this.editForm, cardUsageInformation);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       cardUsageInformation.bankCode
     );
-    this.cardTypesSharedCollection = this.cardTypesService.addCardTypesToCollectionIfMissing(
+    this.cardTypesSharedCollection = this.cardTypesService.addCardTypesToCollectionIfMissing<ICardTypes>(
       this.cardTypesSharedCollection,
       cardUsageInformation.cardType
     );
-    this.cardBrandTypesSharedCollection = this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing(
+    this.cardBrandTypesSharedCollection = this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing<ICardBrandType>(
       this.cardBrandTypesSharedCollection,
       cardUsageInformation.cardBrand
     );
-    this.cardCategoryTypesSharedCollection = this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing(
+    this.cardCategoryTypesSharedCollection = this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing<ICardCategoryType>(
       this.cardCategoryTypesSharedCollection,
       cardUsageInformation.cardCategoryType
     );
-    this.bankTransactionTypesSharedCollection = this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing(
-      this.bankTransactionTypesSharedCollection,
-      cardUsageInformation.transactionType
-    );
-    this.channelTypesSharedCollection = this.channelTypeService.addChannelTypeToCollectionIfMissing(
+    this.bankTransactionTypesSharedCollection =
+      this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing<IBankTransactionType>(
+        this.bankTransactionTypesSharedCollection,
+        cardUsageInformation.transactionType
+      );
+    this.channelTypesSharedCollection = this.channelTypeService.addChannelTypeToCollectionIfMissing<IChannelType>(
       this.channelTypesSharedCollection,
       cardUsageInformation.channelType
     );
-    this.cardStatesSharedCollection = this.cardStateService.addCardStateToCollectionIfMissing(
+    this.cardStatesSharedCollection = this.cardStateService.addCardStateToCollectionIfMissing<ICardState>(
       this.cardStatesSharedCollection,
       cardUsageInformation.cardState
     );
@@ -206,7 +156,10 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.cardUsageInformation?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -216,7 +169,7 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardTypes[]>) => res.body ?? []))
       .pipe(
         map((cardTypes: ICardTypes[]) =>
-          this.cardTypesService.addCardTypesToCollectionIfMissing(cardTypes, this.editForm.get('cardType')!.value)
+          this.cardTypesService.addCardTypesToCollectionIfMissing<ICardTypes>(cardTypes, this.cardUsageInformation?.cardType)
         )
       )
       .subscribe((cardTypes: ICardTypes[]) => (this.cardTypesSharedCollection = cardTypes));
@@ -226,7 +179,10 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardBrandType[]>) => res.body ?? []))
       .pipe(
         map((cardBrandTypes: ICardBrandType[]) =>
-          this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing(cardBrandTypes, this.editForm.get('cardBrand')!.value)
+          this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing<ICardBrandType>(
+            cardBrandTypes,
+            this.cardUsageInformation?.cardBrand
+          )
         )
       )
       .subscribe((cardBrandTypes: ICardBrandType[]) => (this.cardBrandTypesSharedCollection = cardBrandTypes));
@@ -236,9 +192,9 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardCategoryType[]>) => res.body ?? []))
       .pipe(
         map((cardCategoryTypes: ICardCategoryType[]) =>
-          this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing(
+          this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing<ICardCategoryType>(
             cardCategoryTypes,
-            this.editForm.get('cardCategoryType')!.value
+            this.cardUsageInformation?.cardCategoryType
           )
         )
       )
@@ -249,9 +205,9 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IBankTransactionType[]>) => res.body ?? []))
       .pipe(
         map((bankTransactionTypes: IBankTransactionType[]) =>
-          this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing(
+          this.bankTransactionTypeService.addBankTransactionTypeToCollectionIfMissing<IBankTransactionType>(
             bankTransactionTypes,
-            this.editForm.get('transactionType')!.value
+            this.cardUsageInformation?.transactionType
           )
         )
       )
@@ -262,7 +218,7 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IChannelType[]>) => res.body ?? []))
       .pipe(
         map((channelTypes: IChannelType[]) =>
-          this.channelTypeService.addChannelTypeToCollectionIfMissing(channelTypes, this.editForm.get('channelType')!.value)
+          this.channelTypeService.addChannelTypeToCollectionIfMissing<IChannelType>(channelTypes, this.cardUsageInformation?.channelType)
         )
       )
       .subscribe((channelTypes: IChannelType[]) => (this.channelTypesSharedCollection = channelTypes));
@@ -272,28 +228,9 @@ export class CardUsageInformationUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardState[]>) => res.body ?? []))
       .pipe(
         map((cardStates: ICardState[]) =>
-          this.cardStateService.addCardStateToCollectionIfMissing(cardStates, this.editForm.get('cardState')!.value)
+          this.cardStateService.addCardStateToCollectionIfMissing<ICardState>(cardStates, this.cardUsageInformation?.cardState)
         )
       )
       .subscribe((cardStates: ICardState[]) => (this.cardStatesSharedCollection = cardStates));
-  }
-
-  protected createFromForm(): ICardUsageInformation {
-    return {
-      ...new CardUsageInformation(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      totalNumberOfLiveCards: this.editForm.get(['totalNumberOfLiveCards'])!.value,
-      totalActiveCards: this.editForm.get(['totalActiveCards'])!.value,
-      totalNumberOfTransactionsDone: this.editForm.get(['totalNumberOfTransactionsDone'])!.value,
-      totalValueOfTransactionsDoneInLCY: this.editForm.get(['totalValueOfTransactionsDoneInLCY'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      cardType: this.editForm.get(['cardType'])!.value,
-      cardBrand: this.editForm.get(['cardBrand'])!.value,
-      cardCategoryType: this.editForm.get(['cardCategoryType'])!.value,
-      transactionType: this.editForm.get(['transactionType'])!.value,
-      channelType: this.editForm.get(['channelType'])!.value,
-      cardState: this.editForm.get(['cardState'])!.value,
-    };
   }
 }

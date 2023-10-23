@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CrbReportViewBandFormService } from './crb-report-view-band-form.service';
 import { CrbReportViewBandService } from '../service/crb-report-view-band.service';
-import { ICrbReportViewBand, CrbReportViewBand } from '../crb-report-view-band.model';
+import { ICrbReportViewBand } from '../crb-report-view-band.model';
 
 import { CrbReportViewBandUpdateComponent } from './crb-report-view-band-update.component';
 
@@ -34,19 +16,29 @@ describe('CrbReportViewBand Management Update Component', () => {
   let comp: CrbReportViewBandUpdateComponent;
   let fixture: ComponentFixture<CrbReportViewBandUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let crbReportViewBandFormService: CrbReportViewBandFormService;
   let crbReportViewBandService: CrbReportViewBandService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CrbReportViewBandUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CrbReportViewBandUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CrbReportViewBandUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    crbReportViewBandFormService = TestBed.inject(CrbReportViewBandFormService);
     crbReportViewBandService = TestBed.inject(CrbReportViewBandService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('CrbReportViewBand Management Update Component', () => {
       activatedRoute.data = of({ crbReportViewBand });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(crbReportViewBand));
+      expect(comp.crbReportViewBand).toEqual(crbReportViewBand);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportViewBand>>();
+      const saveSubject = new Subject<HttpResponse<ICrbReportViewBand>>();
       const crbReportViewBand = { id: 123 };
+      jest.spyOn(crbReportViewBandFormService, 'getCrbReportViewBand').mockReturnValue(crbReportViewBand);
       jest.spyOn(crbReportViewBandService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ crbReportViewBand });
@@ -80,18 +73,20 @@ describe('CrbReportViewBand Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(crbReportViewBandFormService.getCrbReportViewBand).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(crbReportViewBandService.update).toHaveBeenCalledWith(crbReportViewBand);
+      expect(crbReportViewBandService.update).toHaveBeenCalledWith(expect.objectContaining(crbReportViewBand));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportViewBand>>();
-      const crbReportViewBand = new CrbReportViewBand();
+      const saveSubject = new Subject<HttpResponse<ICrbReportViewBand>>();
+      const crbReportViewBand = { id: 123 };
+      jest.spyOn(crbReportViewBandFormService, 'getCrbReportViewBand').mockReturnValue({ id: null });
       jest.spyOn(crbReportViewBandService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ crbReportViewBand });
+      activatedRoute.data = of({ crbReportViewBand: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('CrbReportViewBand Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(crbReportViewBandService.create).toHaveBeenCalledWith(crbReportViewBand);
+      expect(crbReportViewBandFormService.getCrbReportViewBand).toHaveBeenCalled();
+      expect(crbReportViewBandService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbReportViewBand>>();
+      const saveSubject = new Subject<HttpResponse<ICrbReportViewBand>>();
       const crbReportViewBand = { id: 123 };
       jest.spyOn(crbReportViewBandService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('CrbReportViewBand Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(crbReportViewBandService.update).toHaveBeenCalledWith(crbReportViewBand);
+      expect(crbReportViewBandService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

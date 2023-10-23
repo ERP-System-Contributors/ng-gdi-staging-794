@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IDerivativeSubType, DerivativeSubType } from '../derivative-sub-type.model';
+import { DerivativeSubTypeFormService, DerivativeSubTypeFormGroup } from './derivative-sub-type-form.service';
+import { IDerivativeSubType } from '../derivative-sub-type.model';
 import { DerivativeSubTypeService } from '../service/derivative-sub-type.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class DerivativeSubTypeUpdateComponent implements OnInit {
   isSaving = false;
+  derivativeSubType: IDerivativeSubType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    financialDerivativeSubTypeCode: [null, [Validators.required]],
-    financialDerivativeSubTye: [null, [Validators.required]],
-    financialDerivativeSubtypeDetails: [],
-  });
+  editForm: DerivativeSubTypeFormGroup = this.derivativeSubTypeFormService.createDerivativeSubTypeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected derivativeSubTypeService: DerivativeSubTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected derivativeSubTypeFormService: DerivativeSubTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ derivativeSubType }) => {
-      this.updateForm(derivativeSubType);
+      this.derivativeSubType = derivativeSubType;
+      if (derivativeSubType) {
+        this.updateForm(derivativeSubType);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class DerivativeSubTypeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class DerivativeSubTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const derivativeSubType = this.createFromForm();
-    if (derivativeSubType.id !== undefined) {
+    const derivativeSubType = this.derivativeSubTypeFormService.getDerivativeSubType(this.editForm);
+    if (derivativeSubType.id !== null) {
       this.subscribeToSaveResponse(this.derivativeSubTypeService.update(derivativeSubType));
     } else {
       this.subscribeToSaveResponse(this.derivativeSubTypeService.create(derivativeSubType));
@@ -87,10 +68,10 @@ export class DerivativeSubTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IDerivativeSubType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class DerivativeSubTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(derivativeSubType: IDerivativeSubType): void {
-    this.editForm.patchValue({
-      id: derivativeSubType.id,
-      financialDerivativeSubTypeCode: derivativeSubType.financialDerivativeSubTypeCode,
-      financialDerivativeSubTye: derivativeSubType.financialDerivativeSubTye,
-      financialDerivativeSubtypeDetails: derivativeSubType.financialDerivativeSubtypeDetails,
-    });
-  }
-
-  protected createFromForm(): IDerivativeSubType {
-    return {
-      ...new DerivativeSubType(),
-      id: this.editForm.get(['id'])!.value,
-      financialDerivativeSubTypeCode: this.editForm.get(['financialDerivativeSubTypeCode'])!.value,
-      financialDerivativeSubTye: this.editForm.get(['financialDerivativeSubTye'])!.value,
-      financialDerivativeSubtypeDetails: this.editForm.get(['financialDerivativeSubtypeDetails'])!.value,
-    };
+    this.derivativeSubType = derivativeSubType;
+    this.derivativeSubTypeFormService.resetForm(this.editForm, derivativeSubType);
   }
 }

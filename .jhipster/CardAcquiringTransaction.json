@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004102823",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -24,49 +26,48 @@
       "fieldValidateRulesMin": 0
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "CardAcquiringTransaction",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "channelType",
+      "otherEntityField": "channelTypes",
       "otherEntityName": "channelType",
+      "relationshipName": "channelType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "channelTypes"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardBrandType",
+      "otherEntityField": "cardBrandType",
       "otherEntityName": "cardBrandType",
+      "relationshipName": "cardBrandType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardBrandType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "currencyOfTransaction",
+      "otherEntityField": "alphabeticCode",
       "otherEntityName": "isoCurrencyCode",
+      "relationshipName": "currencyOfTransaction",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "alphabeticCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardIssuerCategory",
+      "otherEntityField": "cardCategoryDescription",
       "otherEntityName": "cardCategoryType",
+      "relationshipName": "cardIssuerCategory",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardCategoryDescription"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "CardAcquiringTransaction",
-  "changelogDate": "20231004102823",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

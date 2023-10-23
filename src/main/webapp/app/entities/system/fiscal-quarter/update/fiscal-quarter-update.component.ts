@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IFiscalQuarter, FiscalQuarter } from '../fiscal-quarter.model';
+import { FiscalQuarterFormService, FiscalQuarterFormGroup } from './fiscal-quarter-form.service';
+import { IFiscalQuarter } from '../fiscal-quarter.model';
 import { FiscalQuarterService } from '../service/fiscal-quarter.service';
 import { IFiscalYear } from 'app/entities/system/fiscal-year/fiscal-year.model';
 import { FiscalYearService } from 'app/entities/system/fiscal-year/service/fiscal-year.service';
@@ -38,34 +20,36 @@ import { UniversallyUniqueMappingService } from 'app/entities/gdi/universally-un
 })
 export class FiscalQuarterUpdateComponent implements OnInit {
   isSaving = false;
+  fiscalQuarter: IFiscalQuarter | null = null;
 
   fiscalYearsSharedCollection: IFiscalYear[] = [];
   placeholdersSharedCollection: IPlaceholder[] = [];
   universallyUniqueMappingsSharedCollection: IUniversallyUniqueMapping[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    quarterNumber: [null, [Validators.required]],
-    startDate: [null, [Validators.required]],
-    endDate: [null, [Validators.required]],
-    fiscalQuarterCode: [null, [Validators.required]],
-    fiscalYear: [null, Validators.required],
-    placeholders: [],
-    universallyUniqueMappings: [],
-  });
+  editForm: FiscalQuarterFormGroup = this.fiscalQuarterFormService.createFiscalQuarterFormGroup();
 
   constructor(
     protected fiscalQuarterService: FiscalQuarterService,
+    protected fiscalQuarterFormService: FiscalQuarterFormService,
     protected fiscalYearService: FiscalYearService,
     protected placeholderService: PlaceholderService,
     protected universallyUniqueMappingService: UniversallyUniqueMappingService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareFiscalYear = (o1: IFiscalYear | null, o2: IFiscalYear | null): boolean => this.fiscalYearService.compareFiscalYear(o1, o2);
+
+  comparePlaceholder = (o1: IPlaceholder | null, o2: IPlaceholder | null): boolean => this.placeholderService.comparePlaceholder(o1, o2);
+
+  compareUniversallyUniqueMapping = (o1: IUniversallyUniqueMapping | null, o2: IUniversallyUniqueMapping | null): boolean =>
+    this.universallyUniqueMappingService.compareUniversallyUniqueMapping(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ fiscalQuarter }) => {
-      this.updateForm(fiscalQuarter);
+      this.fiscalQuarter = fiscalQuarter;
+      if (fiscalQuarter) {
+        this.updateForm(fiscalQuarter);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -77,56 +61,19 @@ export class FiscalQuarterUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const fiscalQuarter = this.createFromForm();
-    if (fiscalQuarter.id !== undefined) {
+    const fiscalQuarter = this.fiscalQuarterFormService.getFiscalQuarter(this.editForm);
+    if (fiscalQuarter.id !== null) {
       this.subscribeToSaveResponse(this.fiscalQuarterService.update(fiscalQuarter));
     } else {
       this.subscribeToSaveResponse(this.fiscalQuarterService.create(fiscalQuarter));
     }
   }
 
-  trackFiscalYearById(index: number, item: IFiscalYear): number {
-    return item.id!;
-  }
-
-  trackPlaceholderById(index: number, item: IPlaceholder): number {
-    return item.id!;
-  }
-
-  trackUniversallyUniqueMappingById(index: number, item: IUniversallyUniqueMapping): number {
-    return item.id!;
-  }
-
-  getSelectedPlaceholder(option: IPlaceholder, selectedVals?: IPlaceholder[]): IPlaceholder {
-    if (selectedVals) {
-      for (const selectedVal of selectedVals) {
-        if (option.id === selectedVal.id) {
-          return selectedVal;
-        }
-      }
-    }
-    return option;
-  }
-
-  getSelectedUniversallyUniqueMapping(
-    option: IUniversallyUniqueMapping,
-    selectedVals?: IUniversallyUniqueMapping[]
-  ): IUniversallyUniqueMapping {
-    if (selectedVals) {
-      for (const selectedVal of selectedVals) {
-        if (option.id === selectedVal.id) {
-          return selectedVal;
-        }
-      }
-    }
-    return option;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IFiscalQuarter>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -142,29 +89,22 @@ export class FiscalQuarterUpdateComponent implements OnInit {
   }
 
   protected updateForm(fiscalQuarter: IFiscalQuarter): void {
-    this.editForm.patchValue({
-      id: fiscalQuarter.id,
-      quarterNumber: fiscalQuarter.quarterNumber,
-      startDate: fiscalQuarter.startDate,
-      endDate: fiscalQuarter.endDate,
-      fiscalQuarterCode: fiscalQuarter.fiscalQuarterCode,
-      fiscalYear: fiscalQuarter.fiscalYear,
-      placeholders: fiscalQuarter.placeholders,
-      universallyUniqueMappings: fiscalQuarter.universallyUniqueMappings,
-    });
+    this.fiscalQuarter = fiscalQuarter;
+    this.fiscalQuarterFormService.resetForm(this.editForm, fiscalQuarter);
 
-    this.fiscalYearsSharedCollection = this.fiscalYearService.addFiscalYearToCollectionIfMissing(
+    this.fiscalYearsSharedCollection = this.fiscalYearService.addFiscalYearToCollectionIfMissing<IFiscalYear>(
       this.fiscalYearsSharedCollection,
       fiscalQuarter.fiscalYear
     );
-    this.placeholdersSharedCollection = this.placeholderService.addPlaceholderToCollectionIfMissing(
+    this.placeholdersSharedCollection = this.placeholderService.addPlaceholderToCollectionIfMissing<IPlaceholder>(
       this.placeholdersSharedCollection,
       ...(fiscalQuarter.placeholders ?? [])
     );
-    this.universallyUniqueMappingsSharedCollection = this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing(
-      this.universallyUniqueMappingsSharedCollection,
-      ...(fiscalQuarter.universallyUniqueMappings ?? [])
-    );
+    this.universallyUniqueMappingsSharedCollection =
+      this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing<IUniversallyUniqueMapping>(
+        this.universallyUniqueMappingsSharedCollection,
+        ...(fiscalQuarter.universallyUniqueMappings ?? [])
+      );
   }
 
   protected loadRelationshipsOptions(): void {
@@ -173,7 +113,7 @@ export class FiscalQuarterUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IFiscalYear[]>) => res.body ?? []))
       .pipe(
         map((fiscalYears: IFiscalYear[]) =>
-          this.fiscalYearService.addFiscalYearToCollectionIfMissing(fiscalYears, this.editForm.get('fiscalYear')!.value)
+          this.fiscalYearService.addFiscalYearToCollectionIfMissing<IFiscalYear>(fiscalYears, this.fiscalQuarter?.fiscalYear)
         )
       )
       .subscribe((fiscalYears: IFiscalYear[]) => (this.fiscalYearsSharedCollection = fiscalYears));
@@ -183,7 +123,10 @@ export class FiscalQuarterUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IPlaceholder[]>) => res.body ?? []))
       .pipe(
         map((placeholders: IPlaceholder[]) =>
-          this.placeholderService.addPlaceholderToCollectionIfMissing(placeholders, ...(this.editForm.get('placeholders')!.value ?? []))
+          this.placeholderService.addPlaceholderToCollectionIfMissing<IPlaceholder>(
+            placeholders,
+            ...(this.fiscalQuarter?.placeholders ?? [])
+          )
         )
       )
       .subscribe((placeholders: IPlaceholder[]) => (this.placeholdersSharedCollection = placeholders));
@@ -193,9 +136,9 @@ export class FiscalQuarterUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IUniversallyUniqueMapping[]>) => res.body ?? []))
       .pipe(
         map((universallyUniqueMappings: IUniversallyUniqueMapping[]) =>
-          this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing(
+          this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing<IUniversallyUniqueMapping>(
             universallyUniqueMappings,
-            ...(this.editForm.get('universallyUniqueMappings')!.value ?? [])
+            ...(this.fiscalQuarter?.universallyUniqueMappings ?? [])
           )
         )
       )
@@ -203,19 +146,5 @@ export class FiscalQuarterUpdateComponent implements OnInit {
         (universallyUniqueMappings: IUniversallyUniqueMapping[]) =>
           (this.universallyUniqueMappingsSharedCollection = universallyUniqueMappings)
       );
-  }
-
-  protected createFromForm(): IFiscalQuarter {
-    return {
-      ...new FiscalQuarter(),
-      id: this.editForm.get(['id'])!.value,
-      quarterNumber: this.editForm.get(['quarterNumber'])!.value,
-      startDate: this.editForm.get(['startDate'])!.value,
-      endDate: this.editForm.get(['endDate'])!.value,
-      fiscalQuarterCode: this.editForm.get(['fiscalQuarterCode'])!.value,
-      fiscalYear: this.editForm.get(['fiscalYear'])!.value,
-      placeholders: this.editForm.get(['placeholders'])!.value,
-      universallyUniqueMappings: this.editForm.get(['universallyUniqueMappings'])!.value,
-    };
   }
 }

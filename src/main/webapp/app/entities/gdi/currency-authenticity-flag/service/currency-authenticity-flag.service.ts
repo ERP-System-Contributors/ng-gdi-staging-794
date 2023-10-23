@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICurrencyAuthenticityFlag, getCurrencyAuthenticityFlagIdentifier } from '../currency-authenticity-flag.model';
+import { ICurrencyAuthenticityFlag, NewCurrencyAuthenticityFlag } from '../currency-authenticity-flag.model';
+
+export type PartialUpdateCurrencyAuthenticityFlag = Partial<ICurrencyAuthenticityFlag> & Pick<ICurrencyAuthenticityFlag, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICurrencyAuthenticityFlag>;
 export type EntityArrayResponseType = HttpResponse<ICurrencyAuthenticityFlag[]>;
@@ -36,21 +20,21 @@ export class CurrencyAuthenticityFlagService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(currencyAuthenticityFlag: ICurrencyAuthenticityFlag): Observable<EntityResponseType> {
+  create(currencyAuthenticityFlag: NewCurrencyAuthenticityFlag): Observable<EntityResponseType> {
     return this.http.post<ICurrencyAuthenticityFlag>(this.resourceUrl, currencyAuthenticityFlag, { observe: 'response' });
   }
 
   update(currencyAuthenticityFlag: ICurrencyAuthenticityFlag): Observable<EntityResponseType> {
     return this.http.put<ICurrencyAuthenticityFlag>(
-      `${this.resourceUrl}/${getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlag) as number}`,
+      `${this.resourceUrl}/${this.getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlag)}`,
       currencyAuthenticityFlag,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(currencyAuthenticityFlag: ICurrencyAuthenticityFlag): Observable<EntityResponseType> {
+  partialUpdate(currencyAuthenticityFlag: PartialUpdateCurrencyAuthenticityFlag): Observable<EntityResponseType> {
     return this.http.patch<ICurrencyAuthenticityFlag>(
-      `${this.resourceUrl}/${getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlag) as number}`,
+      `${this.resourceUrl}/${this.getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlag)}`,
       currencyAuthenticityFlag,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CurrencyAuthenticityFlagService {
     return this.http.get<ICurrencyAuthenticityFlag[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCurrencyAuthenticityFlagToCollectionIfMissing(
-    currencyAuthenticityFlagCollection: ICurrencyAuthenticityFlag[],
-    ...currencyAuthenticityFlagsToCheck: (ICurrencyAuthenticityFlag | null | undefined)[]
-  ): ICurrencyAuthenticityFlag[] {
-    const currencyAuthenticityFlags: ICurrencyAuthenticityFlag[] = currencyAuthenticityFlagsToCheck.filter(isPresent);
+  getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlag: Pick<ICurrencyAuthenticityFlag, 'id'>): number {
+    return currencyAuthenticityFlag.id;
+  }
+
+  compareCurrencyAuthenticityFlag(
+    o1: Pick<ICurrencyAuthenticityFlag, 'id'> | null,
+    o2: Pick<ICurrencyAuthenticityFlag, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCurrencyAuthenticityFlagIdentifier(o1) === this.getCurrencyAuthenticityFlagIdentifier(o2) : o1 === o2;
+  }
+
+  addCurrencyAuthenticityFlagToCollectionIfMissing<Type extends Pick<ICurrencyAuthenticityFlag, 'id'>>(
+    currencyAuthenticityFlagCollection: Type[],
+    ...currencyAuthenticityFlagsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const currencyAuthenticityFlags: Type[] = currencyAuthenticityFlagsToCheck.filter(isPresent);
     if (currencyAuthenticityFlags.length > 0) {
       const currencyAuthenticityFlagCollectionIdentifiers = currencyAuthenticityFlagCollection.map(
-        currencyAuthenticityFlagItem => getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlagItem)!
+        currencyAuthenticityFlagItem => this.getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlagItem)!
       );
       const currencyAuthenticityFlagsToAdd = currencyAuthenticityFlags.filter(currencyAuthenticityFlagItem => {
-        const currencyAuthenticityFlagIdentifier = getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlagItem);
-        if (
-          currencyAuthenticityFlagIdentifier == null ||
-          currencyAuthenticityFlagCollectionIdentifiers.includes(currencyAuthenticityFlagIdentifier)
-        ) {
+        const currencyAuthenticityFlagIdentifier = this.getCurrencyAuthenticityFlagIdentifier(currencyAuthenticityFlagItem);
+        if (currencyAuthenticityFlagCollectionIdentifiers.includes(currencyAuthenticityFlagIdentifier)) {
           return false;
         }
         currencyAuthenticityFlagCollectionIdentifiers.push(currencyAuthenticityFlagIdentifier);

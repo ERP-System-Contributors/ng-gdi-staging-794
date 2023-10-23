@@ -1,22 +1,3 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
 <div *ngIf="allBeans">
   <h2 id="configuration-page-heading" data-cy="configurationPageHeading">Configuration</h2>
 
@@ -41,7 +22,7 @@
           <div class="row" *ngFor="let property of bean.properties | keyvalue">
             <div class="col-md-4">{{ property.key }}</div>
             <div class="col-md-8">
-              <span class="float-right badge-secondary break">{{ property.value | json }}</span>
+              <span class="float-end bg-secondary break">{{ property.value | json }}</span>
             </div>
           </div>
         </td>
@@ -65,7 +46,7 @@
         <tr *ngFor="let property of propertySource.properties | keyvalue">
           <td class="break">{{ property.key }}</td>
           <td class="break">
-            <span class="float-right badge-secondary break">{{ property.value.value }}</span>
+            <span class="float-end bg-secondary break">{{ property.value.value }}</span>
           </td>
         </tr>
       </tbody>

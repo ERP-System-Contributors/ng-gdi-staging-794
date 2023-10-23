@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { ICardIssuerCharges, CardIssuerCharges } from '../card-issuer-charges.model';
+import { CardIssuerChargesFormService, CardIssuerChargesFormGroup } from './card-issuer-charges-form.service';
+import { ICardIssuerCharges } from '../card-issuer-charges.model';
 import { CardIssuerChargesService } from '../service/card-issuer-charges.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
@@ -44,6 +26,7 @@ import { CardChargesService } from 'app/entities/gdi/card-charges/service/card-c
 })
 export class CardIssuerChargesUpdateComponent implements OnInit {
   isSaving = false;
+  cardIssuerCharges: ICardIssuerCharges | null = null;
 
   institutionCodesSharedCollection: IInstitutionCode[] = [];
   cardCategoryTypesSharedCollection: ICardCategoryType[] = [];
@@ -52,33 +35,42 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
   cardClassTypesSharedCollection: ICardClassType[] = [];
   cardChargesSharedCollection: ICardCharges[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    reportingDate: [null, [Validators.required]],
-    cardFeeChargeInLCY: [null, [Validators.required, Validators.min(0)]],
-    bankCode: [null, Validators.required],
-    cardCategory: [null, Validators.required],
-    cardType: [null, Validators.required],
-    cardBrand: [null, Validators.required],
-    cardClass: [null, Validators.required],
-    cardChargeType: [null, Validators.required],
-  });
+  editForm: CardIssuerChargesFormGroup = this.cardIssuerChargesFormService.createCardIssuerChargesFormGroup();
 
   constructor(
     protected cardIssuerChargesService: CardIssuerChargesService,
+    protected cardIssuerChargesFormService: CardIssuerChargesFormService,
     protected institutionCodeService: InstitutionCodeService,
     protected cardCategoryTypeService: CardCategoryTypeService,
     protected cardTypesService: CardTypesService,
     protected cardBrandTypeService: CardBrandTypeService,
     protected cardClassTypeService: CardClassTypeService,
     protected cardChargesService: CardChargesService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareInstitutionCode = (o1: IInstitutionCode | null, o2: IInstitutionCode | null): boolean =>
+    this.institutionCodeService.compareInstitutionCode(o1, o2);
+
+  compareCardCategoryType = (o1: ICardCategoryType | null, o2: ICardCategoryType | null): boolean =>
+    this.cardCategoryTypeService.compareCardCategoryType(o1, o2);
+
+  compareCardTypes = (o1: ICardTypes | null, o2: ICardTypes | null): boolean => this.cardTypesService.compareCardTypes(o1, o2);
+
+  compareCardBrandType = (o1: ICardBrandType | null, o2: ICardBrandType | null): boolean =>
+    this.cardBrandTypeService.compareCardBrandType(o1, o2);
+
+  compareCardClassType = (o1: ICardClassType | null, o2: ICardClassType | null): boolean =>
+    this.cardClassTypeService.compareCardClassType(o1, o2);
+
+  compareCardCharges = (o1: ICardCharges | null, o2: ICardCharges | null): boolean => this.cardChargesService.compareCardCharges(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ cardIssuerCharges }) => {
-      this.updateForm(cardIssuerCharges);
+      this.cardIssuerCharges = cardIssuerCharges;
+      if (cardIssuerCharges) {
+        this.updateForm(cardIssuerCharges);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -90,43 +82,19 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const cardIssuerCharges = this.createFromForm();
-    if (cardIssuerCharges.id !== undefined) {
+    const cardIssuerCharges = this.cardIssuerChargesFormService.getCardIssuerCharges(this.editForm);
+    if (cardIssuerCharges.id !== null) {
       this.subscribeToSaveResponse(this.cardIssuerChargesService.update(cardIssuerCharges));
     } else {
       this.subscribeToSaveResponse(this.cardIssuerChargesService.create(cardIssuerCharges));
     }
   }
 
-  trackInstitutionCodeById(index: number, item: IInstitutionCode): number {
-    return item.id!;
-  }
-
-  trackCardCategoryTypeById(index: number, item: ICardCategoryType): number {
-    return item.id!;
-  }
-
-  trackCardTypesById(index: number, item: ICardTypes): number {
-    return item.id!;
-  }
-
-  trackCardBrandTypeById(index: number, item: ICardBrandType): number {
-    return item.id!;
-  }
-
-  trackCardClassTypeById(index: number, item: ICardClassType): number {
-    return item.id!;
-  }
-
-  trackCardChargesById(index: number, item: ICardCharges): number {
-    return item.id!;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICardIssuerCharges>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -142,39 +110,30 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
   }
 
   protected updateForm(cardIssuerCharges: ICardIssuerCharges): void {
-    this.editForm.patchValue({
-      id: cardIssuerCharges.id,
-      reportingDate: cardIssuerCharges.reportingDate,
-      cardFeeChargeInLCY: cardIssuerCharges.cardFeeChargeInLCY,
-      bankCode: cardIssuerCharges.bankCode,
-      cardCategory: cardIssuerCharges.cardCategory,
-      cardType: cardIssuerCharges.cardType,
-      cardBrand: cardIssuerCharges.cardBrand,
-      cardClass: cardIssuerCharges.cardClass,
-      cardChargeType: cardIssuerCharges.cardChargeType,
-    });
+    this.cardIssuerCharges = cardIssuerCharges;
+    this.cardIssuerChargesFormService.resetForm(this.editForm, cardIssuerCharges);
 
-    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(
+    this.institutionCodesSharedCollection = this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
       this.institutionCodesSharedCollection,
       cardIssuerCharges.bankCode
     );
-    this.cardCategoryTypesSharedCollection = this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing(
+    this.cardCategoryTypesSharedCollection = this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing<ICardCategoryType>(
       this.cardCategoryTypesSharedCollection,
       cardIssuerCharges.cardCategory
     );
-    this.cardTypesSharedCollection = this.cardTypesService.addCardTypesToCollectionIfMissing(
+    this.cardTypesSharedCollection = this.cardTypesService.addCardTypesToCollectionIfMissing<ICardTypes>(
       this.cardTypesSharedCollection,
       cardIssuerCharges.cardType
     );
-    this.cardBrandTypesSharedCollection = this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing(
+    this.cardBrandTypesSharedCollection = this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing<ICardBrandType>(
       this.cardBrandTypesSharedCollection,
       cardIssuerCharges.cardBrand
     );
-    this.cardClassTypesSharedCollection = this.cardClassTypeService.addCardClassTypeToCollectionIfMissing(
+    this.cardClassTypesSharedCollection = this.cardClassTypeService.addCardClassTypeToCollectionIfMissing<ICardClassType>(
       this.cardClassTypesSharedCollection,
       cardIssuerCharges.cardClass
     );
-    this.cardChargesSharedCollection = this.cardChargesService.addCardChargesToCollectionIfMissing(
+    this.cardChargesSharedCollection = this.cardChargesService.addCardChargesToCollectionIfMissing<ICardCharges>(
       this.cardChargesSharedCollection,
       cardIssuerCharges.cardChargeType
     );
@@ -186,7 +145,10 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IInstitutionCode[]>) => res.body ?? []))
       .pipe(
         map((institutionCodes: IInstitutionCode[]) =>
-          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing(institutionCodes, this.editForm.get('bankCode')!.value)
+          this.institutionCodeService.addInstitutionCodeToCollectionIfMissing<IInstitutionCode>(
+            institutionCodes,
+            this.cardIssuerCharges?.bankCode
+          )
         )
       )
       .subscribe((institutionCodes: IInstitutionCode[]) => (this.institutionCodesSharedCollection = institutionCodes));
@@ -196,7 +158,10 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardCategoryType[]>) => res.body ?? []))
       .pipe(
         map((cardCategoryTypes: ICardCategoryType[]) =>
-          this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing(cardCategoryTypes, this.editForm.get('cardCategory')!.value)
+          this.cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing<ICardCategoryType>(
+            cardCategoryTypes,
+            this.cardIssuerCharges?.cardCategory
+          )
         )
       )
       .subscribe((cardCategoryTypes: ICardCategoryType[]) => (this.cardCategoryTypesSharedCollection = cardCategoryTypes));
@@ -206,7 +171,7 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardTypes[]>) => res.body ?? []))
       .pipe(
         map((cardTypes: ICardTypes[]) =>
-          this.cardTypesService.addCardTypesToCollectionIfMissing(cardTypes, this.editForm.get('cardType')!.value)
+          this.cardTypesService.addCardTypesToCollectionIfMissing<ICardTypes>(cardTypes, this.cardIssuerCharges?.cardType)
         )
       )
       .subscribe((cardTypes: ICardTypes[]) => (this.cardTypesSharedCollection = cardTypes));
@@ -216,7 +181,7 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardBrandType[]>) => res.body ?? []))
       .pipe(
         map((cardBrandTypes: ICardBrandType[]) =>
-          this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing(cardBrandTypes, this.editForm.get('cardBrand')!.value)
+          this.cardBrandTypeService.addCardBrandTypeToCollectionIfMissing<ICardBrandType>(cardBrandTypes, this.cardIssuerCharges?.cardBrand)
         )
       )
       .subscribe((cardBrandTypes: ICardBrandType[]) => (this.cardBrandTypesSharedCollection = cardBrandTypes));
@@ -226,7 +191,7 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardClassType[]>) => res.body ?? []))
       .pipe(
         map((cardClassTypes: ICardClassType[]) =>
-          this.cardClassTypeService.addCardClassTypeToCollectionIfMissing(cardClassTypes, this.editForm.get('cardClass')!.value)
+          this.cardClassTypeService.addCardClassTypeToCollectionIfMissing<ICardClassType>(cardClassTypes, this.cardIssuerCharges?.cardClass)
         )
       )
       .subscribe((cardClassTypes: ICardClassType[]) => (this.cardClassTypesSharedCollection = cardClassTypes));
@@ -236,24 +201,9 @@ export class CardIssuerChargesUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<ICardCharges[]>) => res.body ?? []))
       .pipe(
         map((cardCharges: ICardCharges[]) =>
-          this.cardChargesService.addCardChargesToCollectionIfMissing(cardCharges, this.editForm.get('cardChargeType')!.value)
+          this.cardChargesService.addCardChargesToCollectionIfMissing<ICardCharges>(cardCharges, this.cardIssuerCharges?.cardChargeType)
         )
       )
       .subscribe((cardCharges: ICardCharges[]) => (this.cardChargesSharedCollection = cardCharges));
-  }
-
-  protected createFromForm(): ICardIssuerCharges {
-    return {
-      ...new CardIssuerCharges(),
-      id: this.editForm.get(['id'])!.value,
-      reportingDate: this.editForm.get(['reportingDate'])!.value,
-      cardFeeChargeInLCY: this.editForm.get(['cardFeeChargeInLCY'])!.value,
-      bankCode: this.editForm.get(['bankCode'])!.value,
-      cardCategory: this.editForm.get(['cardCategory'])!.value,
-      cardType: this.editForm.get(['cardType'])!.value,
-      cardBrand: this.editForm.get(['cardBrand'])!.value,
-      cardClass: this.editForm.get(['cardClass'])!.value,
-      cardChargeType: this.editForm.get(['cardChargeType'])!.value,
-    };
   }
 }

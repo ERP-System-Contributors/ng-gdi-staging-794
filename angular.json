@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "erp-system": {
+    "ng-gdi-staging-794": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -33,17 +33,9 @@
               "src/main/webapp/content",
               "src/main/webapp/favicon.ico",
               "src/main/webapp/manifest.webapp",
-              "src/main/webapp/robots.txt",
-              {
-                "glob": "*.{js,css,html,png}",
-                "input": "./node_modules/swagger-ui-dist",
-                "output": "swagger-ui",
-                "ignore": ["**/index.html"]
-              },
-              { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
-              { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
+              "src/main/webapp/robots.txt"
             ],
-            "styles": ["src/main/webapp/content/scss/global.scss", "src/main/webapp/content/scss/vendor.scss"],
+            "styles": ["src/main/webapp/content/scss/vendor.scss", "src/main/webapp/content/scss/global.scss"],
             "scripts": []
           },
           "configurations": {
@@ -84,15 +76,15 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "browserTarget": "erp-system:build:development",
+            "browserTarget": "ng-gdi-staging-794:build:development",
             "port": 4200
           },
           "configurations": {
             "production": {
-              "browserTarget": "erp-system:build:production"
+              "browserTarget": "ng-gdi-staging-794:build:production"
             },
             "development": {
-              "browserTarget": "erp-system:build:development"
+              "browserTarget": "ng-gdi-staging-794:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -106,9 +98,13 @@
       }
     }
   },
-  "defaultProject": "erp-system",
   "cli": {
-    "analytics": "3d349525-9203-4059-adec-01cc15c5beda",
-    "packageManager": "npm"
+    "cache": {
+      "enabled": true,
+      "path": "./target/angular/",
+      "environment": "all"
+    },
+    "packageManager": "npm",
+    "analytics": "02bb2633-13a6-4bf3-9d64-3a88a5978926"
   }
 }

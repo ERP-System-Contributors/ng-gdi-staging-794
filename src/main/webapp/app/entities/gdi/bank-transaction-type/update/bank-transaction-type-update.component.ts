@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IBankTransactionType, BankTransactionType } from '../bank-transaction-type.model';
+import { BankTransactionTypeFormService, BankTransactionTypeFormGroup } from './bank-transaction-type-form.service';
+import { IBankTransactionType } from '../bank-transaction-type.model';
 import { BankTransactionTypeService } from '../service/bank-transaction-type.service';
 
 @Component({
@@ -32,22 +14,22 @@ import { BankTransactionTypeService } from '../service/bank-transaction-type.ser
 })
 export class BankTransactionTypeUpdateComponent implements OnInit {
   isSaving = false;
+  bankTransactionType: IBankTransactionType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    transactionTypeCode: [null, [Validators.required]],
-    transactionTypeDetails: [null, [Validators.required]],
-  });
+  editForm: BankTransactionTypeFormGroup = this.bankTransactionTypeFormService.createBankTransactionTypeFormGroup();
 
   constructor(
     protected bankTransactionTypeService: BankTransactionTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected bankTransactionTypeFormService: BankTransactionTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ bankTransactionType }) => {
-      this.updateForm(bankTransactionType);
+      this.bankTransactionType = bankTransactionType;
+      if (bankTransactionType) {
+        this.updateForm(bankTransactionType);
+      }
     });
   }
 
@@ -57,8 +39,8 @@ export class BankTransactionTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const bankTransactionType = this.createFromForm();
-    if (bankTransactionType.id !== undefined) {
+    const bankTransactionType = this.bankTransactionTypeFormService.getBankTransactionType(this.editForm);
+    if (bankTransactionType.id !== null) {
       this.subscribeToSaveResponse(this.bankTransactionTypeService.update(bankTransactionType));
     } else {
       this.subscribeToSaveResponse(this.bankTransactionTypeService.create(bankTransactionType));
@@ -66,10 +48,10 @@ export class BankTransactionTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IBankTransactionType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -85,19 +67,7 @@ export class BankTransactionTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(bankTransactionType: IBankTransactionType): void {
-    this.editForm.patchValue({
-      id: bankTransactionType.id,
-      transactionTypeCode: bankTransactionType.transactionTypeCode,
-      transactionTypeDetails: bankTransactionType.transactionTypeDetails,
-    });
-  }
-
-  protected createFromForm(): IBankTransactionType {
-    return {
-      ...new BankTransactionType(),
-      id: this.editForm.get(['id'])!.value,
-      transactionTypeCode: this.editForm.get(['transactionTypeCode'])!.value,
-      transactionTypeDetails: this.editForm.get(['transactionTypeDetails'])!.value,
-    };
+    this.bankTransactionType = bankTransactionType;
+    this.bankTransactionTypeFormService.resetForm(this.editForm, bankTransactionType);
   }
 }

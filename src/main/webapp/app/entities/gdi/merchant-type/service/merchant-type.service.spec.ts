@@ -1,32 +1,18 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { IMerchantType, MerchantType } from '../merchant-type.model';
+import { IMerchantType } from '../merchant-type.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../merchant-type.test-samples';
 
 import { MerchantTypeService } from './merchant-type.service';
+
+const requireRestSample: IMerchantType = {
+  ...sampleWithRequiredData,
+};
 
 describe('MerchantType Service', () => {
   let service: MerchantTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: IMerchantType;
   let expectedResult: IMerchantType | IMerchantType[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +22,27 @@ describe('MerchantType Service', () => {
     expectedResult = null;
     service = TestBed.inject(MerchantTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      merchantTypeCode: 'AAAAAAA',
-      merchantType: 'AAAAAAA',
-      merchantTypeDetails: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a MerchantType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const merchantType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new MerchantType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(merchantType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +50,11 @@ describe('MerchantType Service', () => {
     });
 
     it('should update a MerchantType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          merchantTypeCode: 'BBBBBB',
-          merchantType: 'BBBBBB',
-          merchantTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const merchantType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(merchantType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,11 +62,9 @@ describe('MerchantType Service', () => {
     });
 
     it('should partial update a MerchantType', () => {
-      const patchObject = Object.assign({}, new MerchantType());
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -108,72 +74,66 @@ describe('MerchantType Service', () => {
     });
 
     it('should return a list of MerchantType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          merchantTypeCode: 'BBBBBB',
-          merchantType: 'BBBBBB',
-          merchantTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a MerchantType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addMerchantTypeToCollectionIfMissing', () => {
       it('should add a MerchantType to an empty array', () => {
-        const merchantType: IMerchantType = { id: 123 };
+        const merchantType: IMerchantType = sampleWithRequiredData;
         expectedResult = service.addMerchantTypeToCollectionIfMissing([], merchantType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(merchantType);
       });
 
       it('should not add a MerchantType to an array that contains it', () => {
-        const merchantType: IMerchantType = { id: 123 };
+        const merchantType: IMerchantType = sampleWithRequiredData;
         const merchantTypeCollection: IMerchantType[] = [
           {
             ...merchantType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addMerchantTypeToCollectionIfMissing(merchantTypeCollection, merchantType);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a MerchantType to an array that doesn't contain it", () => {
-        const merchantType: IMerchantType = { id: 123 };
-        const merchantTypeCollection: IMerchantType[] = [{ id: 456 }];
+        const merchantType: IMerchantType = sampleWithRequiredData;
+        const merchantTypeCollection: IMerchantType[] = [sampleWithPartialData];
         expectedResult = service.addMerchantTypeToCollectionIfMissing(merchantTypeCollection, merchantType);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(merchantType);
       });
 
       it('should add only unique MerchantType to an array', () => {
-        const merchantTypeArray: IMerchantType[] = [{ id: 123 }, { id: 456 }, { id: 92960 }];
-        const merchantTypeCollection: IMerchantType[] = [{ id: 123 }];
+        const merchantTypeArray: IMerchantType[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const merchantTypeCollection: IMerchantType[] = [sampleWithRequiredData];
         expectedResult = service.addMerchantTypeToCollectionIfMissing(merchantTypeCollection, ...merchantTypeArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const merchantType: IMerchantType = { id: 123 };
-        const merchantType2: IMerchantType = { id: 456 };
+        const merchantType: IMerchantType = sampleWithRequiredData;
+        const merchantType2: IMerchantType = sampleWithPartialData;
         expectedResult = service.addMerchantTypeToCollectionIfMissing([], merchantType, merchantType2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(merchantType);
@@ -181,16 +141,60 @@ describe('MerchantType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const merchantType: IMerchantType = { id: 123 };
+        const merchantType: IMerchantType = sampleWithRequiredData;
         expectedResult = service.addMerchantTypeToCollectionIfMissing([], null, merchantType, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(merchantType);
       });
 
       it('should return initial array if no MerchantType is added', () => {
-        const merchantTypeCollection: IMerchantType[] = [{ id: 123 }];
+        const merchantTypeCollection: IMerchantType[] = [sampleWithRequiredData];
         expectedResult = service.addMerchantTypeToCollectionIfMissing(merchantTypeCollection, undefined, null);
         expect(expectedResult).toEqual(merchantTypeCollection);
+      });
+    });
+
+    describe('compareMerchantType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareMerchantType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareMerchantType(entity1, entity2);
+        const compareResult2 = service.compareMerchantType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareMerchantType(entity1, entity2);
+        const compareResult2 = service.compareMerchantType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareMerchantType(entity1, entity2);
+        const compareResult2 = service.compareMerchantType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

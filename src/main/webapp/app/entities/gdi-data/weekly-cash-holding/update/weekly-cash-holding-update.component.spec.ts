@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { WeeklyCashHoldingFormService } from './weekly-cash-holding-form.service';
 import { WeeklyCashHoldingService } from '../service/weekly-cash-holding.service';
-import { IWeeklyCashHolding, WeeklyCashHolding } from '../weekly-cash-holding.model';
+import { IWeeklyCashHolding } from '../weekly-cash-holding.model';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
 import { IBankBranchCode } from 'app/entities/gdi/bank-branch-code/bank-branch-code.model';
@@ -42,6 +24,7 @@ describe('WeeklyCashHolding Management Update Component', () => {
   let comp: WeeklyCashHoldingUpdateComponent;
   let fixture: ComponentFixture<WeeklyCashHoldingUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let weeklyCashHoldingFormService: WeeklyCashHoldingFormService;
   let weeklyCashHoldingService: WeeklyCashHoldingService;
   let institutionCodeService: InstitutionCodeService;
   let bankBranchCodeService: BankBranchCodeService;
@@ -50,15 +33,24 @@ describe('WeeklyCashHolding Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [WeeklyCashHoldingUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(WeeklyCashHoldingUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(WeeklyCashHoldingUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    weeklyCashHoldingFormService = TestBed.inject(WeeklyCashHoldingFormService);
     weeklyCashHoldingService = TestBed.inject(WeeklyCashHoldingService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
     bankBranchCodeService = TestBed.inject(BankBranchCodeService);
@@ -86,7 +78,7 @@ describe('WeeklyCashHolding Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -108,7 +100,7 @@ describe('WeeklyCashHolding Management Update Component', () => {
       expect(bankBranchCodeService.query).toHaveBeenCalled();
       expect(bankBranchCodeService.addBankBranchCodeToCollectionIfMissing).toHaveBeenCalledWith(
         bankBranchCodeCollection,
-        ...additionalBankBranchCodes
+        ...additionalBankBranchCodes.map(expect.objectContaining)
       );
       expect(comp.bankBranchCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -130,7 +122,7 @@ describe('WeeklyCashHolding Management Update Component', () => {
       expect(countySubCountyCodeService.query).toHaveBeenCalled();
       expect(countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing).toHaveBeenCalledWith(
         countySubCountyCodeCollection,
-        ...additionalCountySubCountyCodes
+        ...additionalCountySubCountyCodes.map(expect.objectContaining)
       );
       expect(comp.countySubCountyCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -159,7 +151,7 @@ describe('WeeklyCashHolding Management Update Component', () => {
       expect(kenyanCurrencyDenominationService.query).toHaveBeenCalled();
       expect(kenyanCurrencyDenominationService.addKenyanCurrencyDenominationToCollectionIfMissing).toHaveBeenCalledWith(
         kenyanCurrencyDenominationCollection,
-        ...additionalKenyanCurrencyDenominations
+        ...additionalKenyanCurrencyDenominations.map(expect.objectContaining)
       );
       expect(comp.kenyanCurrencyDenominationsSharedCollection).toEqual(expectedCollection);
     });
@@ -178,19 +170,20 @@ describe('WeeklyCashHolding Management Update Component', () => {
       activatedRoute.data = of({ weeklyCashHolding });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(weeklyCashHolding));
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.bankBranchCodesSharedCollection).toContain(branchId);
       expect(comp.countySubCountyCodesSharedCollection).toContain(subCountyCode);
       expect(comp.kenyanCurrencyDenominationsSharedCollection).toContain(denomination);
+      expect(comp.weeklyCashHolding).toEqual(weeklyCashHolding);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCashHolding>>();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCashHolding>>();
       const weeklyCashHolding = { id: 123 };
+      jest.spyOn(weeklyCashHoldingFormService, 'getWeeklyCashHolding').mockReturnValue(weeklyCashHolding);
       jest.spyOn(weeklyCashHoldingService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ weeklyCashHolding });
@@ -203,18 +196,20 @@ describe('WeeklyCashHolding Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(weeklyCashHoldingFormService.getWeeklyCashHolding).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(weeklyCashHoldingService.update).toHaveBeenCalledWith(weeklyCashHolding);
+      expect(weeklyCashHoldingService.update).toHaveBeenCalledWith(expect.objectContaining(weeklyCashHolding));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCashHolding>>();
-      const weeklyCashHolding = new WeeklyCashHolding();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCashHolding>>();
+      const weeklyCashHolding = { id: 123 };
+      jest.spyOn(weeklyCashHoldingFormService, 'getWeeklyCashHolding').mockReturnValue({ id: null });
       jest.spyOn(weeklyCashHoldingService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ weeklyCashHolding });
+      activatedRoute.data = of({ weeklyCashHolding: null });
       comp.ngOnInit();
 
       // WHEN
@@ -224,14 +219,15 @@ describe('WeeklyCashHolding Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(weeklyCashHoldingService.create).toHaveBeenCalledWith(weeklyCashHolding);
+      expect(weeklyCashHoldingFormService.getWeeklyCashHolding).toHaveBeenCalled();
+      expect(weeklyCashHoldingService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<WeeklyCashHolding>>();
+      const saveSubject = new Subject<HttpResponse<IWeeklyCashHolding>>();
       const weeklyCashHolding = { id: 123 };
       jest.spyOn(weeklyCashHoldingService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -244,42 +240,50 @@ describe('WeeklyCashHolding Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(weeklyCashHoldingService.update).toHaveBeenCalledWith(weeklyCashHolding);
+      expect(weeklyCashHoldingService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackBankBranchCodeById', () => {
-      it('Should return tracked BankBranchCode primary key', () => {
+    describe('compareBankBranchCode', () => {
+      it('Should forward to bankBranchCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackBankBranchCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(bankBranchCodeService, 'compareBankBranchCode');
+        comp.compareBankBranchCode(entity, entity2);
+        expect(bankBranchCodeService.compareBankBranchCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCountySubCountyCodeById', () => {
-      it('Should return tracked CountySubCountyCode primary key', () => {
+    describe('compareCountySubCountyCode', () => {
+      it('Should forward to countySubCountyCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCountySubCountyCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(countySubCountyCodeService, 'compareCountySubCountyCode');
+        comp.compareCountySubCountyCode(entity, entity2);
+        expect(countySubCountyCodeService.compareCountySubCountyCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackKenyanCurrencyDenominationById', () => {
-      it('Should return tracked KenyanCurrencyDenomination primary key', () => {
+    describe('compareKenyanCurrencyDenomination', () => {
+      it('Should forward to kenyanCurrencyDenominationService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackKenyanCurrencyDenominationById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(kenyanCurrencyDenominationService, 'compareKenyanCurrencyDenomination');
+        comp.compareKenyanCurrencyDenomination(entity, entity2);
+        expect(kenyanCurrencyDenominationService.compareKenyanCurrencyDenomination).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

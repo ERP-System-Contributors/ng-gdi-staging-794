@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-exchange-rate-heading" data-cy="ExchangeRateCreateUpdateHeading">Create or edit a Exchange Rate</h2>
@@ -25,13 +6,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_businessReportingDay">Business Reporting Day</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_businessReportingDay">Business Reporting Day</label>
           <div class="input-group">
             <input
               id="field_businessReportingDay"
@@ -43,11 +24,9 @@
               #businessReportingDayDp="ngbDatepicker"
               formControlName="businessReportingDay"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="businessReportingDayDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="businessReportingDayDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -61,8 +40,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_buyingRate">Buying Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_buyingRate">Buying Rate</label>
           <input
             type="number"
             class="form-control"
@@ -79,8 +58,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_sellingRate">Selling Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_sellingRate">Selling Rate</label>
           <input
             type="number"
             class="form-control"
@@ -97,8 +76,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_meanRate">Mean Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_meanRate">Mean Rate</label>
           <input type="number" class="form-control" name="meanRate" id="field_meanRate" data-cy="meanRate" formControlName="meanRate" />
           <div *ngIf="editForm.get('meanRate')!.invalid && (editForm.get('meanRate')!.dirty || editForm.get('meanRate')!.touched)">
             <small class="form-text text-danger" *ngIf="editForm.get('meanRate')?.errors?.required"> This field is required. </small>
@@ -108,8 +87,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_closingBidRate">Closing Bid Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_closingBidRate">Closing Bid Rate</label>
           <input
             type="number"
             class="form-control"
@@ -130,8 +109,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_closingOfferRate">Closing Offer Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_closingOfferRate">Closing Offer Rate</label>
           <input
             type="number"
             class="form-control"
@@ -155,8 +134,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_usdCrossRate">Usd Cross Rate</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_usdCrossRate">Usd Cross Rate</label>
           <input
             type="number"
             class="form-control"
@@ -175,24 +154,18 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_institutionCode">Institution Code</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_institutionCode">Institution Code</label>
           <select
             class="form-control"
             id="field_institutionCode"
             data-cy="institutionCode"
             name="institutionCode"
             formControlName="institutionCode"
+            [compareWith]="compareInstitutionCode"
           >
             <option *ngIf="!editForm.get('institutionCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('institutionCode')!.value?.id
-                  ? editForm.get('institutionCode')!.value
-                  : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -206,18 +179,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['institutionCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_currencyCode">Currency Code</label>
-          <select class="form-control" id="field_currencyCode" data-cy="currencyCode" name="currencyCode" formControlName="currencyCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_currencyCode">Currency Code</label>
+          <select
+            class="form-control"
+            id="field_currencyCode"
+            data-cy="currencyCode"
+            name="currencyCode"
+            formControlName="currencyCode"
+            [compareWith]="compareIsoCurrencyCode"
+          >
             <option *ngIf="!editForm.get('currencyCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                isoCurrencyCodeOption.id === editForm.get('currencyCode')!.value?.id
-                  ? editForm.get('currencyCode')!.value
-                  : isoCurrencyCodeOption
-              "
-              *ngFor="let isoCurrencyCodeOption of isoCurrencyCodesSharedCollection; trackBy: trackIsoCurrencyCodeById"
-            >
+            <option [ngValue]="isoCurrencyCodeOption" *ngFor="let isoCurrencyCodeOption of isoCurrencyCodesSharedCollection">
               {{ isoCurrencyCodeOption.alphabeticCode }}
             </option>
           </select>

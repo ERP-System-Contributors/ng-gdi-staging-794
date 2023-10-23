@@ -1,36 +1,22 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import * as dayjs from 'dayjs';
 
 import { DATE_FORMAT } from 'app/config/input.constants';
-import { IFiscalMonth, FiscalMonth } from '../fiscal-month.model';
+import { IFiscalMonth } from '../fiscal-month.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../fiscal-month.test-samples';
 
-import { FiscalMonthService } from './fiscal-month.service';
+import { FiscalMonthService, RestFiscalMonth } from './fiscal-month.service';
+
+const requireRestSample: RestFiscalMonth = {
+  ...sampleWithRequiredData,
+  startDate: sampleWithRequiredData.startDate?.format(DATE_FORMAT),
+  endDate: sampleWithRequiredData.endDate?.format(DATE_FORMAT),
+};
 
 describe('FiscalMonth Service', () => {
   let service: FiscalMonthService;
   let httpMock: HttpTestingController;
-  let elemDefault: IFiscalMonth;
   let expectedResult: IFiscalMonth | IFiscalMonth[] | boolean | null;
-  let currentDate: dayjs.Dayjs;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -39,53 +25,27 @@ describe('FiscalMonth Service', () => {
     expectedResult = null;
     service = TestBed.inject(FiscalMonthService);
     httpMock = TestBed.inject(HttpTestingController);
-    currentDate = dayjs();
-
-    elemDefault = {
-      id: 0,
-      monthNumber: 0,
-      startDate: currentDate,
-      endDate: currentDate,
-      fiscalMonthCode: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign(
-        {
-          startDate: currentDate.format(DATE_FORMAT),
-          endDate: currentDate.format(DATE_FORMAT),
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a FiscalMonth', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-          startDate: currentDate.format(DATE_FORMAT),
-          endDate: currentDate.format(DATE_FORMAT),
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const fiscalMonth = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign(
-        {
-          startDate: currentDate,
-          endDate: currentDate,
-        },
-        returnedFromService
-      );
-
-      service.create(new FiscalMonth()).subscribe(resp => (expectedResult = resp.body));
+      service.create(fiscalMonth).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -93,26 +53,11 @@ describe('FiscalMonth Service', () => {
     });
 
     it('should update a FiscalMonth', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          monthNumber: 1,
-          startDate: currentDate.format(DATE_FORMAT),
-          endDate: currentDate.format(DATE_FORMAT),
-          fiscalMonthCode: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const fiscalMonth = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign(
-        {
-          startDate: currentDate,
-          endDate: currentDate,
-        },
-        returnedFromService
-      );
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(fiscalMonth).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -120,25 +65,9 @@ describe('FiscalMonth Service', () => {
     });
 
     it('should partial update a FiscalMonth', () => {
-      const patchObject = Object.assign(
-        {
-          monthNumber: 1,
-          startDate: currentDate.format(DATE_FORMAT),
-          endDate: currentDate.format(DATE_FORMAT),
-          fiscalMonthCode: 'BBBBBB',
-        },
-        new FiscalMonth()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign(
-        {
-          startDate: currentDate,
-          endDate: currentDate,
-        },
-        returnedFromService
-      );
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -148,79 +77,66 @@ describe('FiscalMonth Service', () => {
     });
 
     it('should return a list of FiscalMonth', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          monthNumber: 1,
-          startDate: currentDate.format(DATE_FORMAT),
-          endDate: currentDate.format(DATE_FORMAT),
-          fiscalMonthCode: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign(
-        {
-          startDate: currentDate,
-          endDate: currentDate,
-        },
-        returnedFromService
-      );
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a FiscalMonth', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addFiscalMonthToCollectionIfMissing', () => {
       it('should add a FiscalMonth to an empty array', () => {
-        const fiscalMonth: IFiscalMonth = { id: 123 };
+        const fiscalMonth: IFiscalMonth = sampleWithRequiredData;
         expectedResult = service.addFiscalMonthToCollectionIfMissing([], fiscalMonth);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(fiscalMonth);
       });
 
       it('should not add a FiscalMonth to an array that contains it', () => {
-        const fiscalMonth: IFiscalMonth = { id: 123 };
+        const fiscalMonth: IFiscalMonth = sampleWithRequiredData;
         const fiscalMonthCollection: IFiscalMonth[] = [
           {
             ...fiscalMonth,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addFiscalMonthToCollectionIfMissing(fiscalMonthCollection, fiscalMonth);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a FiscalMonth to an array that doesn't contain it", () => {
-        const fiscalMonth: IFiscalMonth = { id: 123 };
-        const fiscalMonthCollection: IFiscalMonth[] = [{ id: 456 }];
+        const fiscalMonth: IFiscalMonth = sampleWithRequiredData;
+        const fiscalMonthCollection: IFiscalMonth[] = [sampleWithPartialData];
         expectedResult = service.addFiscalMonthToCollectionIfMissing(fiscalMonthCollection, fiscalMonth);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(fiscalMonth);
       });
 
       it('should add only unique FiscalMonth to an array', () => {
-        const fiscalMonthArray: IFiscalMonth[] = [{ id: 123 }, { id: 456 }, { id: 32299 }];
-        const fiscalMonthCollection: IFiscalMonth[] = [{ id: 123 }];
+        const fiscalMonthArray: IFiscalMonth[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const fiscalMonthCollection: IFiscalMonth[] = [sampleWithRequiredData];
         expectedResult = service.addFiscalMonthToCollectionIfMissing(fiscalMonthCollection, ...fiscalMonthArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const fiscalMonth: IFiscalMonth = { id: 123 };
-        const fiscalMonth2: IFiscalMonth = { id: 456 };
+        const fiscalMonth: IFiscalMonth = sampleWithRequiredData;
+        const fiscalMonth2: IFiscalMonth = sampleWithPartialData;
         expectedResult = service.addFiscalMonthToCollectionIfMissing([], fiscalMonth, fiscalMonth2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(fiscalMonth);
@@ -228,16 +144,60 @@ describe('FiscalMonth Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const fiscalMonth: IFiscalMonth = { id: 123 };
+        const fiscalMonth: IFiscalMonth = sampleWithRequiredData;
         expectedResult = service.addFiscalMonthToCollectionIfMissing([], null, fiscalMonth, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(fiscalMonth);
       });
 
       it('should return initial array if no FiscalMonth is added', () => {
-        const fiscalMonthCollection: IFiscalMonth[] = [{ id: 123 }];
+        const fiscalMonthCollection: IFiscalMonth[] = [sampleWithRequiredData];
         expectedResult = service.addFiscalMonthToCollectionIfMissing(fiscalMonthCollection, undefined, null);
         expect(expectedResult).toEqual(fiscalMonthCollection);
+      });
+    });
+
+    describe('compareFiscalMonth', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareFiscalMonth(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareFiscalMonth(entity1, entity2);
+        const compareResult2 = service.compareFiscalMonth(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareFiscalMonth(entity1, entity2);
+        const compareResult2 = service.compareFiscalMonth(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareFiscalMonth(entity1, entity2);
+        const compareResult2 = service.compareFiscalMonth(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

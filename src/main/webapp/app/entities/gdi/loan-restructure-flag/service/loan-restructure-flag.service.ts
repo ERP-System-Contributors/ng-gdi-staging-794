@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ILoanRestructureFlag, getLoanRestructureFlagIdentifier } from '../loan-restructure-flag.model';
+import { ILoanRestructureFlag, NewLoanRestructureFlag } from '../loan-restructure-flag.model';
+
+export type PartialUpdateLoanRestructureFlag = Partial<ILoanRestructureFlag> & Pick<ILoanRestructureFlag, 'id'>;
 
 export type EntityResponseType = HttpResponse<ILoanRestructureFlag>;
 export type EntityArrayResponseType = HttpResponse<ILoanRestructureFlag[]>;
@@ -36,21 +20,21 @@ export class LoanRestructureFlagService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(loanRestructureFlag: ILoanRestructureFlag): Observable<EntityResponseType> {
+  create(loanRestructureFlag: NewLoanRestructureFlag): Observable<EntityResponseType> {
     return this.http.post<ILoanRestructureFlag>(this.resourceUrl, loanRestructureFlag, { observe: 'response' });
   }
 
   update(loanRestructureFlag: ILoanRestructureFlag): Observable<EntityResponseType> {
     return this.http.put<ILoanRestructureFlag>(
-      `${this.resourceUrl}/${getLoanRestructureFlagIdentifier(loanRestructureFlag) as number}`,
+      `${this.resourceUrl}/${this.getLoanRestructureFlagIdentifier(loanRestructureFlag)}`,
       loanRestructureFlag,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(loanRestructureFlag: ILoanRestructureFlag): Observable<EntityResponseType> {
+  partialUpdate(loanRestructureFlag: PartialUpdateLoanRestructureFlag): Observable<EntityResponseType> {
     return this.http.patch<ILoanRestructureFlag>(
-      `${this.resourceUrl}/${getLoanRestructureFlagIdentifier(loanRestructureFlag) as number}`,
+      `${this.resourceUrl}/${this.getLoanRestructureFlagIdentifier(loanRestructureFlag)}`,
       loanRestructureFlag,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class LoanRestructureFlagService {
     return this.http.get<ILoanRestructureFlag[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addLoanRestructureFlagToCollectionIfMissing(
-    loanRestructureFlagCollection: ILoanRestructureFlag[],
-    ...loanRestructureFlagsToCheck: (ILoanRestructureFlag | null | undefined)[]
-  ): ILoanRestructureFlag[] {
-    const loanRestructureFlags: ILoanRestructureFlag[] = loanRestructureFlagsToCheck.filter(isPresent);
+  getLoanRestructureFlagIdentifier(loanRestructureFlag: Pick<ILoanRestructureFlag, 'id'>): number {
+    return loanRestructureFlag.id;
+  }
+
+  compareLoanRestructureFlag(o1: Pick<ILoanRestructureFlag, 'id'> | null, o2: Pick<ILoanRestructureFlag, 'id'> | null): boolean {
+    return o1 && o2 ? this.getLoanRestructureFlagIdentifier(o1) === this.getLoanRestructureFlagIdentifier(o2) : o1 === o2;
+  }
+
+  addLoanRestructureFlagToCollectionIfMissing<Type extends Pick<ILoanRestructureFlag, 'id'>>(
+    loanRestructureFlagCollection: Type[],
+    ...loanRestructureFlagsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const loanRestructureFlags: Type[] = loanRestructureFlagsToCheck.filter(isPresent);
     if (loanRestructureFlags.length > 0) {
       const loanRestructureFlagCollectionIdentifiers = loanRestructureFlagCollection.map(
-        loanRestructureFlagItem => getLoanRestructureFlagIdentifier(loanRestructureFlagItem)!
+        loanRestructureFlagItem => this.getLoanRestructureFlagIdentifier(loanRestructureFlagItem)!
       );
       const loanRestructureFlagsToAdd = loanRestructureFlags.filter(loanRestructureFlagItem => {
-        const loanRestructureFlagIdentifier = getLoanRestructureFlagIdentifier(loanRestructureFlagItem);
-        if (loanRestructureFlagIdentifier == null || loanRestructureFlagCollectionIdentifiers.includes(loanRestructureFlagIdentifier)) {
+        const loanRestructureFlagIdentifier = this.getLoanRestructureFlagIdentifier(loanRestructureFlagItem);
+        if (loanRestructureFlagCollectionIdentifiers.includes(loanRestructureFlagIdentifier)) {
           return false;
         }
         loanRestructureFlagCollectionIdentifiers.push(loanRestructureFlagIdentifier);

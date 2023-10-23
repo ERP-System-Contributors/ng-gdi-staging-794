@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004124958",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -49,35 +51,34 @@
       "fieldValidateRulesMin": 0
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "CreditCardFacility",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "customerCategory",
+      "otherEntityField": "creditCardOwnershipCategoryType",
       "otherEntityName": "creditCardOwnership",
+      "relationshipName": "customerCategory",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "creditCardOwnershipCategoryType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "currencyCode",
+      "otherEntityField": "alphabeticCode",
       "otherEntityName": "isoCurrencyCode",
+      "relationshipName": "currencyCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "alphabeticCode"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "CreditCardFacility",
-  "changelogDate": "20231004124958",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

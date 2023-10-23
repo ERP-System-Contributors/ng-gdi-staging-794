@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <div *ngIf="particularsOfOutlet">
       <h2 data-cy="particularsOfOutletDetailsHeading"><span>Particulars Of Outlet</span></h2>
@@ -72,40 +53,40 @@
         <dt><span>Sub County Code</span></dt>
         <dd>
           <div *ngIf="particularsOfOutlet.subCountyCode">
-            <a [routerLink]="['/county-sub-county-code', particularsOfOutlet.subCountyCode?.id, 'view']">{{
-              particularsOfOutlet.subCountyCode?.subCountyName
+            <a [routerLink]="['/county-sub-county-code', particularsOfOutlet.subCountyCode.id, 'view']">{{
+              particularsOfOutlet.subCountyCode.subCountyName
             }}</a>
           </div>
         </dd>
         <dt><span>Bank Code</span></dt>
         <dd>
           <div *ngIf="particularsOfOutlet.bankCode">
-            <a [routerLink]="['/institution-code', particularsOfOutlet.bankCode?.id, 'view']">{{
-              particularsOfOutlet.bankCode?.institutionName
+            <a [routerLink]="['/institution-code', particularsOfOutlet.bankCode.id, 'view']">{{
+              particularsOfOutlet.bankCode.institutionName
             }}</a>
           </div>
         </dd>
         <dt><span>Outlet Id</span></dt>
         <dd>
           <div *ngIf="particularsOfOutlet.outletId">
-            <a [routerLink]="['/bank-branch-code', particularsOfOutlet.outletId?.id, 'view']">{{
-              particularsOfOutlet.outletId?.branchCode
+            <a [routerLink]="['/bank-branch-code', particularsOfOutlet.outletId.id, 'view']">{{
+              particularsOfOutlet.outletId.branchCode
             }}</a>
           </div>
         </dd>
         <dt><span>Type Of Outlet</span></dt>
         <dd>
           <div *ngIf="particularsOfOutlet.typeOfOutlet">
-            <a [routerLink]="['/outlet-type', particularsOfOutlet.typeOfOutlet?.id, 'view']">{{
-              particularsOfOutlet.typeOfOutlet?.outletType
+            <a [routerLink]="['/outlet-type', particularsOfOutlet.typeOfOutlet.id, 'view']">{{
+              particularsOfOutlet.typeOfOutlet.outletType
             }}</a>
           </div>
         </dd>
         <dt><span>Outlet Status</span></dt>
         <dd>
           <div *ngIf="particularsOfOutlet.outletStatus">
-            <a [routerLink]="['/outlet-status', particularsOfOutlet.outletStatus?.id, 'view']">{{
-              particularsOfOutlet.outletStatus?.branchStatusType
+            <a [routerLink]="['/outlet-status', particularsOfOutlet.outletStatus.id, 'view']">{{
+              particularsOfOutlet.outletStatus.branchStatusType
             }}</a>
           </div>
         </dd>

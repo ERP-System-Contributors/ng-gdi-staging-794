@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IChartOfAccountsCode, getChartOfAccountsCodeIdentifier } from '../chart-of-accounts-code.model';
+import { IChartOfAccountsCode, NewChartOfAccountsCode } from '../chart-of-accounts-code.model';
+
+export type PartialUpdateChartOfAccountsCode = Partial<IChartOfAccountsCode> & Pick<IChartOfAccountsCode, 'id'>;
 
 export type EntityResponseType = HttpResponse<IChartOfAccountsCode>;
 export type EntityArrayResponseType = HttpResponse<IChartOfAccountsCode[]>;
@@ -36,21 +20,21 @@ export class ChartOfAccountsCodeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(chartOfAccountsCode: IChartOfAccountsCode): Observable<EntityResponseType> {
+  create(chartOfAccountsCode: NewChartOfAccountsCode): Observable<EntityResponseType> {
     return this.http.post<IChartOfAccountsCode>(this.resourceUrl, chartOfAccountsCode, { observe: 'response' });
   }
 
   update(chartOfAccountsCode: IChartOfAccountsCode): Observable<EntityResponseType> {
     return this.http.put<IChartOfAccountsCode>(
-      `${this.resourceUrl}/${getChartOfAccountsCodeIdentifier(chartOfAccountsCode) as number}`,
+      `${this.resourceUrl}/${this.getChartOfAccountsCodeIdentifier(chartOfAccountsCode)}`,
       chartOfAccountsCode,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(chartOfAccountsCode: IChartOfAccountsCode): Observable<EntityResponseType> {
+  partialUpdate(chartOfAccountsCode: PartialUpdateChartOfAccountsCode): Observable<EntityResponseType> {
     return this.http.patch<IChartOfAccountsCode>(
-      `${this.resourceUrl}/${getChartOfAccountsCodeIdentifier(chartOfAccountsCode) as number}`,
+      `${this.resourceUrl}/${this.getChartOfAccountsCodeIdentifier(chartOfAccountsCode)}`,
       chartOfAccountsCode,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class ChartOfAccountsCodeService {
     return this.http.get<IChartOfAccountsCode[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addChartOfAccountsCodeToCollectionIfMissing(
-    chartOfAccountsCodeCollection: IChartOfAccountsCode[],
-    ...chartOfAccountsCodesToCheck: (IChartOfAccountsCode | null | undefined)[]
-  ): IChartOfAccountsCode[] {
-    const chartOfAccountsCodes: IChartOfAccountsCode[] = chartOfAccountsCodesToCheck.filter(isPresent);
+  getChartOfAccountsCodeIdentifier(chartOfAccountsCode: Pick<IChartOfAccountsCode, 'id'>): number {
+    return chartOfAccountsCode.id;
+  }
+
+  compareChartOfAccountsCode(o1: Pick<IChartOfAccountsCode, 'id'> | null, o2: Pick<IChartOfAccountsCode, 'id'> | null): boolean {
+    return o1 && o2 ? this.getChartOfAccountsCodeIdentifier(o1) === this.getChartOfAccountsCodeIdentifier(o2) : o1 === o2;
+  }
+
+  addChartOfAccountsCodeToCollectionIfMissing<Type extends Pick<IChartOfAccountsCode, 'id'>>(
+    chartOfAccountsCodeCollection: Type[],
+    ...chartOfAccountsCodesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const chartOfAccountsCodes: Type[] = chartOfAccountsCodesToCheck.filter(isPresent);
     if (chartOfAccountsCodes.length > 0) {
       const chartOfAccountsCodeCollectionIdentifiers = chartOfAccountsCodeCollection.map(
-        chartOfAccountsCodeItem => getChartOfAccountsCodeIdentifier(chartOfAccountsCodeItem)!
+        chartOfAccountsCodeItem => this.getChartOfAccountsCodeIdentifier(chartOfAccountsCodeItem)!
       );
       const chartOfAccountsCodesToAdd = chartOfAccountsCodes.filter(chartOfAccountsCodeItem => {
-        const chartOfAccountsCodeIdentifier = getChartOfAccountsCodeIdentifier(chartOfAccountsCodeItem);
-        if (chartOfAccountsCodeIdentifier == null || chartOfAccountsCodeCollectionIdentifiers.includes(chartOfAccountsCodeIdentifier)) {
+        const chartOfAccountsCodeIdentifier = this.getChartOfAccountsCodeIdentifier(chartOfAccountsCodeItem);
+        if (chartOfAccountsCodeCollectionIdentifiers.includes(chartOfAccountsCodeIdentifier)) {
           return false;
         }
         chartOfAccountsCodeCollectionIdentifiers.push(chartOfAccountsCodeIdentifier);

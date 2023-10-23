@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CrbComplaintStatusTypeFormService } from './crb-complaint-status-type-form.service';
 import { CrbComplaintStatusTypeService } from '../service/crb-complaint-status-type.service';
-import { ICrbComplaintStatusType, CrbComplaintStatusType } from '../crb-complaint-status-type.model';
+import { ICrbComplaintStatusType } from '../crb-complaint-status-type.model';
 
 import { CrbComplaintStatusTypeUpdateComponent } from './crb-complaint-status-type-update.component';
 
@@ -34,19 +16,29 @@ describe('CrbComplaintStatusType Management Update Component', () => {
   let comp: CrbComplaintStatusTypeUpdateComponent;
   let fixture: ComponentFixture<CrbComplaintStatusTypeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let crbComplaintStatusTypeFormService: CrbComplaintStatusTypeFormService;
   let crbComplaintStatusTypeService: CrbComplaintStatusTypeService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CrbComplaintStatusTypeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CrbComplaintStatusTypeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CrbComplaintStatusTypeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    crbComplaintStatusTypeFormService = TestBed.inject(CrbComplaintStatusTypeFormService);
     crbComplaintStatusTypeService = TestBed.inject(CrbComplaintStatusTypeService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('CrbComplaintStatusType Management Update Component', () => {
       activatedRoute.data = of({ crbComplaintStatusType });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(crbComplaintStatusType));
+      expect(comp.crbComplaintStatusType).toEqual(crbComplaintStatusType);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbComplaintStatusType>>();
+      const saveSubject = new Subject<HttpResponse<ICrbComplaintStatusType>>();
       const crbComplaintStatusType = { id: 123 };
+      jest.spyOn(crbComplaintStatusTypeFormService, 'getCrbComplaintStatusType').mockReturnValue(crbComplaintStatusType);
       jest.spyOn(crbComplaintStatusTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ crbComplaintStatusType });
@@ -80,18 +73,20 @@ describe('CrbComplaintStatusType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(crbComplaintStatusTypeFormService.getCrbComplaintStatusType).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(crbComplaintStatusTypeService.update).toHaveBeenCalledWith(crbComplaintStatusType);
+      expect(crbComplaintStatusTypeService.update).toHaveBeenCalledWith(expect.objectContaining(crbComplaintStatusType));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbComplaintStatusType>>();
-      const crbComplaintStatusType = new CrbComplaintStatusType();
+      const saveSubject = new Subject<HttpResponse<ICrbComplaintStatusType>>();
+      const crbComplaintStatusType = { id: 123 };
+      jest.spyOn(crbComplaintStatusTypeFormService, 'getCrbComplaintStatusType').mockReturnValue({ id: null });
       jest.spyOn(crbComplaintStatusTypeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ crbComplaintStatusType });
+      activatedRoute.data = of({ crbComplaintStatusType: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('CrbComplaintStatusType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(crbComplaintStatusTypeService.create).toHaveBeenCalledWith(crbComplaintStatusType);
+      expect(crbComplaintStatusTypeFormService.getCrbComplaintStatusType).toHaveBeenCalled();
+      expect(crbComplaintStatusTypeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CrbComplaintStatusType>>();
+      const saveSubject = new Subject<HttpResponse<ICrbComplaintStatusType>>();
       const crbComplaintStatusType = { id: 123 };
       jest.spyOn(crbComplaintStatusTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('CrbComplaintStatusType Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(crbComplaintStatusTypeService.update).toHaveBeenCalledWith(crbComplaintStatusType);
+      expect(crbComplaintStatusTypeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

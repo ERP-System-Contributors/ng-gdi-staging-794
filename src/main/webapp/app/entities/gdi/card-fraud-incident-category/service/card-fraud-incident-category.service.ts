@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICardFraudIncidentCategory, getCardFraudIncidentCategoryIdentifier } from '../card-fraud-incident-category.model';
+import { ICardFraudIncidentCategory, NewCardFraudIncidentCategory } from '../card-fraud-incident-category.model';
+
+export type PartialUpdateCardFraudIncidentCategory = Partial<ICardFraudIncidentCategory> & Pick<ICardFraudIncidentCategory, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICardFraudIncidentCategory>;
 export type EntityArrayResponseType = HttpResponse<ICardFraudIncidentCategory[]>;
@@ -36,21 +20,21 @@ export class CardFraudIncidentCategoryService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(cardFraudIncidentCategory: ICardFraudIncidentCategory): Observable<EntityResponseType> {
+  create(cardFraudIncidentCategory: NewCardFraudIncidentCategory): Observable<EntityResponseType> {
     return this.http.post<ICardFraudIncidentCategory>(this.resourceUrl, cardFraudIncidentCategory, { observe: 'response' });
   }
 
   update(cardFraudIncidentCategory: ICardFraudIncidentCategory): Observable<EntityResponseType> {
     return this.http.put<ICardFraudIncidentCategory>(
-      `${this.resourceUrl}/${getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategory) as number}`,
+      `${this.resourceUrl}/${this.getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategory)}`,
       cardFraudIncidentCategory,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(cardFraudIncidentCategory: ICardFraudIncidentCategory): Observable<EntityResponseType> {
+  partialUpdate(cardFraudIncidentCategory: PartialUpdateCardFraudIncidentCategory): Observable<EntityResponseType> {
     return this.http.patch<ICardFraudIncidentCategory>(
-      `${this.resourceUrl}/${getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategory) as number}`,
+      `${this.resourceUrl}/${this.getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategory)}`,
       cardFraudIncidentCategory,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CardFraudIncidentCategoryService {
     return this.http.get<ICardFraudIncidentCategory[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCardFraudIncidentCategoryToCollectionIfMissing(
-    cardFraudIncidentCategoryCollection: ICardFraudIncidentCategory[],
-    ...cardFraudIncidentCategoriesToCheck: (ICardFraudIncidentCategory | null | undefined)[]
-  ): ICardFraudIncidentCategory[] {
-    const cardFraudIncidentCategories: ICardFraudIncidentCategory[] = cardFraudIncidentCategoriesToCheck.filter(isPresent);
+  getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategory: Pick<ICardFraudIncidentCategory, 'id'>): number {
+    return cardFraudIncidentCategory.id;
+  }
+
+  compareCardFraudIncidentCategory(
+    o1: Pick<ICardFraudIncidentCategory, 'id'> | null,
+    o2: Pick<ICardFraudIncidentCategory, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCardFraudIncidentCategoryIdentifier(o1) === this.getCardFraudIncidentCategoryIdentifier(o2) : o1 === o2;
+  }
+
+  addCardFraudIncidentCategoryToCollectionIfMissing<Type extends Pick<ICardFraudIncidentCategory, 'id'>>(
+    cardFraudIncidentCategoryCollection: Type[],
+    ...cardFraudIncidentCategoriesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const cardFraudIncidentCategories: Type[] = cardFraudIncidentCategoriesToCheck.filter(isPresent);
     if (cardFraudIncidentCategories.length > 0) {
       const cardFraudIncidentCategoryCollectionIdentifiers = cardFraudIncidentCategoryCollection.map(
-        cardFraudIncidentCategoryItem => getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategoryItem)!
+        cardFraudIncidentCategoryItem => this.getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategoryItem)!
       );
       const cardFraudIncidentCategoriesToAdd = cardFraudIncidentCategories.filter(cardFraudIncidentCategoryItem => {
-        const cardFraudIncidentCategoryIdentifier = getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategoryItem);
-        if (
-          cardFraudIncidentCategoryIdentifier == null ||
-          cardFraudIncidentCategoryCollectionIdentifiers.includes(cardFraudIncidentCategoryIdentifier)
-        ) {
+        const cardFraudIncidentCategoryIdentifier = this.getCardFraudIncidentCategoryIdentifier(cardFraudIncidentCategoryItem);
+        if (cardFraudIncidentCategoryCollectionIdentifiers.includes(cardFraudIncidentCategoryIdentifier)) {
           return false;
         }
         cardFraudIncidentCategoryCollectionIdentifiers.push(cardFraudIncidentCategoryIdentifier);

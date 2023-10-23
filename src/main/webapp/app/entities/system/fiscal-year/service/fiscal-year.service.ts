@@ -1,33 +1,28 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IFiscalYear, getFiscalYearIdentifier } from '../fiscal-year.model';
+import { IFiscalYear, NewFiscalYear } from '../fiscal-year.model';
+
+export type PartialUpdateFiscalYear = Partial<IFiscalYear> & Pick<IFiscalYear, 'id'>;
+
+type RestOf<T extends IFiscalYear | NewFiscalYear> = Omit<T, 'startDate' | 'endDate'> & {
+  startDate?: string | null;
+  endDate?: string | null;
+};
+
+export type RestFiscalYear = RestOf<IFiscalYear>;
+
+export type NewRestFiscalYear = RestOf<NewFiscalYear>;
+
+export type PartialUpdateRestFiscalYear = RestOf<PartialUpdateFiscalYear>;
 
 export type EntityResponseType = HttpResponse<IFiscalYear>;
 export type EntityArrayResponseType = HttpResponse<IFiscalYear[]>;
@@ -39,38 +34,38 @@ export class FiscalYearService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(fiscalYear: IFiscalYear): Observable<EntityResponseType> {
+  create(fiscalYear: NewFiscalYear): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalYear);
     return this.http
-      .post<IFiscalYear>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestFiscalYear>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(fiscalYear: IFiscalYear): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalYear);
     return this.http
-      .put<IFiscalYear>(`${this.resourceUrl}/${getFiscalYearIdentifier(fiscalYear) as number}`, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .put<RestFiscalYear>(`${this.resourceUrl}/${this.getFiscalYearIdentifier(fiscalYear)}`, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(fiscalYear: IFiscalYear): Observable<EntityResponseType> {
+  partialUpdate(fiscalYear: PartialUpdateFiscalYear): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalYear);
     return this.http
-      .patch<IFiscalYear>(`${this.resourceUrl}/${getFiscalYearIdentifier(fiscalYear) as number}`, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .patch<RestFiscalYear>(`${this.resourceUrl}/${this.getFiscalYearIdentifier(fiscalYear)}`, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<IFiscalYear>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestFiscalYear>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IFiscalYear[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestFiscalYear[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -80,20 +75,28 @@ export class FiscalYearService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IFiscalYear[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestFiscalYear[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addFiscalYearToCollectionIfMissing(
-    fiscalYearCollection: IFiscalYear[],
-    ...fiscalYearsToCheck: (IFiscalYear | null | undefined)[]
-  ): IFiscalYear[] {
-    const fiscalYears: IFiscalYear[] = fiscalYearsToCheck.filter(isPresent);
+  getFiscalYearIdentifier(fiscalYear: Pick<IFiscalYear, 'id'>): number {
+    return fiscalYear.id;
+  }
+
+  compareFiscalYear(o1: Pick<IFiscalYear, 'id'> | null, o2: Pick<IFiscalYear, 'id'> | null): boolean {
+    return o1 && o2 ? this.getFiscalYearIdentifier(o1) === this.getFiscalYearIdentifier(o2) : o1 === o2;
+  }
+
+  addFiscalYearToCollectionIfMissing<Type extends Pick<IFiscalYear, 'id'>>(
+    fiscalYearCollection: Type[],
+    ...fiscalYearsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const fiscalYears: Type[] = fiscalYearsToCheck.filter(isPresent);
     if (fiscalYears.length > 0) {
-      const fiscalYearCollectionIdentifiers = fiscalYearCollection.map(fiscalYearItem => getFiscalYearIdentifier(fiscalYearItem)!);
+      const fiscalYearCollectionIdentifiers = fiscalYearCollection.map(fiscalYearItem => this.getFiscalYearIdentifier(fiscalYearItem)!);
       const fiscalYearsToAdd = fiscalYears.filter(fiscalYearItem => {
-        const fiscalYearIdentifier = getFiscalYearIdentifier(fiscalYearItem);
-        if (fiscalYearIdentifier == null || fiscalYearCollectionIdentifiers.includes(fiscalYearIdentifier)) {
+        const fiscalYearIdentifier = this.getFiscalYearIdentifier(fiscalYearItem);
+        if (fiscalYearCollectionIdentifiers.includes(fiscalYearIdentifier)) {
           return false;
         }
         fiscalYearCollectionIdentifiers.push(fiscalYearIdentifier);
@@ -104,28 +107,31 @@ export class FiscalYearService {
     return fiscalYearCollection;
   }
 
-  protected convertDateFromClient(fiscalYear: IFiscalYear): IFiscalYear {
-    return Object.assign({}, fiscalYear, {
-      startDate: fiscalYear.startDate?.isValid() ? fiscalYear.startDate.format(DATE_FORMAT) : undefined,
-      endDate: fiscalYear.endDate?.isValid() ? fiscalYear.endDate.format(DATE_FORMAT) : undefined,
+  protected convertDateFromClient<T extends IFiscalYear | NewFiscalYear | PartialUpdateFiscalYear>(fiscalYear: T): RestOf<T> {
+    return {
+      ...fiscalYear,
+      startDate: fiscalYear.startDate?.format(DATE_FORMAT) ?? null,
+      endDate: fiscalYear.endDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restFiscalYear: RestFiscalYear): IFiscalYear {
+    return {
+      ...restFiscalYear,
+      startDate: restFiscalYear.startDate ? dayjs(restFiscalYear.startDate) : undefined,
+      endDate: restFiscalYear.endDate ? dayjs(restFiscalYear.endDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestFiscalYear>): HttpResponse<IFiscalYear> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.startDate = res.body.startDate ? dayjs(res.body.startDate) : undefined;
-      res.body.endDate = res.body.endDate ? dayjs(res.body.endDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((fiscalYear: IFiscalYear) => {
-        fiscalYear.startDate = fiscalYear.startDate ? dayjs(fiscalYear.startDate) : undefined;
-        fiscalYear.endDate = fiscalYear.endDate ? dayjs(fiscalYear.endDate) : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestFiscalYear[]>): HttpResponse<IFiscalYear[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

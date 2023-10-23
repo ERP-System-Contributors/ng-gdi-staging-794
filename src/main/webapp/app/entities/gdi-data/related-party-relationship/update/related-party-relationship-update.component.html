@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-related-party-relationship-heading" data-cy="RelatedPartyRelationshipCreateUpdateHeading">
@@ -27,13 +8,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -45,11 +26,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -60,8 +39,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_customerId">Customer Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_customerId">Customer Id</label>
           <input
             type="text"
             class="form-control"
@@ -75,8 +54,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_relatedPartyId">Related Party Id</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_relatedPartyId">Related Party Id</label>
           <input
             type="text"
             class="form-control"
@@ -94,16 +73,18 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -112,16 +93,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_branchId">Branch Id</label>
-          <select class="form-control" id="field_branchId" data-cy="branchId" name="branchId" formControlName="branchId">
+        <div class="row mb-3">
+          <label class="form-label" for="field_branchId">Branch Id</label>
+          <select
+            class="form-control"
+            id="field_branchId"
+            data-cy="branchId"
+            name="branchId"
+            formControlName="branchId"
+            [compareWith]="compareBankBranchCode"
+          >
             <option *ngIf="!editForm.get('branchId')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                bankBranchCodeOption.id === editForm.get('branchId')!.value?.id ? editForm.get('branchId')!.value : bankBranchCodeOption
-              "
-              *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection; trackBy: trackBankBranchCodeById"
-            >
+            <option [ngValue]="bankBranchCodeOption" *ngFor="let bankBranchCodeOption of bankBranchCodesSharedCollection">
               {{ bankBranchCodeOption.branchCode }}
             </option>
           </select>
@@ -130,24 +113,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['branchId'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_relationshipType">Relationship Type</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_relationshipType">Relationship Type</label>
           <select
             class="form-control"
             id="field_relationshipType"
             data-cy="relationshipType"
             name="relationshipType"
             formControlName="relationshipType"
+            [compareWith]="comparePartyRelationType"
           >
             <option *ngIf="!editForm.get('relationshipType')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                partyRelationTypeOption.id === editForm.get('relationshipType')!.value?.id
-                  ? editForm.get('relationshipType')!.value
-                  : partyRelationTypeOption
-              "
-              *ngFor="let partyRelationTypeOption of partyRelationTypesSharedCollection; trackBy: trackPartyRelationTypeById"
-            >
+            <option [ngValue]="partyRelationTypeOption" *ngFor="let partyRelationTypeOption of partyRelationTypesSharedCollection">
               {{ partyRelationTypeOption.partyRelationType }}
             </option>
           </select>

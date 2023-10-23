@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { AccountAttributeFormService } from './account-attribute-form.service';
 import { AccountAttributeService } from '../service/account-attribute.service';
-import { IAccountAttribute, AccountAttribute } from '../account-attribute.model';
+import { IAccountAttribute } from '../account-attribute.model';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
 import { IBankBranchCode } from 'app/entities/gdi/bank-branch-code/bank-branch-code.model';
@@ -40,6 +22,7 @@ describe('AccountAttribute Management Update Component', () => {
   let comp: AccountAttributeUpdateComponent;
   let fixture: ComponentFixture<AccountAttributeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let accountAttributeFormService: AccountAttributeFormService;
   let accountAttributeService: AccountAttributeService;
   let institutionCodeService: InstitutionCodeService;
   let bankBranchCodeService: BankBranchCodeService;
@@ -47,15 +30,24 @@ describe('AccountAttribute Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [AccountAttributeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(AccountAttributeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(AccountAttributeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    accountAttributeFormService = TestBed.inject(AccountAttributeFormService);
     accountAttributeService = TestBed.inject(AccountAttributeService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
     bankBranchCodeService = TestBed.inject(BankBranchCodeService);
@@ -82,7 +74,7 @@ describe('AccountAttribute Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -104,7 +96,7 @@ describe('AccountAttribute Management Update Component', () => {
       expect(bankBranchCodeService.query).toHaveBeenCalled();
       expect(bankBranchCodeService.addBankBranchCodeToCollectionIfMissing).toHaveBeenCalledWith(
         bankBranchCodeCollection,
-        ...additionalBankBranchCodes
+        ...additionalBankBranchCodes.map(expect.objectContaining)
       );
       expect(comp.bankBranchCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -126,7 +118,7 @@ describe('AccountAttribute Management Update Component', () => {
       expect(accountOwnershipTypeService.query).toHaveBeenCalled();
       expect(accountOwnershipTypeService.addAccountOwnershipTypeToCollectionIfMissing).toHaveBeenCalledWith(
         accountOwnershipTypeCollection,
-        ...additionalAccountOwnershipTypes
+        ...additionalAccountOwnershipTypes.map(expect.objectContaining)
       );
       expect(comp.accountOwnershipTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -143,18 +135,19 @@ describe('AccountAttribute Management Update Component', () => {
       activatedRoute.data = of({ accountAttribute });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(accountAttribute));
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.bankBranchCodesSharedCollection).toContain(branchCode);
       expect(comp.accountOwnershipTypesSharedCollection).toContain(accountOwnershipType);
+      expect(comp.accountAttribute).toEqual(accountAttribute);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<AccountAttribute>>();
+      const saveSubject = new Subject<HttpResponse<IAccountAttribute>>();
       const accountAttribute = { id: 123 };
+      jest.spyOn(accountAttributeFormService, 'getAccountAttribute').mockReturnValue(accountAttribute);
       jest.spyOn(accountAttributeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ accountAttribute });
@@ -167,18 +160,20 @@ describe('AccountAttribute Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(accountAttributeFormService.getAccountAttribute).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(accountAttributeService.update).toHaveBeenCalledWith(accountAttribute);
+      expect(accountAttributeService.update).toHaveBeenCalledWith(expect.objectContaining(accountAttribute));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<AccountAttribute>>();
-      const accountAttribute = new AccountAttribute();
+      const saveSubject = new Subject<HttpResponse<IAccountAttribute>>();
+      const accountAttribute = { id: 123 };
+      jest.spyOn(accountAttributeFormService, 'getAccountAttribute').mockReturnValue({ id: null });
       jest.spyOn(accountAttributeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ accountAttribute });
+      activatedRoute.data = of({ accountAttribute: null });
       comp.ngOnInit();
 
       // WHEN
@@ -188,14 +183,15 @@ describe('AccountAttribute Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(accountAttributeService.create).toHaveBeenCalledWith(accountAttribute);
+      expect(accountAttributeFormService.getAccountAttribute).toHaveBeenCalled();
+      expect(accountAttributeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<AccountAttribute>>();
+      const saveSubject = new Subject<HttpResponse<IAccountAttribute>>();
       const accountAttribute = { id: 123 };
       jest.spyOn(accountAttributeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -208,34 +204,40 @@ describe('AccountAttribute Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(accountAttributeService.update).toHaveBeenCalledWith(accountAttribute);
+      expect(accountAttributeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackBankBranchCodeById', () => {
-      it('Should return tracked BankBranchCode primary key', () => {
+    describe('compareBankBranchCode', () => {
+      it('Should forward to bankBranchCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackBankBranchCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(bankBranchCodeService, 'compareBankBranchCode');
+        comp.compareBankBranchCode(entity, entity2);
+        expect(bankBranchCodeService.compareBankBranchCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackAccountOwnershipTypeById', () => {
-      it('Should return tracked AccountOwnershipType primary key', () => {
+    describe('compareAccountOwnershipType', () => {
+      it('Should forward to accountOwnershipTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackAccountOwnershipTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(accountOwnershipTypeService, 'compareAccountOwnershipType');
+        comp.compareAccountOwnershipType(entity, entity2);
+        expect(accountOwnershipTypeService.compareAccountOwnershipType).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

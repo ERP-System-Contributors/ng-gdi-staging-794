@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004103003",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -13,56 +15,55 @@
       "fieldValidateRulesMin": 0
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "CardIssuerCharges",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardCategory",
+      "otherEntityField": "cardCategoryDescription",
       "otherEntityName": "cardCategoryType",
+      "relationshipName": "cardCategory",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardCategoryDescription"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardType",
+      "otherEntityField": "cardType",
       "otherEntityName": "cardTypes",
+      "relationshipName": "cardType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardBrand",
+      "otherEntityField": "cardBrandType",
       "otherEntityName": "cardBrandType",
+      "relationshipName": "cardBrand",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardBrandType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardClass",
+      "otherEntityField": "cardClassType",
       "otherEntityName": "cardClassType",
+      "relationshipName": "cardClass",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardClassType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "cardChargeType",
+      "otherEntityField": "cardChargeTypeName",
       "otherEntityName": "cardCharges",
+      "relationshipName": "cardChargeType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "cardChargeTypeName"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "CardIssuerCharges",
-  "changelogDate": "20231004103003",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

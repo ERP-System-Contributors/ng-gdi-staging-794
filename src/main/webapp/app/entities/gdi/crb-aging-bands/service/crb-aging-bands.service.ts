@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICrbAgingBands, getCrbAgingBandsIdentifier } from '../crb-aging-bands.model';
+import { ICrbAgingBands, NewCrbAgingBands } from '../crb-aging-bands.model';
+
+export type PartialUpdateCrbAgingBands = Partial<ICrbAgingBands> & Pick<ICrbAgingBands, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICrbAgingBands>;
 export type EntityArrayResponseType = HttpResponse<ICrbAgingBands[]>;
@@ -36,18 +20,18 @@ export class CrbAgingBandsService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(crbAgingBands: ICrbAgingBands): Observable<EntityResponseType> {
+  create(crbAgingBands: NewCrbAgingBands): Observable<EntityResponseType> {
     return this.http.post<ICrbAgingBands>(this.resourceUrl, crbAgingBands, { observe: 'response' });
   }
 
   update(crbAgingBands: ICrbAgingBands): Observable<EntityResponseType> {
-    return this.http.put<ICrbAgingBands>(`${this.resourceUrl}/${getCrbAgingBandsIdentifier(crbAgingBands) as number}`, crbAgingBands, {
+    return this.http.put<ICrbAgingBands>(`${this.resourceUrl}/${this.getCrbAgingBandsIdentifier(crbAgingBands)}`, crbAgingBands, {
       observe: 'response',
     });
   }
 
-  partialUpdate(crbAgingBands: ICrbAgingBands): Observable<EntityResponseType> {
-    return this.http.patch<ICrbAgingBands>(`${this.resourceUrl}/${getCrbAgingBandsIdentifier(crbAgingBands) as number}`, crbAgingBands, {
+  partialUpdate(crbAgingBands: PartialUpdateCrbAgingBands): Observable<EntityResponseType> {
+    return this.http.patch<ICrbAgingBands>(`${this.resourceUrl}/${this.getCrbAgingBandsIdentifier(crbAgingBands)}`, crbAgingBands, {
       observe: 'response',
     });
   }
@@ -70,18 +54,26 @@ export class CrbAgingBandsService {
     return this.http.get<ICrbAgingBands[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCrbAgingBandsToCollectionIfMissing(
-    crbAgingBandsCollection: ICrbAgingBands[],
-    ...crbAgingBandsToCheck: (ICrbAgingBands | null | undefined)[]
-  ): ICrbAgingBands[] {
-    const crbAgingBands: ICrbAgingBands[] = crbAgingBandsToCheck.filter(isPresent);
+  getCrbAgingBandsIdentifier(crbAgingBands: Pick<ICrbAgingBands, 'id'>): number {
+    return crbAgingBands.id;
+  }
+
+  compareCrbAgingBands(o1: Pick<ICrbAgingBands, 'id'> | null, o2: Pick<ICrbAgingBands, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCrbAgingBandsIdentifier(o1) === this.getCrbAgingBandsIdentifier(o2) : o1 === o2;
+  }
+
+  addCrbAgingBandsToCollectionIfMissing<Type extends Pick<ICrbAgingBands, 'id'>>(
+    crbAgingBandsCollection: Type[],
+    ...crbAgingBandsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const crbAgingBands: Type[] = crbAgingBandsToCheck.filter(isPresent);
     if (crbAgingBands.length > 0) {
       const crbAgingBandsCollectionIdentifiers = crbAgingBandsCollection.map(
-        crbAgingBandsItem => getCrbAgingBandsIdentifier(crbAgingBandsItem)!
+        crbAgingBandsItem => this.getCrbAgingBandsIdentifier(crbAgingBandsItem)!
       );
       const crbAgingBandsToAdd = crbAgingBands.filter(crbAgingBandsItem => {
-        const crbAgingBandsIdentifier = getCrbAgingBandsIdentifier(crbAgingBandsItem);
-        if (crbAgingBandsIdentifier == null || crbAgingBandsCollectionIdentifiers.includes(crbAgingBandsIdentifier)) {
+        const crbAgingBandsIdentifier = this.getCrbAgingBandsIdentifier(crbAgingBandsItem);
+        if (crbAgingBandsCollectionIdentifiers.includes(crbAgingBandsIdentifier)) {
           return false;
         }
         crbAgingBandsCollectionIdentifiers.push(crbAgingBandsIdentifier);

@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004095743",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -29,35 +31,34 @@
       "fieldValidateRulesMin": 0
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "AgentBankingActivity",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchCode",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "transactionType",
+      "otherEntityField": "transactionTypeCode",
       "otherEntityName": "bankTransactionType",
+      "relationshipName": "transactionType",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "transactionTypeCode"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "AgentBankingActivity",
-  "changelogDate": "20231004095743",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

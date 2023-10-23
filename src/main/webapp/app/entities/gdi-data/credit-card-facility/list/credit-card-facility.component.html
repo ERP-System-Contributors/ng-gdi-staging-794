@@ -1,30 +1,11 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
 <div>
   <h2 id="page-heading" data-cy="CreditCardFacilityHeading">
     <span>Credit Card Facilities</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
-        <span>Refresh List</span>
+        <span>Refresh list</span>
       </button>
 
       <button
@@ -43,60 +24,105 @@
 
   <jhi-alert></jhi-alert>
 
-  <div class="row">
+  <form name="searchForm" class="row row-cols-sm-auto align-items-center">
     <div class="col-sm-12">
-      <form name="searchForm" class="form-inline">
-        <div class="input-group w-100 mt-3">
-          <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
+      <div class="input-group w-100 mt-3">
+        <label class="visually-hidden" for="currentSearch">Search for Credit Card Facility</label>
+        <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
 
-          <button class="input-group-append btn btn-info" (click)="search(currentSearch)">
-            <fa-icon icon="search"></fa-icon>
-          </button>
+        <button class="btn btn-info" (click)="search(currentSearch)">
+          <fa-icon icon="search"></fa-icon>
+        </button>
 
-          <button class="input-group-append btn btn-danger" (click)="search('')" *ngIf="currentSearch">
-            <fa-icon icon="trash-alt"></fa-icon>
-          </button>
-        </div>
-      </form>
+        <button class="btn btn-danger" (click)="search('')" *ngIf="currentSearch">
+          <fa-icon icon="trash-alt"></fa-icon>
+        </button>
+      </div>
     </div>
-  </div>
+  </form>
+
+  <jhi-filter [filters]="filters"></jhi-filter>
 
   <div class="alert alert-warning" id="no-result" *ngIf="creditCardFacilities?.length === 0">
-    <span>No creditCardFacilities found</span>
+    <span>No Credit Card Facilities found</span>
   </div>
 
-  <div class="table-responsive" id="entities" *ngIf="creditCardFacilities && creditCardFacilities.length > 0">
+  <div class="table-responsive table-entities" id="entities" *ngIf="creditCardFacilities && creditCardFacilities.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
-          <th scope="col" jhiSortBy="id"><span>ID</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="reportingDate"><span>Reporting Date</span> <fa-icon icon="sort"></fa-icon></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id">
+            <div class="d-flex">
+              <span>ID</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="reportingDate">
+            <div class="d-flex">
+              <span>Reporting Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col" jhiSortBy="totalNumberOfActiveCreditCards">
-            <span>Total Number Of Active Credit Cards</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total Number Of Active Credit Cards</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalCreditCardLimitsInCCY">
-            <span>Total Credit Card Limits In CCY</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total Credit Card Limits In CCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalCreditCardLimitsInLCY">
-            <span>Total Credit Card Limits In LCY</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total Credit Card Limits In LCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalCreditCardAmountUtilisedInCCY">
-            <span>Total Credit Card Amount Utilised In CCY</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total Credit Card Amount Utilised In CCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalCreditCardAmountUtilisedInLcy">
-            <span>Total Credit Card Amount Utilised In Lcy</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total Credit Card Amount Utilised In Lcy</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalNPACreditCardAmountInFCY">
-            <span>Total NPA Credit Card Amount In FCY</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total NPA Credit Card Amount In FCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
           <th scope="col" jhiSortBy="totalNPACreditCardAmountInLCY">
-            <span>Total NPA Credit Card Amount In LCY</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Total NPA Credit Card Amount In LCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
-          <th scope="col" jhiSortBy="bankCode.institutionName"><span>Bank Code</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="bankCode.institutionName">
+            <div class="d-flex">
+              <span>Bank Code</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col" jhiSortBy="customerCategory.creditCardOwnershipCategoryType">
-            <span>Customer Category</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Customer Category</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
-          <th scope="col" jhiSortBy="currencyCode.alphabeticCode"><span>Currency Code</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="currencyCode.alphabeticCode">
+            <div class="d-flex">
+              <span>Currency Code</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -115,26 +141,26 @@
           <td>{{ creditCardFacility.totalNPACreditCardAmountInLCY }}</td>
           <td>
             <div *ngIf="creditCardFacility.bankCode">
-              <a [routerLink]="['/institution-code', creditCardFacility.bankCode?.id, 'view']">{{
-                creditCardFacility.bankCode?.institutionName
+              <a [routerLink]="['/institution-code', creditCardFacility.bankCode.id, 'view']">{{
+                creditCardFacility.bankCode.institutionName
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="creditCardFacility.customerCategory">
-              <a [routerLink]="['/credit-card-ownership', creditCardFacility.customerCategory?.id, 'view']">{{
-                creditCardFacility.customerCategory?.creditCardOwnershipCategoryType
+              <a [routerLink]="['/credit-card-ownership', creditCardFacility.customerCategory.id, 'view']">{{
+                creditCardFacility.customerCategory.creditCardOwnershipCategoryType
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="creditCardFacility.currencyCode">
-              <a [routerLink]="['/iso-currency-code', creditCardFacility.currencyCode?.id, 'view']">{{
-                creditCardFacility.currencyCode?.alphabeticCode
+              <a [routerLink]="['/iso-currency-code', creditCardFacility.currencyCode.id, 'view']">{{
+                creditCardFacility.currencyCode.alphabeticCode
               }}</a>
             </div>
           </td>
-          <td class="text-right">
+          <td class="text-end">
             <div class="btn-group">
               <button
                 type="submit"
@@ -168,19 +194,19 @@
   </div>
 
   <div *ngIf="creditCardFacilities && creditCardFacilities.length > 0">
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <ngb-pagination
         [collectionSize]="totalItems"
-        [(page)]="ngbPaginationPage"
+        [page]="page"
         [pageSize]="itemsPerPage"
         [maxSize]="5"
         [rotate]="true"
         [boundaryLinks]="true"
-        (pageChange)="loadPage($event)"
+        (pageChange)="navigateToPage($event)"
       ></ngb-pagination>
     </div>
   </div>

@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IDepartmentType, getDepartmentTypeIdentifier } from '../department-type.model';
+import { IDepartmentType, NewDepartmentType } from '../department-type.model';
+
+export type PartialUpdateDepartmentType = Partial<IDepartmentType> & Pick<IDepartmentType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IDepartmentType>;
 export type EntityArrayResponseType = HttpResponse<IDepartmentType[]>;
@@ -36,22 +20,20 @@ export class DepartmentTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(departmentType: IDepartmentType): Observable<EntityResponseType> {
+  create(departmentType: NewDepartmentType): Observable<EntityResponseType> {
     return this.http.post<IDepartmentType>(this.resourceUrl, departmentType, { observe: 'response' });
   }
 
   update(departmentType: IDepartmentType): Observable<EntityResponseType> {
-    return this.http.put<IDepartmentType>(`${this.resourceUrl}/${getDepartmentTypeIdentifier(departmentType) as number}`, departmentType, {
+    return this.http.put<IDepartmentType>(`${this.resourceUrl}/${this.getDepartmentTypeIdentifier(departmentType)}`, departmentType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(departmentType: IDepartmentType): Observable<EntityResponseType> {
-    return this.http.patch<IDepartmentType>(
-      `${this.resourceUrl}/${getDepartmentTypeIdentifier(departmentType) as number}`,
-      departmentType,
-      { observe: 'response' }
-    );
+  partialUpdate(departmentType: PartialUpdateDepartmentType): Observable<EntityResponseType> {
+    return this.http.patch<IDepartmentType>(`${this.resourceUrl}/${this.getDepartmentTypeIdentifier(departmentType)}`, departmentType, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -72,18 +54,26 @@ export class DepartmentTypeService {
     return this.http.get<IDepartmentType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addDepartmentTypeToCollectionIfMissing(
-    departmentTypeCollection: IDepartmentType[],
-    ...departmentTypesToCheck: (IDepartmentType | null | undefined)[]
-  ): IDepartmentType[] {
-    const departmentTypes: IDepartmentType[] = departmentTypesToCheck.filter(isPresent);
+  getDepartmentTypeIdentifier(departmentType: Pick<IDepartmentType, 'id'>): number {
+    return departmentType.id;
+  }
+
+  compareDepartmentType(o1: Pick<IDepartmentType, 'id'> | null, o2: Pick<IDepartmentType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getDepartmentTypeIdentifier(o1) === this.getDepartmentTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addDepartmentTypeToCollectionIfMissing<Type extends Pick<IDepartmentType, 'id'>>(
+    departmentTypeCollection: Type[],
+    ...departmentTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const departmentTypes: Type[] = departmentTypesToCheck.filter(isPresent);
     if (departmentTypes.length > 0) {
       const departmentTypeCollectionIdentifiers = departmentTypeCollection.map(
-        departmentTypeItem => getDepartmentTypeIdentifier(departmentTypeItem)!
+        departmentTypeItem => this.getDepartmentTypeIdentifier(departmentTypeItem)!
       );
       const departmentTypesToAdd = departmentTypes.filter(departmentTypeItem => {
-        const departmentTypeIdentifier = getDepartmentTypeIdentifier(departmentTypeItem);
-        if (departmentTypeIdentifier == null || departmentTypeCollectionIdentifiers.includes(departmentTypeIdentifier)) {
+        const departmentTypeIdentifier = this.getDepartmentTypeIdentifier(departmentTypeItem);
+        if (departmentTypeCollectionIdentifiers.includes(departmentTypeIdentifier)) {
           return false;
         }
         departmentTypeCollectionIdentifiers.push(departmentTypeIdentifier);

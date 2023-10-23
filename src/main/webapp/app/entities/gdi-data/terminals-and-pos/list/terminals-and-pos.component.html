@@ -1,30 +1,11 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
 <div>
   <h2 id="page-heading" data-cy="TerminalsAndPOSHeading">
     <span>Terminals And POS</span>
 
     <div class="d-flex justify-content-end">
-      <button class="btn btn-info mr-2" (click)="loadPage()" [disabled]="isLoading">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
         <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
-        <span>Refresh List</span>
+        <span>Refresh list</span>
       </button>
 
       <button
@@ -43,51 +24,123 @@
 
   <jhi-alert></jhi-alert>
 
-  <div class="row">
+  <form name="searchForm" class="row row-cols-sm-auto align-items-center">
     <div class="col-sm-12">
-      <form name="searchForm" class="form-inline">
-        <div class="input-group w-100 mt-3">
-          <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
+      <div class="input-group w-100 mt-3">
+        <label class="visually-hidden" for="currentSearch">Search for Terminals And POS</label>
+        <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
 
-          <button class="input-group-append btn btn-info" (click)="search(currentSearch)">
-            <fa-icon icon="search"></fa-icon>
-          </button>
+        <button class="btn btn-info" (click)="search(currentSearch)">
+          <fa-icon icon="search"></fa-icon>
+        </button>
 
-          <button class="input-group-append btn btn-danger" (click)="search('')" *ngIf="currentSearch">
-            <fa-icon icon="trash-alt"></fa-icon>
-          </button>
-        </div>
-      </form>
+        <button class="btn btn-danger" (click)="search('')" *ngIf="currentSearch">
+          <fa-icon icon="trash-alt"></fa-icon>
+        </button>
+      </div>
     </div>
-  </div>
+  </form>
+
+  <jhi-filter [filters]="filters"></jhi-filter>
 
   <div class="alert alert-warning" id="no-result" *ngIf="terminalsAndPOS?.length === 0">
-    <span>No terminalsAndPOS found</span>
+    <span>No Terminals And POS found</span>
   </div>
 
-  <div class="table-responsive" id="entities" *ngIf="terminalsAndPOS && terminalsAndPOS.length > 0">
+  <div class="table-responsive table-entities" id="entities" *ngIf="terminalsAndPOS && terminalsAndPOS.length > 0">
     <table class="table table-striped" aria-describedby="page-heading">
       <thead>
-        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="loadPage()">
-          <th scope="col" jhiSortBy="id"><span>ID</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="reportingDate"><span>Reporting Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="terminalId"><span>Terminal Id</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="merchantId"><span>Merchant Id</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="terminalName"><span>Terminal Name</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon></th>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id">
+            <div class="d-flex">
+              <span>ID</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="reportingDate">
+            <div class="d-flex">
+              <span>Reporting Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="terminalId">
+            <div class="d-flex">
+              <span>Terminal Id</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="merchantId">
+            <div class="d-flex">
+              <span>Merchant Id</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="terminalName">
+            <div class="d-flex">
+              <span>Terminal Name</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col" jhiSortBy="terminalLocation">
-            <span>Terminal Location</span> <fa-icon *ngIf="!currentSearch" icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Terminal Location</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
           </th>
-          <th scope="col" jhiSortBy="iso6709Latitute"><span>Iso 6709 Latitute</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="iso6709Longitude"><span>Iso 6709 Longitude</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="terminalOpeningDate"><span>Terminal Opening Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="terminalClosureDate"><span>Terminal Closure Date</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="terminalType.txnTerminalTypeCode"><span>Terminal Type</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="iso6709Latitute">
+            <div class="d-flex">
+              <span>Iso 6709 Latitute</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="iso6709Longitude">
+            <div class="d-flex">
+              <span>Iso 6709 Longitude</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="terminalOpeningDate">
+            <div class="d-flex">
+              <span>Terminal Opening Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="terminalClosureDate">
+            <div class="d-flex">
+              <span>Terminal Closure Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="terminalType.txnTerminalTypeCode">
+            <div class="d-flex">
+              <span>Terminal Type</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col" jhiSortBy="terminalFunctionality.terminalFunctionality">
-            <span>Terminal Functionality</span> <fa-icon icon="sort"></fa-icon>
+            <div class="d-flex">
+              <span>Terminal Functionality</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
           </th>
-          <th scope="col" jhiSortBy="physicalLocation.subCountyCode"><span>Physical Location</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="bankId.institutionName"><span>Bank Id</span> <fa-icon icon="sort"></fa-icon></th>
-          <th scope="col" jhiSortBy="branchId.branchCode"><span>Branch Id</span> <fa-icon icon="sort"></fa-icon></th>
+          <th scope="col" jhiSortBy="physicalLocation.subCountyCode">
+            <div class="d-flex">
+              <span>Physical Location</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="bankId.institutionName">
+            <div class="d-flex">
+              <span>Bank Id</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="branchId.branchCode">
+            <div class="d-flex">
+              <span>Branch Id</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -107,36 +160,36 @@
           <td>{{ terminalsAndPOS.terminalClosureDate | formatMediumDate }}</td>
           <td>
             <div *ngIf="terminalsAndPOS.terminalType">
-              <a [routerLink]="['/terminal-types', terminalsAndPOS.terminalType?.id, 'view']">{{
-                terminalsAndPOS.terminalType?.txnTerminalTypeCode
+              <a [routerLink]="['/terminal-types', terminalsAndPOS.terminalType.id, 'view']">{{
+                terminalsAndPOS.terminalType.txnTerminalTypeCode
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="terminalsAndPOS.terminalFunctionality">
-              <a [routerLink]="['/terminal-functions', terminalsAndPOS.terminalFunctionality?.id, 'view']">{{
-                terminalsAndPOS.terminalFunctionality?.terminalFunctionality
+              <a [routerLink]="['/terminal-functions', terminalsAndPOS.terminalFunctionality.id, 'view']">{{
+                terminalsAndPOS.terminalFunctionality.terminalFunctionality
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="terminalsAndPOS.physicalLocation">
-              <a [routerLink]="['/county-sub-county-code', terminalsAndPOS.physicalLocation?.id, 'view']">{{
-                terminalsAndPOS.physicalLocation?.subCountyCode
+              <a [routerLink]="['/county-sub-county-code', terminalsAndPOS.physicalLocation.id, 'view']">{{
+                terminalsAndPOS.physicalLocation.subCountyCode
               }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="terminalsAndPOS.bankId">
-              <a [routerLink]="['/institution-code', terminalsAndPOS.bankId?.id, 'view']">{{ terminalsAndPOS.bankId?.institutionName }}</a>
+              <a [routerLink]="['/institution-code', terminalsAndPOS.bankId.id, 'view']">{{ terminalsAndPOS.bankId.institutionName }}</a>
             </div>
           </td>
           <td>
             <div *ngIf="terminalsAndPOS.branchId">
-              <a [routerLink]="['/bank-branch-code', terminalsAndPOS.branchId?.id, 'view']">{{ terminalsAndPOS.branchId?.branchCode }}</a>
+              <a [routerLink]="['/bank-branch-code', terminalsAndPOS.branchId.id, 'view']">{{ terminalsAndPOS.branchId.branchCode }}</a>
             </div>
           </td>
-          <td class="text-right">
+          <td class="text-end">
             <div class="btn-group">
               <button
                 type="submit"
@@ -170,19 +223,19 @@
   </div>
 
   <div *ngIf="terminalsAndPOS && terminalsAndPOS.length > 0">
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
     </div>
 
-    <div class="row justify-content-center">
+    <div class="d-flex justify-content-center">
       <ngb-pagination
         [collectionSize]="totalItems"
-        [(page)]="ngbPaginationPage"
+        [page]="page"
         [pageSize]="itemsPerPage"
         [maxSize]="5"
         [rotate]="true"
         [boundaryLinks]="true"
-        (pageChange)="loadPage($event)"
+        (pageChange)="navigateToPage($event)"
       ></ngb-pagination>
     </div>
   </div>

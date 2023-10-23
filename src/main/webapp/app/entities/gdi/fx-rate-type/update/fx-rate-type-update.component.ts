@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IFxRateType, FxRateType } from '../fx-rate-type.model';
+import { FxRateTypeFormService, FxRateTypeFormGroup } from './fx-rate-type-form.service';
+import { IFxRateType } from '../fx-rate-type.model';
 import { FxRateTypeService } from '../service/fx-rate-type.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class FxRateTypeUpdateComponent implements OnInit {
   isSaving = false;
+  fxRateType: IFxRateType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    fxRateCode: [null, [Validators.required]],
-    fxRateType: [null, [Validators.required]],
-    fxRateDetails: [],
-  });
+  editForm: FxRateTypeFormGroup = this.fxRateTypeFormService.createFxRateTypeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected fxRateTypeService: FxRateTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected fxRateTypeFormService: FxRateTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ fxRateType }) => {
-      this.updateForm(fxRateType);
+      this.fxRateType = fxRateType;
+      if (fxRateType) {
+        this.updateForm(fxRateType);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class FxRateTypeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class FxRateTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const fxRateType = this.createFromForm();
-    if (fxRateType.id !== undefined) {
+    const fxRateType = this.fxRateTypeFormService.getFxRateType(this.editForm);
+    if (fxRateType.id !== null) {
       this.subscribeToSaveResponse(this.fxRateTypeService.update(fxRateType));
     } else {
       this.subscribeToSaveResponse(this.fxRateTypeService.create(fxRateType));
@@ -87,10 +68,10 @@ export class FxRateTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IFxRateType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class FxRateTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(fxRateType: IFxRateType): void {
-    this.editForm.patchValue({
-      id: fxRateType.id,
-      fxRateCode: fxRateType.fxRateCode,
-      fxRateType: fxRateType.fxRateType,
-      fxRateDetails: fxRateType.fxRateDetails,
-    });
-  }
-
-  protected createFromForm(): IFxRateType {
-    return {
-      ...new FxRateType(),
-      id: this.editForm.get(['id'])!.value,
-      fxRateCode: this.editForm.get(['fxRateCode'])!.value,
-      fxRateType: this.editForm.get(['fxRateType'])!.value,
-      fxRateDetails: this.editForm.get(['fxRateDetails'])!.value,
-    };
+    this.fxRateType = fxRateType;
+    this.fxRateTypeFormService.resetForm(this.editForm, fxRateType);
   }
 }

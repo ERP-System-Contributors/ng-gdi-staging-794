@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004053154",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "businessReportingDate",
@@ -46,49 +48,48 @@
       "fieldValidateRules": ["required"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "ParticularsOfOutlet",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "subCountyCode",
+      "otherEntityField": "subCountyName",
       "otherEntityName": "countySubCountyCode",
+      "relationshipName": "subCountyCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "subCountyName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "outletId",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "outletId",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "typeOfOutlet",
+      "otherEntityField": "outletType",
       "otherEntityName": "outletType",
+      "relationshipName": "typeOfOutlet",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "outletType"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "outletStatus",
+      "otherEntityField": "branchStatusType",
       "otherEntityName": "outletStatus",
+      "relationshipName": "outletStatus",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchStatusType"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "ParticularsOfOutlet",
-  "changelogDate": "20231004053154",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

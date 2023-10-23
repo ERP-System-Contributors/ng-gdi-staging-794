@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20230816114147",
   "clientRootFolder": "system",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "fiscalYearCode",
@@ -22,42 +24,41 @@
       "fieldValues": "OPEN,CLOSED,IN_PROGRESS"
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "FiscalYear",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "placeholder",
-      "otherEntityName": "placeholder",
-      "relationshipType": "many-to-many",
       "otherEntityField": "description",
+      "otherEntityName": "placeholder",
+      "otherEntityRelationshipName": "fiscalYear",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalYear"
+      "relationshipName": "placeholder",
+      "relationshipType": "many-to-many"
     },
     {
-      "relationshipName": "universallyUniqueMapping",
-      "otherEntityName": "universallyUniqueMapping",
-      "relationshipType": "many-to-many",
       "otherEntityField": "universalKey",
+      "otherEntityName": "universallyUniqueMapping",
+      "otherEntityRelationshipName": "fiscalYear",
       "ownerSide": true,
-      "otherEntityRelationshipName": "fiscalYear"
+      "relationshipName": "universallyUniqueMapping",
+      "relationshipType": "many-to-many"
     },
     {
+      "otherEntityField": "applicationIdentity",
+      "otherEntityName": "applicationUser",
       "relationshipName": "createdBy",
-      "otherEntityName": "applicationUser",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "applicationIdentity"
+      "relationshipType": "many-to-one"
     },
     {
-      "relationshipName": "lastUpdatedBy",
+      "otherEntityField": "applicationIdentity",
       "otherEntityName": "applicationUser",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "applicationIdentity"
+      "relationshipName": "lastUpdatedBy",
+      "relationshipType": "many-to-one"
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "FiscalYear",
-  "changelogDate": "20230816114147",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

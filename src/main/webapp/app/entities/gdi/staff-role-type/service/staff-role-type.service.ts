@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IStaffRoleType, getStaffRoleTypeIdentifier } from '../staff-role-type.model';
+import { IStaffRoleType, NewStaffRoleType } from '../staff-role-type.model';
+
+export type PartialUpdateStaffRoleType = Partial<IStaffRoleType> & Pick<IStaffRoleType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IStaffRoleType>;
 export type EntityArrayResponseType = HttpResponse<IStaffRoleType[]>;
@@ -36,18 +20,18 @@ export class StaffRoleTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(staffRoleType: IStaffRoleType): Observable<EntityResponseType> {
+  create(staffRoleType: NewStaffRoleType): Observable<EntityResponseType> {
     return this.http.post<IStaffRoleType>(this.resourceUrl, staffRoleType, { observe: 'response' });
   }
 
   update(staffRoleType: IStaffRoleType): Observable<EntityResponseType> {
-    return this.http.put<IStaffRoleType>(`${this.resourceUrl}/${getStaffRoleTypeIdentifier(staffRoleType) as number}`, staffRoleType, {
+    return this.http.put<IStaffRoleType>(`${this.resourceUrl}/${this.getStaffRoleTypeIdentifier(staffRoleType)}`, staffRoleType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(staffRoleType: IStaffRoleType): Observable<EntityResponseType> {
-    return this.http.patch<IStaffRoleType>(`${this.resourceUrl}/${getStaffRoleTypeIdentifier(staffRoleType) as number}`, staffRoleType, {
+  partialUpdate(staffRoleType: PartialUpdateStaffRoleType): Observable<EntityResponseType> {
+    return this.http.patch<IStaffRoleType>(`${this.resourceUrl}/${this.getStaffRoleTypeIdentifier(staffRoleType)}`, staffRoleType, {
       observe: 'response',
     });
   }
@@ -70,18 +54,26 @@ export class StaffRoleTypeService {
     return this.http.get<IStaffRoleType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addStaffRoleTypeToCollectionIfMissing(
-    staffRoleTypeCollection: IStaffRoleType[],
-    ...staffRoleTypesToCheck: (IStaffRoleType | null | undefined)[]
-  ): IStaffRoleType[] {
-    const staffRoleTypes: IStaffRoleType[] = staffRoleTypesToCheck.filter(isPresent);
+  getStaffRoleTypeIdentifier(staffRoleType: Pick<IStaffRoleType, 'id'>): number {
+    return staffRoleType.id;
+  }
+
+  compareStaffRoleType(o1: Pick<IStaffRoleType, 'id'> | null, o2: Pick<IStaffRoleType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getStaffRoleTypeIdentifier(o1) === this.getStaffRoleTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addStaffRoleTypeToCollectionIfMissing<Type extends Pick<IStaffRoleType, 'id'>>(
+    staffRoleTypeCollection: Type[],
+    ...staffRoleTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const staffRoleTypes: Type[] = staffRoleTypesToCheck.filter(isPresent);
     if (staffRoleTypes.length > 0) {
       const staffRoleTypeCollectionIdentifiers = staffRoleTypeCollection.map(
-        staffRoleTypeItem => getStaffRoleTypeIdentifier(staffRoleTypeItem)!
+        staffRoleTypeItem => this.getStaffRoleTypeIdentifier(staffRoleTypeItem)!
       );
       const staffRoleTypesToAdd = staffRoleTypes.filter(staffRoleTypeItem => {
-        const staffRoleTypeIdentifier = getStaffRoleTypeIdentifier(staffRoleTypeItem);
-        if (staffRoleTypeIdentifier == null || staffRoleTypeCollectionIdentifiers.includes(staffRoleTypeIdentifier)) {
+        const staffRoleTypeIdentifier = this.getStaffRoleTypeIdentifier(staffRoleTypeItem);
+        if (staffRoleTypeCollectionIdentifiers.includes(staffRoleTypeIdentifier)) {
           return false;
         }
         staffRoleTypeCollectionIdentifiers.push(staffRoleTypeIdentifier);

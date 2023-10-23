@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICategoryOfSecurity, getCategoryOfSecurityIdentifier } from '../category-of-security.model';
+import { ICategoryOfSecurity, NewCategoryOfSecurity } from '../category-of-security.model';
+
+export type PartialUpdateCategoryOfSecurity = Partial<ICategoryOfSecurity> & Pick<ICategoryOfSecurity, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICategoryOfSecurity>;
 export type EntityArrayResponseType = HttpResponse<ICategoryOfSecurity[]>;
@@ -36,21 +20,21 @@ export class CategoryOfSecurityService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(categoryOfSecurity: ICategoryOfSecurity): Observable<EntityResponseType> {
+  create(categoryOfSecurity: NewCategoryOfSecurity): Observable<EntityResponseType> {
     return this.http.post<ICategoryOfSecurity>(this.resourceUrl, categoryOfSecurity, { observe: 'response' });
   }
 
   update(categoryOfSecurity: ICategoryOfSecurity): Observable<EntityResponseType> {
     return this.http.put<ICategoryOfSecurity>(
-      `${this.resourceUrl}/${getCategoryOfSecurityIdentifier(categoryOfSecurity) as number}`,
+      `${this.resourceUrl}/${this.getCategoryOfSecurityIdentifier(categoryOfSecurity)}`,
       categoryOfSecurity,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(categoryOfSecurity: ICategoryOfSecurity): Observable<EntityResponseType> {
+  partialUpdate(categoryOfSecurity: PartialUpdateCategoryOfSecurity): Observable<EntityResponseType> {
     return this.http.patch<ICategoryOfSecurity>(
-      `${this.resourceUrl}/${getCategoryOfSecurityIdentifier(categoryOfSecurity) as number}`,
+      `${this.resourceUrl}/${this.getCategoryOfSecurityIdentifier(categoryOfSecurity)}`,
       categoryOfSecurity,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class CategoryOfSecurityService {
     return this.http.get<ICategoryOfSecurity[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCategoryOfSecurityToCollectionIfMissing(
-    categoryOfSecurityCollection: ICategoryOfSecurity[],
-    ...categoryOfSecuritiesToCheck: (ICategoryOfSecurity | null | undefined)[]
-  ): ICategoryOfSecurity[] {
-    const categoryOfSecurities: ICategoryOfSecurity[] = categoryOfSecuritiesToCheck.filter(isPresent);
+  getCategoryOfSecurityIdentifier(categoryOfSecurity: Pick<ICategoryOfSecurity, 'id'>): number {
+    return categoryOfSecurity.id;
+  }
+
+  compareCategoryOfSecurity(o1: Pick<ICategoryOfSecurity, 'id'> | null, o2: Pick<ICategoryOfSecurity, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCategoryOfSecurityIdentifier(o1) === this.getCategoryOfSecurityIdentifier(o2) : o1 === o2;
+  }
+
+  addCategoryOfSecurityToCollectionIfMissing<Type extends Pick<ICategoryOfSecurity, 'id'>>(
+    categoryOfSecurityCollection: Type[],
+    ...categoryOfSecuritiesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const categoryOfSecurities: Type[] = categoryOfSecuritiesToCheck.filter(isPresent);
     if (categoryOfSecurities.length > 0) {
       const categoryOfSecurityCollectionIdentifiers = categoryOfSecurityCollection.map(
-        categoryOfSecurityItem => getCategoryOfSecurityIdentifier(categoryOfSecurityItem)!
+        categoryOfSecurityItem => this.getCategoryOfSecurityIdentifier(categoryOfSecurityItem)!
       );
       const categoryOfSecuritiesToAdd = categoryOfSecurities.filter(categoryOfSecurityItem => {
-        const categoryOfSecurityIdentifier = getCategoryOfSecurityIdentifier(categoryOfSecurityItem);
-        if (categoryOfSecurityIdentifier == null || categoryOfSecurityCollectionIdentifiers.includes(categoryOfSecurityIdentifier)) {
+        const categoryOfSecurityIdentifier = this.getCategoryOfSecurityIdentifier(categoryOfSecurityItem);
+        if (categoryOfSecurityCollectionIdentifiers.includes(categoryOfSecurityIdentifier)) {
           return false;
         }
         categoryOfSecurityCollectionIdentifiers.push(categoryOfSecurityIdentifier);

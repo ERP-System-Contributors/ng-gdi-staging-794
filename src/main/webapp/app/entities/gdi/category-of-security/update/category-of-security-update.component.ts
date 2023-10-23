@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICategoryOfSecurity, CategoryOfSecurity } from '../category-of-security.model';
+import { CategoryOfSecurityFormService, CategoryOfSecurityFormGroup } from './category-of-security-form.service';
+import { ICategoryOfSecurity } from '../category-of-security.model';
 import { CategoryOfSecurityService } from '../service/category-of-security.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class CategoryOfSecurityUpdateComponent implements OnInit {
   isSaving = false;
+  categoryOfSecurity: ICategoryOfSecurity | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    categoryOfSecurity: [null, [Validators.required]],
-    categoryOfSecurityDetails: [null, [Validators.required]],
-    categoryOfSecurityDescription: [],
-  });
+  editForm: CategoryOfSecurityFormGroup = this.categoryOfSecurityFormService.createCategoryOfSecurityFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected categoryOfSecurityService: CategoryOfSecurityService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected categoryOfSecurityFormService: CategoryOfSecurityFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ categoryOfSecurity }) => {
-      this.updateForm(categoryOfSecurity);
+      this.categoryOfSecurity = categoryOfSecurity;
+      if (categoryOfSecurity) {
+        this.updateForm(categoryOfSecurity);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class CategoryOfSecurityUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class CategoryOfSecurityUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const categoryOfSecurity = this.createFromForm();
-    if (categoryOfSecurity.id !== undefined) {
+    const categoryOfSecurity = this.categoryOfSecurityFormService.getCategoryOfSecurity(this.editForm);
+    if (categoryOfSecurity.id !== null) {
       this.subscribeToSaveResponse(this.categoryOfSecurityService.update(categoryOfSecurity));
     } else {
       this.subscribeToSaveResponse(this.categoryOfSecurityService.create(categoryOfSecurity));
@@ -87,10 +68,10 @@ export class CategoryOfSecurityUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICategoryOfSecurity>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class CategoryOfSecurityUpdateComponent implements OnInit {
   }
 
   protected updateForm(categoryOfSecurity: ICategoryOfSecurity): void {
-    this.editForm.patchValue({
-      id: categoryOfSecurity.id,
-      categoryOfSecurity: categoryOfSecurity.categoryOfSecurity,
-      categoryOfSecurityDetails: categoryOfSecurity.categoryOfSecurityDetails,
-      categoryOfSecurityDescription: categoryOfSecurity.categoryOfSecurityDescription,
-    });
-  }
-
-  protected createFromForm(): ICategoryOfSecurity {
-    return {
-      ...new CategoryOfSecurity(),
-      id: this.editForm.get(['id'])!.value,
-      categoryOfSecurity: this.editForm.get(['categoryOfSecurity'])!.value,
-      categoryOfSecurityDetails: this.editForm.get(['categoryOfSecurityDetails'])!.value,
-      categoryOfSecurityDescription: this.editForm.get(['categoryOfSecurityDescription'])!.value,
-    };
+    this.categoryOfSecurity = categoryOfSecurity;
+    this.categoryOfSecurityFormService.resetForm(this.editForm, categoryOfSecurity);
   }
 }

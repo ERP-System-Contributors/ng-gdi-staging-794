@@ -1,5 +1,5 @@
 /*
- * Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
+ * Erp System - Mark V No 5 (Ehud Series) Client 1.5.2
  * Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ const { writeFileSync } = require('fs');
 const gitInfo = gitDescribeSync(__dirname, {
   longSemver: false,
   dirtySemver: false,
-  customArguments: ['--abbrev=16']
+  customArguments: ['--abbrev=16'],
 });
 const versionInfoJson = JSON.stringify(gitInfo, null, 2);
 

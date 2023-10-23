@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { ParticularsOfOutletFormService } from './particulars-of-outlet-form.service';
 import { ParticularsOfOutletService } from '../service/particulars-of-outlet.service';
-import { IParticularsOfOutlet, ParticularsOfOutlet } from '../particulars-of-outlet.model';
+import { IParticularsOfOutlet } from '../particulars-of-outlet.model';
 import { ICountySubCountyCode } from 'app/entities/gdi-data/county-sub-county-code/county-sub-county-code.model';
 import { CountySubCountyCodeService } from 'app/entities/gdi-data/county-sub-county-code/service/county-sub-county-code.service';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
@@ -44,6 +26,7 @@ describe('ParticularsOfOutlet Management Update Component', () => {
   let comp: ParticularsOfOutletUpdateComponent;
   let fixture: ComponentFixture<ParticularsOfOutletUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let particularsOfOutletFormService: ParticularsOfOutletFormService;
   let particularsOfOutletService: ParticularsOfOutletService;
   let countySubCountyCodeService: CountySubCountyCodeService;
   let institutionCodeService: InstitutionCodeService;
@@ -53,15 +36,24 @@ describe('ParticularsOfOutlet Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [ParticularsOfOutletUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(ParticularsOfOutletUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(ParticularsOfOutletUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    particularsOfOutletFormService = TestBed.inject(ParticularsOfOutletFormService);
     particularsOfOutletService = TestBed.inject(ParticularsOfOutletService);
     countySubCountyCodeService = TestBed.inject(CountySubCountyCodeService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
@@ -90,7 +82,7 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       expect(countySubCountyCodeService.query).toHaveBeenCalled();
       expect(countySubCountyCodeService.addCountySubCountyCodeToCollectionIfMissing).toHaveBeenCalledWith(
         countySubCountyCodeCollection,
-        ...additionalCountySubCountyCodes
+        ...additionalCountySubCountyCodes.map(expect.objectContaining)
       );
       expect(comp.countySubCountyCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -112,7 +104,7 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -134,7 +126,7 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       expect(bankBranchCodeService.query).toHaveBeenCalled();
       expect(bankBranchCodeService.addBankBranchCodeToCollectionIfMissing).toHaveBeenCalledWith(
         bankBranchCodeCollection,
-        ...additionalBankBranchCodes
+        ...additionalBankBranchCodes.map(expect.objectContaining)
       );
       expect(comp.bankBranchCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -154,7 +146,10 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       comp.ngOnInit();
 
       expect(outletTypeService.query).toHaveBeenCalled();
-      expect(outletTypeService.addOutletTypeToCollectionIfMissing).toHaveBeenCalledWith(outletTypeCollection, ...additionalOutletTypes);
+      expect(outletTypeService.addOutletTypeToCollectionIfMissing).toHaveBeenCalledWith(
+        outletTypeCollection,
+        ...additionalOutletTypes.map(expect.objectContaining)
+      );
       expect(comp.outletTypesSharedCollection).toEqual(expectedCollection);
     });
 
@@ -175,7 +170,7 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       expect(outletStatusService.query).toHaveBeenCalled();
       expect(outletStatusService.addOutletStatusToCollectionIfMissing).toHaveBeenCalledWith(
         outletStatusCollection,
-        ...additionalOutletStatuses
+        ...additionalOutletStatuses.map(expect.objectContaining)
       );
       expect(comp.outletStatusesSharedCollection).toEqual(expectedCollection);
     });
@@ -196,20 +191,21 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       activatedRoute.data = of({ particularsOfOutlet });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(particularsOfOutlet));
       expect(comp.countySubCountyCodesSharedCollection).toContain(subCountyCode);
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.bankBranchCodesSharedCollection).toContain(outletId);
       expect(comp.outletTypesSharedCollection).toContain(typeOfOutlet);
       expect(comp.outletStatusesSharedCollection).toContain(outletStatus);
+      expect(comp.particularsOfOutlet).toEqual(particularsOfOutlet);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ParticularsOfOutlet>>();
+      const saveSubject = new Subject<HttpResponse<IParticularsOfOutlet>>();
       const particularsOfOutlet = { id: 123 };
+      jest.spyOn(particularsOfOutletFormService, 'getParticularsOfOutlet').mockReturnValue(particularsOfOutlet);
       jest.spyOn(particularsOfOutletService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ particularsOfOutlet });
@@ -222,18 +218,20 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(particularsOfOutletFormService.getParticularsOfOutlet).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(particularsOfOutletService.update).toHaveBeenCalledWith(particularsOfOutlet);
+      expect(particularsOfOutletService.update).toHaveBeenCalledWith(expect.objectContaining(particularsOfOutlet));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ParticularsOfOutlet>>();
-      const particularsOfOutlet = new ParticularsOfOutlet();
+      const saveSubject = new Subject<HttpResponse<IParticularsOfOutlet>>();
+      const particularsOfOutlet = { id: 123 };
+      jest.spyOn(particularsOfOutletFormService, 'getParticularsOfOutlet').mockReturnValue({ id: null });
       jest.spyOn(particularsOfOutletService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ particularsOfOutlet });
+      activatedRoute.data = of({ particularsOfOutlet: null });
       comp.ngOnInit();
 
       // WHEN
@@ -243,14 +241,15 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(particularsOfOutletService.create).toHaveBeenCalledWith(particularsOfOutlet);
+      expect(particularsOfOutletFormService.getParticularsOfOutlet).toHaveBeenCalled();
+      expect(particularsOfOutletService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ParticularsOfOutlet>>();
+      const saveSubject = new Subject<HttpResponse<IParticularsOfOutlet>>();
       const particularsOfOutlet = { id: 123 };
       jest.spyOn(particularsOfOutletService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -263,50 +262,60 @@ describe('ParticularsOfOutlet Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(particularsOfOutletService.update).toHaveBeenCalledWith(particularsOfOutlet);
+      expect(particularsOfOutletService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackCountySubCountyCodeById', () => {
-      it('Should return tracked CountySubCountyCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareCountySubCountyCode', () => {
+      it('Should forward to countySubCountyCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCountySubCountyCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(countySubCountyCodeService, 'compareCountySubCountyCode');
+        comp.compareCountySubCountyCode(entity, entity2);
+        expect(countySubCountyCodeService.compareCountySubCountyCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackBankBranchCodeById', () => {
-      it('Should return tracked BankBranchCode primary key', () => {
+    describe('compareBankBranchCode', () => {
+      it('Should forward to bankBranchCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackBankBranchCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(bankBranchCodeService, 'compareBankBranchCode');
+        comp.compareBankBranchCode(entity, entity2);
+        expect(bankBranchCodeService.compareBankBranchCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackOutletTypeById', () => {
-      it('Should return tracked OutletType primary key', () => {
+    describe('compareOutletType', () => {
+      it('Should forward to outletTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackOutletTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(outletTypeService, 'compareOutletType');
+        comp.compareOutletType(entity, entity2);
+        expect(outletTypeService.compareOutletType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackOutletStatusById', () => {
-      it('Should return tracked OutletStatus primary key', () => {
+    describe('compareOutletStatus', () => {
+      it('Should forward to outletStatusService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackOutletStatusById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(outletStatusService, 'compareOutletStatus');
+        comp.compareOutletStatus(entity, entity2);
+        expect(outletStatusService.compareOutletStatus).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
+# Erp System - Mark V No 5 (Ehud Series) Client 1.5.2
 # Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ set -eu
 # to set the defaults:
 export SERVER_API_DOCKER_DEPLOY_HOST=${SERVER_API_DOCKER_DEPLOY_HOST:-http://localhost}
 export SERVER_API_DOCKER_DEPLOY_PORT=${SERVER_API_DOCKER_DEPLOY_PORT:-8980}
-export ERP_DOCUMENTS_MAX_FILE_SIZE=${ERP_DOCUMENTS_MAX_FILE_SIZE:-50M}
+export CLIENT_MAX_FILE_SIZE=${CLIENT_MAX_FILE_SIZE:-50M}
 # export NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=8192"}
 
 # Due to `set -u` this would fail if not defined and no default was set above

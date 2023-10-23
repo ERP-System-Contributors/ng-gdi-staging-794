@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IBankTransactionType, getBankTransactionTypeIdentifier } from '../bank-transaction-type.model';
+import { IBankTransactionType, NewBankTransactionType } from '../bank-transaction-type.model';
+
+export type PartialUpdateBankTransactionType = Partial<IBankTransactionType> & Pick<IBankTransactionType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IBankTransactionType>;
 export type EntityArrayResponseType = HttpResponse<IBankTransactionType[]>;
@@ -36,21 +20,21 @@ export class BankTransactionTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(bankTransactionType: IBankTransactionType): Observable<EntityResponseType> {
+  create(bankTransactionType: NewBankTransactionType): Observable<EntityResponseType> {
     return this.http.post<IBankTransactionType>(this.resourceUrl, bankTransactionType, { observe: 'response' });
   }
 
   update(bankTransactionType: IBankTransactionType): Observable<EntityResponseType> {
     return this.http.put<IBankTransactionType>(
-      `${this.resourceUrl}/${getBankTransactionTypeIdentifier(bankTransactionType) as number}`,
+      `${this.resourceUrl}/${this.getBankTransactionTypeIdentifier(bankTransactionType)}`,
       bankTransactionType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(bankTransactionType: IBankTransactionType): Observable<EntityResponseType> {
+  partialUpdate(bankTransactionType: PartialUpdateBankTransactionType): Observable<EntityResponseType> {
     return this.http.patch<IBankTransactionType>(
-      `${this.resourceUrl}/${getBankTransactionTypeIdentifier(bankTransactionType) as number}`,
+      `${this.resourceUrl}/${this.getBankTransactionTypeIdentifier(bankTransactionType)}`,
       bankTransactionType,
       { observe: 'response' }
     );
@@ -74,18 +58,26 @@ export class BankTransactionTypeService {
     return this.http.get<IBankTransactionType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addBankTransactionTypeToCollectionIfMissing(
-    bankTransactionTypeCollection: IBankTransactionType[],
-    ...bankTransactionTypesToCheck: (IBankTransactionType | null | undefined)[]
-  ): IBankTransactionType[] {
-    const bankTransactionTypes: IBankTransactionType[] = bankTransactionTypesToCheck.filter(isPresent);
+  getBankTransactionTypeIdentifier(bankTransactionType: Pick<IBankTransactionType, 'id'>): number {
+    return bankTransactionType.id;
+  }
+
+  compareBankTransactionType(o1: Pick<IBankTransactionType, 'id'> | null, o2: Pick<IBankTransactionType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getBankTransactionTypeIdentifier(o1) === this.getBankTransactionTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addBankTransactionTypeToCollectionIfMissing<Type extends Pick<IBankTransactionType, 'id'>>(
+    bankTransactionTypeCollection: Type[],
+    ...bankTransactionTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const bankTransactionTypes: Type[] = bankTransactionTypesToCheck.filter(isPresent);
     if (bankTransactionTypes.length > 0) {
       const bankTransactionTypeCollectionIdentifiers = bankTransactionTypeCollection.map(
-        bankTransactionTypeItem => getBankTransactionTypeIdentifier(bankTransactionTypeItem)!
+        bankTransactionTypeItem => this.getBankTransactionTypeIdentifier(bankTransactionTypeItem)!
       );
       const bankTransactionTypesToAdd = bankTransactionTypes.filter(bankTransactionTypeItem => {
-        const bankTransactionTypeIdentifier = getBankTransactionTypeIdentifier(bankTransactionTypeItem);
-        if (bankTransactionTypeIdentifier == null || bankTransactionTypeCollectionIdentifiers.includes(bankTransactionTypeIdentifier)) {
+        const bankTransactionTypeIdentifier = this.getBankTransactionTypeIdentifier(bankTransactionTypeItem);
+        if (bankTransactionTypeCollectionIdentifiers.includes(bankTransactionTypeIdentifier)) {
           return false;
         }
         bankTransactionTypeCollectionIdentifiers.push(bankTransactionTypeIdentifier);

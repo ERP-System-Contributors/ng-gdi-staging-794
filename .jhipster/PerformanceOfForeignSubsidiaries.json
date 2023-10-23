@@ -1,5 +1,8 @@
 {
+  "changelogDate": "20231004090122",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
+  "entityTableName": "foreign_subsidiary_performance",
   "fields": [
     {
       "fieldName": "subsidiaryName",
@@ -79,29 +82,27 @@
       "fieldValidateRulesMin": "1"
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "PerformanceOfForeignSubsidiaries",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "subsidiaryCountryCode",
+      "otherEntityField": "countryDescription",
       "otherEntityName": "isoCountryCode",
+      "relationshipName": "subsidiaryCountryCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "countryDescription"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "PerformanceOfForeignSubsidiaries",
-  "changelogDate": "20231004090122",
-  "incrementalChangelog": false,
-  "entityTableName": "foreign_subsidiary_performance"
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

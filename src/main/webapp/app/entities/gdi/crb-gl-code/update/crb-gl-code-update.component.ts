@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICrbGlCode, CrbGlCode } from '../crb-gl-code.model';
+import { CrbGlCodeFormService, CrbGlCodeFormGroup } from './crb-gl-code-form.service';
+import { ICrbGlCode } from '../crb-gl-code.model';
 import { CrbGlCodeService } from '../service/crb-gl-code.service';
 
 @Component({
@@ -32,20 +14,22 @@ import { CrbGlCodeService } from '../service/crb-gl-code.service';
 })
 export class CrbGlCodeUpdateComponent implements OnInit {
   isSaving = false;
+  crbGlCode: ICrbGlCode | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    glCode: [null, [Validators.required]],
-    glDescription: [null, [Validators.required]],
-    glType: [null, [Validators.required]],
-    institutionCategory: [null, [Validators.required]],
-  });
+  editForm: CrbGlCodeFormGroup = this.crbGlCodeFormService.createCrbGlCodeFormGroup();
 
-  constructor(protected crbGlCodeService: CrbGlCodeService, protected activatedRoute: ActivatedRoute, protected fb: FormBuilder) {}
+  constructor(
+    protected crbGlCodeService: CrbGlCodeService,
+    protected crbGlCodeFormService: CrbGlCodeFormService,
+    protected activatedRoute: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ crbGlCode }) => {
-      this.updateForm(crbGlCode);
+      this.crbGlCode = crbGlCode;
+      if (crbGlCode) {
+        this.updateForm(crbGlCode);
+      }
     });
   }
 
@@ -55,8 +39,8 @@ export class CrbGlCodeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const crbGlCode = this.createFromForm();
-    if (crbGlCode.id !== undefined) {
+    const crbGlCode = this.crbGlCodeFormService.getCrbGlCode(this.editForm);
+    if (crbGlCode.id !== null) {
       this.subscribeToSaveResponse(this.crbGlCodeService.update(crbGlCode));
     } else {
       this.subscribeToSaveResponse(this.crbGlCodeService.create(crbGlCode));
@@ -64,10 +48,10 @@ export class CrbGlCodeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICrbGlCode>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -83,23 +67,7 @@ export class CrbGlCodeUpdateComponent implements OnInit {
   }
 
   protected updateForm(crbGlCode: ICrbGlCode): void {
-    this.editForm.patchValue({
-      id: crbGlCode.id,
-      glCode: crbGlCode.glCode,
-      glDescription: crbGlCode.glDescription,
-      glType: crbGlCode.glType,
-      institutionCategory: crbGlCode.institutionCategory,
-    });
-  }
-
-  protected createFromForm(): ICrbGlCode {
-    return {
-      ...new CrbGlCode(),
-      id: this.editForm.get(['id'])!.value,
-      glCode: this.editForm.get(['glCode'])!.value,
-      glDescription: this.editForm.get(['glDescription'])!.value,
-      glType: this.editForm.get(['glType'])!.value,
-      institutionCategory: this.editForm.get(['institutionCategory'])!.value,
-    };
+    this.crbGlCode = crbGlCode;
+    this.crbGlCodeFormService.resetForm(this.editForm, crbGlCode);
   }
 }

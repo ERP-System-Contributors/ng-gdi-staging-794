@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ILoanApplicationStatus, LoanApplicationStatus } from '../loan-application-status.model';
+import { LoanApplicationStatusFormService, LoanApplicationStatusFormGroup } from './loan-application-status-form.service';
+import { ILoanApplicationStatus } from '../loan-application-status.model';
 import { LoanApplicationStatusService } from '../service/loan-application-status.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class LoanApplicationStatusUpdateComponent implements OnInit {
   isSaving = false;
+  loanApplicationStatus: ILoanApplicationStatus | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    loanApplicationStatusTypeCode: [null, [Validators.required]],
-    loanApplicationStatusType: [null, [Validators.required]],
-    loanApplicationStatusDetails: [],
-  });
+  editForm: LoanApplicationStatusFormGroup = this.loanApplicationStatusFormService.createLoanApplicationStatusFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected loanApplicationStatusService: LoanApplicationStatusService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected loanApplicationStatusFormService: LoanApplicationStatusFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ loanApplicationStatus }) => {
-      this.updateForm(loanApplicationStatus);
+      this.loanApplicationStatus = loanApplicationStatus;
+      if (loanApplicationStatus) {
+        this.updateForm(loanApplicationStatus);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class LoanApplicationStatusUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class LoanApplicationStatusUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const loanApplicationStatus = this.createFromForm();
-    if (loanApplicationStatus.id !== undefined) {
+    const loanApplicationStatus = this.loanApplicationStatusFormService.getLoanApplicationStatus(this.editForm);
+    if (loanApplicationStatus.id !== null) {
       this.subscribeToSaveResponse(this.loanApplicationStatusService.update(loanApplicationStatus));
     } else {
       this.subscribeToSaveResponse(this.loanApplicationStatusService.create(loanApplicationStatus));
@@ -87,10 +68,10 @@ export class LoanApplicationStatusUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ILoanApplicationStatus>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class LoanApplicationStatusUpdateComponent implements OnInit {
   }
 
   protected updateForm(loanApplicationStatus: ILoanApplicationStatus): void {
-    this.editForm.patchValue({
-      id: loanApplicationStatus.id,
-      loanApplicationStatusTypeCode: loanApplicationStatus.loanApplicationStatusTypeCode,
-      loanApplicationStatusType: loanApplicationStatus.loanApplicationStatusType,
-      loanApplicationStatusDetails: loanApplicationStatus.loanApplicationStatusDetails,
-    });
-  }
-
-  protected createFromForm(): ILoanApplicationStatus {
-    return {
-      ...new LoanApplicationStatus(),
-      id: this.editForm.get(['id'])!.value,
-      loanApplicationStatusTypeCode: this.editForm.get(['loanApplicationStatusTypeCode'])!.value,
-      loanApplicationStatusType: this.editForm.get(['loanApplicationStatusType'])!.value,
-      loanApplicationStatusDetails: this.editForm.get(['loanApplicationStatusDetails'])!.value,
-    };
+    this.loanApplicationStatus = loanApplicationStatus;
+    this.loanApplicationStatusFormService.resetForm(this.editForm, loanApplicationStatus);
   }
 }

@@ -1,32 +1,23 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { ICrbComplaintStatusType, CrbComplaintStatusType } from '../crb-complaint-status-type.model';
+import { ICrbComplaintStatusType } from '../crb-complaint-status-type.model';
+import {
+  sampleWithRequiredData,
+  sampleWithNewData,
+  sampleWithPartialData,
+  sampleWithFullData,
+} from '../crb-complaint-status-type.test-samples';
 
 import { CrbComplaintStatusTypeService } from './crb-complaint-status-type.service';
+
+const requireRestSample: ICrbComplaintStatusType = {
+  ...sampleWithRequiredData,
+};
 
 describe('CrbComplaintStatusType Service', () => {
   let service: CrbComplaintStatusTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: ICrbComplaintStatusType;
   let expectedResult: ICrbComplaintStatusType | ICrbComplaintStatusType[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +27,27 @@ describe('CrbComplaintStatusType Service', () => {
     expectedResult = null;
     service = TestBed.inject(CrbComplaintStatusTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      complaintStatusTypeCode: 'AAAAAAA',
-      complaintStatusType: 'AAAAAAA',
-      complaintStatusDetails: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a CrbComplaintStatusType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const crbComplaintStatusType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new CrbComplaintStatusType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(crbComplaintStatusType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +55,11 @@ describe('CrbComplaintStatusType Service', () => {
     });
 
     it('should update a CrbComplaintStatusType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          complaintStatusTypeCode: 'BBBBBB',
-          complaintStatusType: 'BBBBBB',
-          complaintStatusDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const crbComplaintStatusType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(crbComplaintStatusType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,16 +67,9 @@ describe('CrbComplaintStatusType Service', () => {
     });
 
     it('should partial update a CrbComplaintStatusType', () => {
-      const patchObject = Object.assign(
-        {
-          complaintStatusDetails: 'BBBBBB',
-        },
-        new CrbComplaintStatusType()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -113,65 +79,59 @@ describe('CrbComplaintStatusType Service', () => {
     });
 
     it('should return a list of CrbComplaintStatusType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          complaintStatusTypeCode: 'BBBBBB',
-          complaintStatusType: 'BBBBBB',
-          complaintStatusDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a CrbComplaintStatusType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addCrbComplaintStatusTypeToCollectionIfMissing', () => {
       it('should add a CrbComplaintStatusType to an empty array', () => {
-        const crbComplaintStatusType: ICrbComplaintStatusType = { id: 123 };
+        const crbComplaintStatusType: ICrbComplaintStatusType = sampleWithRequiredData;
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing([], crbComplaintStatusType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(crbComplaintStatusType);
       });
 
       it('should not add a CrbComplaintStatusType to an array that contains it', () => {
-        const crbComplaintStatusType: ICrbComplaintStatusType = { id: 123 };
+        const crbComplaintStatusType: ICrbComplaintStatusType = sampleWithRequiredData;
         const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [
           {
             ...crbComplaintStatusType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing(crbComplaintStatusTypeCollection, crbComplaintStatusType);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a CrbComplaintStatusType to an array that doesn't contain it", () => {
-        const crbComplaintStatusType: ICrbComplaintStatusType = { id: 123 };
-        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [{ id: 456 }];
+        const crbComplaintStatusType: ICrbComplaintStatusType = sampleWithRequiredData;
+        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [sampleWithPartialData];
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing(crbComplaintStatusTypeCollection, crbComplaintStatusType);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(crbComplaintStatusType);
       });
 
       it('should add only unique CrbComplaintStatusType to an array', () => {
-        const crbComplaintStatusTypeArray: ICrbComplaintStatusType[] = [{ id: 123 }, { id: 456 }, { id: 98719 }];
-        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [{ id: 123 }];
+        const crbComplaintStatusTypeArray: ICrbComplaintStatusType[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [sampleWithRequiredData];
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing(
           crbComplaintStatusTypeCollection,
           ...crbComplaintStatusTypeArray
@@ -180,8 +140,8 @@ describe('CrbComplaintStatusType Service', () => {
       });
 
       it('should accept varargs', () => {
-        const crbComplaintStatusType: ICrbComplaintStatusType = { id: 123 };
-        const crbComplaintStatusType2: ICrbComplaintStatusType = { id: 456 };
+        const crbComplaintStatusType: ICrbComplaintStatusType = sampleWithRequiredData;
+        const crbComplaintStatusType2: ICrbComplaintStatusType = sampleWithPartialData;
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing([], crbComplaintStatusType, crbComplaintStatusType2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(crbComplaintStatusType);
@@ -189,16 +149,60 @@ describe('CrbComplaintStatusType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const crbComplaintStatusType: ICrbComplaintStatusType = { id: 123 };
+        const crbComplaintStatusType: ICrbComplaintStatusType = sampleWithRequiredData;
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing([], null, crbComplaintStatusType, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(crbComplaintStatusType);
       });
 
       it('should return initial array if no CrbComplaintStatusType is added', () => {
-        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [{ id: 123 }];
+        const crbComplaintStatusTypeCollection: ICrbComplaintStatusType[] = [sampleWithRequiredData];
         expectedResult = service.addCrbComplaintStatusTypeToCollectionIfMissing(crbComplaintStatusTypeCollection, undefined, null);
         expect(expectedResult).toEqual(crbComplaintStatusTypeCollection);
+      });
+    });
+
+    describe('compareCrbComplaintStatusType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareCrbComplaintStatusType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareCrbComplaintStatusType(entity1, entity2);
+        const compareResult2 = service.compareCrbComplaintStatusType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareCrbComplaintStatusType(entity1, entity2);
+        const compareResult2 = service.compareCrbComplaintStatusType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareCrbComplaintStatusType(entity1, entity2);
+        const compareResult2 = service.compareCrbComplaintStatusType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

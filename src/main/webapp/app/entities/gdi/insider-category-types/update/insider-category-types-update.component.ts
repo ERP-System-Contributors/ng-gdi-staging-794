@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IInsiderCategoryTypes, InsiderCategoryTypes } from '../insider-category-types.model';
+import { InsiderCategoryTypesFormService, InsiderCategoryTypesFormGroup } from './insider-category-types-form.service';
+import { IInsiderCategoryTypes } from '../insider-category-types.model';
 import { InsiderCategoryTypesService } from '../service/insider-category-types.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class InsiderCategoryTypesUpdateComponent implements OnInit {
   isSaving = false;
+  insiderCategoryTypes: IInsiderCategoryTypes | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    insiderCategoryTypeCode: [null, [Validators.required]],
-    insiderCategoryTypeDetail: [null, [Validators.required]],
-    insiderCategoryDescription: [],
-  });
+  editForm: InsiderCategoryTypesFormGroup = this.insiderCategoryTypesFormService.createInsiderCategoryTypesFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected insiderCategoryTypesService: InsiderCategoryTypesService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected insiderCategoryTypesFormService: InsiderCategoryTypesFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ insiderCategoryTypes }) => {
-      this.updateForm(insiderCategoryTypes);
+      this.insiderCategoryTypes = insiderCategoryTypes;
+      if (insiderCategoryTypes) {
+        this.updateForm(insiderCategoryTypes);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class InsiderCategoryTypesUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class InsiderCategoryTypesUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const insiderCategoryTypes = this.createFromForm();
-    if (insiderCategoryTypes.id !== undefined) {
+    const insiderCategoryTypes = this.insiderCategoryTypesFormService.getInsiderCategoryTypes(this.editForm);
+    if (insiderCategoryTypes.id !== null) {
       this.subscribeToSaveResponse(this.insiderCategoryTypesService.update(insiderCategoryTypes));
     } else {
       this.subscribeToSaveResponse(this.insiderCategoryTypesService.create(insiderCategoryTypes));
@@ -87,10 +68,10 @@ export class InsiderCategoryTypesUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IInsiderCategoryTypes>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class InsiderCategoryTypesUpdateComponent implements OnInit {
   }
 
   protected updateForm(insiderCategoryTypes: IInsiderCategoryTypes): void {
-    this.editForm.patchValue({
-      id: insiderCategoryTypes.id,
-      insiderCategoryTypeCode: insiderCategoryTypes.insiderCategoryTypeCode,
-      insiderCategoryTypeDetail: insiderCategoryTypes.insiderCategoryTypeDetail,
-      insiderCategoryDescription: insiderCategoryTypes.insiderCategoryDescription,
-    });
-  }
-
-  protected createFromForm(): IInsiderCategoryTypes {
-    return {
-      ...new InsiderCategoryTypes(),
-      id: this.editForm.get(['id'])!.value,
-      insiderCategoryTypeCode: this.editForm.get(['insiderCategoryTypeCode'])!.value,
-      insiderCategoryTypeDetail: this.editForm.get(['insiderCategoryTypeDetail'])!.value,
-      insiderCategoryDescription: this.editForm.get(['insiderCategoryDescription'])!.value,
-    };
+    this.insiderCategoryTypes = insiderCategoryTypes;
+    this.insiderCategoryTypesFormService.resetForm(this.editForm, insiderCategoryTypes);
   }
 }

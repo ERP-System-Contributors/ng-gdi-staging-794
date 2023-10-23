@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { BusinessSegmentTypesFormService } from './business-segment-types-form.service';
 import { BusinessSegmentTypesService } from '../service/business-segment-types.service';
-import { IBusinessSegmentTypes, BusinessSegmentTypes } from '../business-segment-types.model';
+import { IBusinessSegmentTypes } from '../business-segment-types.model';
 
 import { BusinessSegmentTypesUpdateComponent } from './business-segment-types-update.component';
 
@@ -34,19 +16,29 @@ describe('BusinessSegmentTypes Management Update Component', () => {
   let comp: BusinessSegmentTypesUpdateComponent;
   let fixture: ComponentFixture<BusinessSegmentTypesUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let businessSegmentTypesFormService: BusinessSegmentTypesFormService;
   let businessSegmentTypesService: BusinessSegmentTypesService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [BusinessSegmentTypesUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(BusinessSegmentTypesUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(BusinessSegmentTypesUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    businessSegmentTypesFormService = TestBed.inject(BusinessSegmentTypesFormService);
     businessSegmentTypesService = TestBed.inject(BusinessSegmentTypesService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('BusinessSegmentTypes Management Update Component', () => {
       activatedRoute.data = of({ businessSegmentTypes });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(businessSegmentTypes));
+      expect(comp.businessSegmentTypes).toEqual(businessSegmentTypes);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<BusinessSegmentTypes>>();
+      const saveSubject = new Subject<HttpResponse<IBusinessSegmentTypes>>();
       const businessSegmentTypes = { id: 123 };
+      jest.spyOn(businessSegmentTypesFormService, 'getBusinessSegmentTypes').mockReturnValue(businessSegmentTypes);
       jest.spyOn(businessSegmentTypesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ businessSegmentTypes });
@@ -80,18 +73,20 @@ describe('BusinessSegmentTypes Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(businessSegmentTypesFormService.getBusinessSegmentTypes).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(businessSegmentTypesService.update).toHaveBeenCalledWith(businessSegmentTypes);
+      expect(businessSegmentTypesService.update).toHaveBeenCalledWith(expect.objectContaining(businessSegmentTypes));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<BusinessSegmentTypes>>();
-      const businessSegmentTypes = new BusinessSegmentTypes();
+      const saveSubject = new Subject<HttpResponse<IBusinessSegmentTypes>>();
+      const businessSegmentTypes = { id: 123 };
+      jest.spyOn(businessSegmentTypesFormService, 'getBusinessSegmentTypes').mockReturnValue({ id: null });
       jest.spyOn(businessSegmentTypesService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ businessSegmentTypes });
+      activatedRoute.data = of({ businessSegmentTypes: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('BusinessSegmentTypes Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(businessSegmentTypesService.create).toHaveBeenCalledWith(businessSegmentTypes);
+      expect(businessSegmentTypesFormService.getBusinessSegmentTypes).toHaveBeenCalled();
+      expect(businessSegmentTypesService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<BusinessSegmentTypes>>();
+      const saveSubject = new Subject<HttpResponse<IBusinessSegmentTypes>>();
       const businessSegmentTypes = { id: 123 };
       jest.spyOn(businessSegmentTypesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('BusinessSegmentTypes Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(businessSegmentTypesService.update).toHaveBeenCalledWith(businessSegmentTypes);
+      expect(businessSegmentTypesService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

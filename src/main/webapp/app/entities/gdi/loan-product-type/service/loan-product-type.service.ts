@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ILoanProductType, getLoanProductTypeIdentifier } from '../loan-product-type.model';
+import { ILoanProductType, NewLoanProductType } from '../loan-product-type.model';
+
+export type PartialUpdateLoanProductType = Partial<ILoanProductType> & Pick<ILoanProductType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ILoanProductType>;
 export type EntityArrayResponseType = HttpResponse<ILoanProductType[]>;
@@ -36,24 +20,20 @@ export class LoanProductTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(loanProductType: ILoanProductType): Observable<EntityResponseType> {
+  create(loanProductType: NewLoanProductType): Observable<EntityResponseType> {
     return this.http.post<ILoanProductType>(this.resourceUrl, loanProductType, { observe: 'response' });
   }
 
   update(loanProductType: ILoanProductType): Observable<EntityResponseType> {
-    return this.http.put<ILoanProductType>(
-      `${this.resourceUrl}/${getLoanProductTypeIdentifier(loanProductType) as number}`,
-      loanProductType,
-      { observe: 'response' }
-    );
+    return this.http.put<ILoanProductType>(`${this.resourceUrl}/${this.getLoanProductTypeIdentifier(loanProductType)}`, loanProductType, {
+      observe: 'response',
+    });
   }
 
-  partialUpdate(loanProductType: ILoanProductType): Observable<EntityResponseType> {
-    return this.http.patch<ILoanProductType>(
-      `${this.resourceUrl}/${getLoanProductTypeIdentifier(loanProductType) as number}`,
-      loanProductType,
-      { observe: 'response' }
-    );
+  partialUpdate(loanProductType: PartialUpdateLoanProductType): Observable<EntityResponseType> {
+    return this.http.patch<ILoanProductType>(`${this.resourceUrl}/${this.getLoanProductTypeIdentifier(loanProductType)}`, loanProductType, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -74,18 +54,26 @@ export class LoanProductTypeService {
     return this.http.get<ILoanProductType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addLoanProductTypeToCollectionIfMissing(
-    loanProductTypeCollection: ILoanProductType[],
-    ...loanProductTypesToCheck: (ILoanProductType | null | undefined)[]
-  ): ILoanProductType[] {
-    const loanProductTypes: ILoanProductType[] = loanProductTypesToCheck.filter(isPresent);
+  getLoanProductTypeIdentifier(loanProductType: Pick<ILoanProductType, 'id'>): number {
+    return loanProductType.id;
+  }
+
+  compareLoanProductType(o1: Pick<ILoanProductType, 'id'> | null, o2: Pick<ILoanProductType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getLoanProductTypeIdentifier(o1) === this.getLoanProductTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addLoanProductTypeToCollectionIfMissing<Type extends Pick<ILoanProductType, 'id'>>(
+    loanProductTypeCollection: Type[],
+    ...loanProductTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const loanProductTypes: Type[] = loanProductTypesToCheck.filter(isPresent);
     if (loanProductTypes.length > 0) {
       const loanProductTypeCollectionIdentifiers = loanProductTypeCollection.map(
-        loanProductTypeItem => getLoanProductTypeIdentifier(loanProductTypeItem)!
+        loanProductTypeItem => this.getLoanProductTypeIdentifier(loanProductTypeItem)!
       );
       const loanProductTypesToAdd = loanProductTypes.filter(loanProductTypeItem => {
-        const loanProductTypeIdentifier = getLoanProductTypeIdentifier(loanProductTypeItem);
-        if (loanProductTypeIdentifier == null || loanProductTypeCollectionIdentifiers.includes(loanProductTypeIdentifier)) {
+        const loanProductTypeIdentifier = this.getLoanProductTypeIdentifier(loanProductTypeItem);
+        if (loanProductTypeCollectionIdentifiers.includes(loanProductTypeIdentifier)) {
           return false;
         }
         loanProductTypeCollectionIdentifiers.push(loanProductTypeIdentifier);

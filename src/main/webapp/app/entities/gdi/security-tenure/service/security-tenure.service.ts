@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ISecurityTenure, getSecurityTenureIdentifier } from '../security-tenure.model';
+import { ISecurityTenure, NewSecurityTenure } from '../security-tenure.model';
+
+export type PartialUpdateSecurityTenure = Partial<ISecurityTenure> & Pick<ISecurityTenure, 'id'>;
 
 export type EntityResponseType = HttpResponse<ISecurityTenure>;
 export type EntityArrayResponseType = HttpResponse<ISecurityTenure[]>;
@@ -36,22 +20,20 @@ export class SecurityTenureService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(securityTenure: ISecurityTenure): Observable<EntityResponseType> {
+  create(securityTenure: NewSecurityTenure): Observable<EntityResponseType> {
     return this.http.post<ISecurityTenure>(this.resourceUrl, securityTenure, { observe: 'response' });
   }
 
   update(securityTenure: ISecurityTenure): Observable<EntityResponseType> {
-    return this.http.put<ISecurityTenure>(`${this.resourceUrl}/${getSecurityTenureIdentifier(securityTenure) as number}`, securityTenure, {
+    return this.http.put<ISecurityTenure>(`${this.resourceUrl}/${this.getSecurityTenureIdentifier(securityTenure)}`, securityTenure, {
       observe: 'response',
     });
   }
 
-  partialUpdate(securityTenure: ISecurityTenure): Observable<EntityResponseType> {
-    return this.http.patch<ISecurityTenure>(
-      `${this.resourceUrl}/${getSecurityTenureIdentifier(securityTenure) as number}`,
-      securityTenure,
-      { observe: 'response' }
-    );
+  partialUpdate(securityTenure: PartialUpdateSecurityTenure): Observable<EntityResponseType> {
+    return this.http.patch<ISecurityTenure>(`${this.resourceUrl}/${this.getSecurityTenureIdentifier(securityTenure)}`, securityTenure, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -72,18 +54,26 @@ export class SecurityTenureService {
     return this.http.get<ISecurityTenure[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addSecurityTenureToCollectionIfMissing(
-    securityTenureCollection: ISecurityTenure[],
-    ...securityTenuresToCheck: (ISecurityTenure | null | undefined)[]
-  ): ISecurityTenure[] {
-    const securityTenures: ISecurityTenure[] = securityTenuresToCheck.filter(isPresent);
+  getSecurityTenureIdentifier(securityTenure: Pick<ISecurityTenure, 'id'>): number {
+    return securityTenure.id;
+  }
+
+  compareSecurityTenure(o1: Pick<ISecurityTenure, 'id'> | null, o2: Pick<ISecurityTenure, 'id'> | null): boolean {
+    return o1 && o2 ? this.getSecurityTenureIdentifier(o1) === this.getSecurityTenureIdentifier(o2) : o1 === o2;
+  }
+
+  addSecurityTenureToCollectionIfMissing<Type extends Pick<ISecurityTenure, 'id'>>(
+    securityTenureCollection: Type[],
+    ...securityTenuresToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const securityTenures: Type[] = securityTenuresToCheck.filter(isPresent);
     if (securityTenures.length > 0) {
       const securityTenureCollectionIdentifiers = securityTenureCollection.map(
-        securityTenureItem => getSecurityTenureIdentifier(securityTenureItem)!
+        securityTenureItem => this.getSecurityTenureIdentifier(securityTenureItem)!
       );
       const securityTenuresToAdd = securityTenures.filter(securityTenureItem => {
-        const securityTenureIdentifier = getSecurityTenureIdentifier(securityTenureItem);
-        if (securityTenureIdentifier == null || securityTenureCollectionIdentifiers.includes(securityTenureIdentifier)) {
+        const securityTenureIdentifier = this.getSecurityTenureIdentifier(securityTenureItem);
+        if (securityTenureCollectionIdentifiers.includes(securityTenureIdentifier)) {
           return false;
         }
         securityTenureCollectionIdentifiers.push(securityTenureIdentifier);

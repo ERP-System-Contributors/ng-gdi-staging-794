@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICrbAmountCategoryBand, CrbAmountCategoryBand } from '../crb-amount-category-band.model';
+import { CrbAmountCategoryBandFormService, CrbAmountCategoryBandFormGroup } from './crb-amount-category-band-form.service';
+import { ICrbAmountCategoryBand } from '../crb-amount-category-band.model';
 import { CrbAmountCategoryBandService } from '../service/crb-amount-category-band.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class CrbAmountCategoryBandUpdateComponent implements OnInit {
   isSaving = false;
+  crbAmountCategoryBand: ICrbAmountCategoryBand | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    amountCategoryBandCode: [null, [Validators.required]],
-    amountCategoryBand: [null, [Validators.required]],
-    amountCategoryBandDetails: [],
-  });
+  editForm: CrbAmountCategoryBandFormGroup = this.crbAmountCategoryBandFormService.createCrbAmountCategoryBandFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected crbAmountCategoryBandService: CrbAmountCategoryBandService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected crbAmountCategoryBandFormService: CrbAmountCategoryBandFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ crbAmountCategoryBand }) => {
-      this.updateForm(crbAmountCategoryBand);
+      this.crbAmountCategoryBand = crbAmountCategoryBand;
+      if (crbAmountCategoryBand) {
+        this.updateForm(crbAmountCategoryBand);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class CrbAmountCategoryBandUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class CrbAmountCategoryBandUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const crbAmountCategoryBand = this.createFromForm();
-    if (crbAmountCategoryBand.id !== undefined) {
+    const crbAmountCategoryBand = this.crbAmountCategoryBandFormService.getCrbAmountCategoryBand(this.editForm);
+    if (crbAmountCategoryBand.id !== null) {
       this.subscribeToSaveResponse(this.crbAmountCategoryBandService.update(crbAmountCategoryBand));
     } else {
       this.subscribeToSaveResponse(this.crbAmountCategoryBandService.create(crbAmountCategoryBand));
@@ -87,10 +68,10 @@ export class CrbAmountCategoryBandUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICrbAmountCategoryBand>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class CrbAmountCategoryBandUpdateComponent implements OnInit {
   }
 
   protected updateForm(crbAmountCategoryBand: ICrbAmountCategoryBand): void {
-    this.editForm.patchValue({
-      id: crbAmountCategoryBand.id,
-      amountCategoryBandCode: crbAmountCategoryBand.amountCategoryBandCode,
-      amountCategoryBand: crbAmountCategoryBand.amountCategoryBand,
-      amountCategoryBandDetails: crbAmountCategoryBand.amountCategoryBandDetails,
-    });
-  }
-
-  protected createFromForm(): ICrbAmountCategoryBand {
-    return {
-      ...new CrbAmountCategoryBand(),
-      id: this.editForm.get(['id'])!.value,
-      amountCategoryBandCode: this.editForm.get(['amountCategoryBandCode'])!.value,
-      amountCategoryBand: this.editForm.get(['amountCategoryBand'])!.value,
-      amountCategoryBandDetails: this.editForm.get(['amountCategoryBandDetails'])!.value,
-    };
+    this.crbAmountCategoryBand = crbAmountCategoryBand;
+    this.crbAmountCategoryBandFormService.resetForm(this.editForm, crbAmountCategoryBand);
   }
 }

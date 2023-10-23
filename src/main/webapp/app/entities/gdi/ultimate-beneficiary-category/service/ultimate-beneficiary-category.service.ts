@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IUltimateBeneficiaryCategory, getUltimateBeneficiaryCategoryIdentifier } from '../ultimate-beneficiary-category.model';
+import { IUltimateBeneficiaryCategory, NewUltimateBeneficiaryCategory } from '../ultimate-beneficiary-category.model';
+
+export type PartialUpdateUltimateBeneficiaryCategory = Partial<IUltimateBeneficiaryCategory> & Pick<IUltimateBeneficiaryCategory, 'id'>;
 
 export type EntityResponseType = HttpResponse<IUltimateBeneficiaryCategory>;
 export type EntityArrayResponseType = HttpResponse<IUltimateBeneficiaryCategory[]>;
@@ -36,21 +20,21 @@ export class UltimateBeneficiaryCategoryService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(ultimateBeneficiaryCategory: IUltimateBeneficiaryCategory): Observable<EntityResponseType> {
+  create(ultimateBeneficiaryCategory: NewUltimateBeneficiaryCategory): Observable<EntityResponseType> {
     return this.http.post<IUltimateBeneficiaryCategory>(this.resourceUrl, ultimateBeneficiaryCategory, { observe: 'response' });
   }
 
   update(ultimateBeneficiaryCategory: IUltimateBeneficiaryCategory): Observable<EntityResponseType> {
     return this.http.put<IUltimateBeneficiaryCategory>(
-      `${this.resourceUrl}/${getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategory) as number}`,
+      `${this.resourceUrl}/${this.getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategory)}`,
       ultimateBeneficiaryCategory,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(ultimateBeneficiaryCategory: IUltimateBeneficiaryCategory): Observable<EntityResponseType> {
+  partialUpdate(ultimateBeneficiaryCategory: PartialUpdateUltimateBeneficiaryCategory): Observable<EntityResponseType> {
     return this.http.patch<IUltimateBeneficiaryCategory>(
-      `${this.resourceUrl}/${getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategory) as number}`,
+      `${this.resourceUrl}/${this.getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategory)}`,
       ultimateBeneficiaryCategory,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class UltimateBeneficiaryCategoryService {
     return this.http.get<IUltimateBeneficiaryCategory[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addUltimateBeneficiaryCategoryToCollectionIfMissing(
-    ultimateBeneficiaryCategoryCollection: IUltimateBeneficiaryCategory[],
-    ...ultimateBeneficiaryCategoriesToCheck: (IUltimateBeneficiaryCategory | null | undefined)[]
-  ): IUltimateBeneficiaryCategory[] {
-    const ultimateBeneficiaryCategories: IUltimateBeneficiaryCategory[] = ultimateBeneficiaryCategoriesToCheck.filter(isPresent);
+  getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategory: Pick<IUltimateBeneficiaryCategory, 'id'>): number {
+    return ultimateBeneficiaryCategory.id;
+  }
+
+  compareUltimateBeneficiaryCategory(
+    o1: Pick<IUltimateBeneficiaryCategory, 'id'> | null,
+    o2: Pick<IUltimateBeneficiaryCategory, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getUltimateBeneficiaryCategoryIdentifier(o1) === this.getUltimateBeneficiaryCategoryIdentifier(o2) : o1 === o2;
+  }
+
+  addUltimateBeneficiaryCategoryToCollectionIfMissing<Type extends Pick<IUltimateBeneficiaryCategory, 'id'>>(
+    ultimateBeneficiaryCategoryCollection: Type[],
+    ...ultimateBeneficiaryCategoriesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const ultimateBeneficiaryCategories: Type[] = ultimateBeneficiaryCategoriesToCheck.filter(isPresent);
     if (ultimateBeneficiaryCategories.length > 0) {
       const ultimateBeneficiaryCategoryCollectionIdentifiers = ultimateBeneficiaryCategoryCollection.map(
-        ultimateBeneficiaryCategoryItem => getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategoryItem)!
+        ultimateBeneficiaryCategoryItem => this.getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategoryItem)!
       );
       const ultimateBeneficiaryCategoriesToAdd = ultimateBeneficiaryCategories.filter(ultimateBeneficiaryCategoryItem => {
-        const ultimateBeneficiaryCategoryIdentifier = getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategoryItem);
-        if (
-          ultimateBeneficiaryCategoryIdentifier == null ||
-          ultimateBeneficiaryCategoryCollectionIdentifiers.includes(ultimateBeneficiaryCategoryIdentifier)
-        ) {
+        const ultimateBeneficiaryCategoryIdentifier = this.getUltimateBeneficiaryCategoryIdentifier(ultimateBeneficiaryCategoryItem);
+        if (ultimateBeneficiaryCategoryCollectionIdentifiers.includes(ultimateBeneficiaryCategoryIdentifier)) {
           return false;
         }
         ultimateBeneficiaryCategoryCollectionIdentifiers.push(ultimateBeneficiaryCategoryIdentifier);

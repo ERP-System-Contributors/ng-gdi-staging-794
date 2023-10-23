@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICounterPartyCategory, CounterPartyCategory } from '../counter-party-category.model';
+import { CounterPartyCategoryFormService, CounterPartyCategoryFormGroup } from './counter-party-category-form.service';
+import { ICounterPartyCategory } from '../counter-party-category.model';
 import { CounterPartyCategoryService } from '../service/counter-party-category.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -36,26 +18,25 @@ import { CounterpartyCategory } from 'app/entities/enumerations/counterparty-cat
 })
 export class CounterPartyCategoryUpdateComponent implements OnInit {
   isSaving = false;
+  counterPartyCategory: ICounterPartyCategory | null = null;
   counterpartyCategoryValues = Object.keys(CounterpartyCategory);
 
-  editForm = this.fb.group({
-    id: [],
-    counterpartyCategoryCode: [null, [Validators.required]],
-    counterpartyCategoryCodeDetails: [null, [Validators.required]],
-    counterpartyCategoryDescription: [],
-  });
+  editForm: CounterPartyCategoryFormGroup = this.counterPartyCategoryFormService.createCounterPartyCategoryFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected counterPartyCategoryService: CounterPartyCategoryService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected counterPartyCategoryFormService: CounterPartyCategoryFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ counterPartyCategory }) => {
-      this.updateForm(counterPartyCategory);
+      this.counterPartyCategory = counterPartyCategory;
+      if (counterPartyCategory) {
+        this.updateForm(counterPartyCategory);
+      }
     });
   }
 
@@ -70,7 +51,7 @@ export class CounterPartyCategoryUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -80,8 +61,8 @@ export class CounterPartyCategoryUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const counterPartyCategory = this.createFromForm();
-    if (counterPartyCategory.id !== undefined) {
+    const counterPartyCategory = this.counterPartyCategoryFormService.getCounterPartyCategory(this.editForm);
+    if (counterPartyCategory.id !== null) {
       this.subscribeToSaveResponse(this.counterPartyCategoryService.update(counterPartyCategory));
     } else {
       this.subscribeToSaveResponse(this.counterPartyCategoryService.create(counterPartyCategory));
@@ -89,10 +70,10 @@ export class CounterPartyCategoryUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICounterPartyCategory>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -108,21 +89,7 @@ export class CounterPartyCategoryUpdateComponent implements OnInit {
   }
 
   protected updateForm(counterPartyCategory: ICounterPartyCategory): void {
-    this.editForm.patchValue({
-      id: counterPartyCategory.id,
-      counterpartyCategoryCode: counterPartyCategory.counterpartyCategoryCode,
-      counterpartyCategoryCodeDetails: counterPartyCategory.counterpartyCategoryCodeDetails,
-      counterpartyCategoryDescription: counterPartyCategory.counterpartyCategoryDescription,
-    });
-  }
-
-  protected createFromForm(): ICounterPartyCategory {
-    return {
-      ...new CounterPartyCategory(),
-      id: this.editForm.get(['id'])!.value,
-      counterpartyCategoryCode: this.editForm.get(['counterpartyCategoryCode'])!.value,
-      counterpartyCategoryCodeDetails: this.editForm.get(['counterpartyCategoryCodeDetails'])!.value,
-      counterpartyCategoryDescription: this.editForm.get(['counterpartyCategoryDescription'])!.value,
-    };
+    this.counterPartyCategory = counterPartyCategory;
+    this.counterPartyCategoryFormService.resetForm(this.editForm, counterPartyCategory);
   }
 }

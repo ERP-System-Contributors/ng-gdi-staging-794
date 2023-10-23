@@ -1,44 +1,31 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { CrbSubmittingInstitutionCategoryService } from '../service/crb-submitting-institution-category.service';
 
 import { CrbSubmittingInstitutionCategoryComponent } from './crb-submitting-institution-category.component';
+import SpyInstance = jest.SpyInstance;
 
 describe('CrbSubmittingInstitutionCategory Management Component', () => {
   let comp: CrbSubmittingInstitutionCategoryComponent;
   let fixture: ComponentFixture<CrbSubmittingInstitutionCategoryComponent>;
   let service: CrbSubmittingInstitutionCategoryService;
+  let routerNavigateSpy: SpyInstance<Promise<boolean>>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [
+        RouterTestingModule.withRoutes([
+          { path: 'crb-submitting-institution-category', component: CrbSubmittingInstitutionCategoryComponent },
+        ]),
+        HttpClientTestingModule,
+      ],
       declarations: [CrbSubmittingInstitutionCategoryComponent],
       providers: [
-        Router,
         {
           provide: ActivatedRoute,
           useValue: {
@@ -50,6 +37,7 @@ describe('CrbSubmittingInstitutionCategory Management Component', () => {
                 page: '1',
                 size: '1',
                 sort: 'id,desc',
+                'filter[someId.in]': 'dc4279ea-cfb9-11ec-9d64-0242ac120002',
               })
             ),
             snapshot: { queryParams: {} },
@@ -63,6 +51,7 @@ describe('CrbSubmittingInstitutionCategory Management Component', () => {
     fixture = TestBed.createComponent(CrbSubmittingInstitutionCategoryComponent);
     comp = fixture.componentInstance;
     service = TestBed.inject(CrbSubmittingInstitutionCategoryService);
+    routerNavigateSpy = jest.spyOn(comp.router, 'navigate');
 
     const headers = new HttpHeaders();
     jest.spyOn(service, 'query').mockReturnValue(
@@ -84,13 +73,22 @@ describe('CrbSubmittingInstitutionCategory Management Component', () => {
     expect(comp.crbSubmittingInstitutionCategories?.[0]).toEqual(expect.objectContaining({ id: 123 }));
   });
 
+  describe('trackId', () => {
+    it('Should forward to crbSubmittingInstitutionCategoryService', () => {
+      const entity = { id: 123 };
+      jest.spyOn(service, 'getCrbSubmittingInstitutionCategoryIdentifier');
+      const id = comp.trackId(0, entity);
+      expect(service.getCrbSubmittingInstitutionCategoryIdentifier).toHaveBeenCalledWith(entity);
+      expect(id).toBe(entity.id);
+    });
+  });
+
   it('should load a page', () => {
     // WHEN
-    comp.loadPage(1);
+    comp.navigateToPage(1);
 
     // THEN
-    expect(service.query).toHaveBeenCalled();
-    expect(comp.crbSubmittingInstitutionCategories?.[0]).toEqual(expect.objectContaining({ id: 123 }));
+    expect(routerNavigateSpy).toHaveBeenCalled();
   });
 
   it('should calculate the sort attribute for an id', () => {
@@ -98,20 +96,32 @@ describe('CrbSubmittingInstitutionCategory Management Component', () => {
     comp.ngOnInit();
 
     // THEN
-    expect(service.query).toHaveBeenCalledWith(expect.objectContaining({ sort: ['id,desc'] }));
+    expect(service.query).toHaveBeenLastCalledWith(expect.objectContaining({ sort: ['id,desc'] }));
   });
 
   it('should calculate the sort attribute for a non-id attribute', () => {
-    // INIT
-    comp.ngOnInit();
-
     // GIVEN
     comp.predicate = 'name';
 
     // WHEN
-    comp.loadPage(1);
+    comp.navigateToWithComponentValues();
 
     // THEN
-    expect(service.query).toHaveBeenLastCalledWith(expect.objectContaining({ sort: ['name,desc', 'id'] }));
+    expect(routerNavigateSpy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          sort: ['name,asc'],
+        }),
+      })
+    );
+  });
+
+  it('should calculate the filter attribute', () => {
+    // WHEN
+    comp.ngOnInit();
+
+    // THEN
+    expect(service.query).toHaveBeenLastCalledWith(expect.objectContaining({ 'someId.in': ['dc4279ea-cfb9-11ec-9d64-0242ac120002'] }));
   });
 });

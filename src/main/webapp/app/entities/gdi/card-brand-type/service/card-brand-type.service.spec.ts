@@ -1,32 +1,18 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { ICardBrandType, CardBrandType } from '../card-brand-type.model';
+import { ICardBrandType } from '../card-brand-type.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../card-brand-type.test-samples';
 
 import { CardBrandTypeService } from './card-brand-type.service';
+
+const requireRestSample: ICardBrandType = {
+  ...sampleWithRequiredData,
+};
 
 describe('CardBrandType Service', () => {
   let service: CardBrandTypeService;
   let httpMock: HttpTestingController;
-  let elemDefault: ICardBrandType;
   let expectedResult: ICardBrandType | ICardBrandType[] | boolean | null;
 
   beforeEach(() => {
@@ -36,37 +22,27 @@ describe('CardBrandType Service', () => {
     expectedResult = null;
     service = TestBed.inject(CardBrandTypeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      cardBrandTypeCode: 'AAAAAAA',
-      cardBrandType: 'AAAAAAA',
-      cardBrandTypeDetails: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a CardBrandType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const cardBrandType = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new CardBrandType()).subscribe(resp => (expectedResult = resp.body));
+      service.create(cardBrandType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -74,19 +50,11 @@ describe('CardBrandType Service', () => {
     });
 
     it('should update a CardBrandType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          cardBrandTypeCode: 'BBBBBB',
-          cardBrandType: 'BBBBBB',
-          cardBrandTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const cardBrandType = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(cardBrandType).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -94,17 +62,9 @@ describe('CardBrandType Service', () => {
     });
 
     it('should partial update a CardBrandType', () => {
-      const patchObject = Object.assign(
-        {
-          cardBrandTypeCode: 'BBBBBB',
-          cardBrandTypeDetails: 'BBBBBB',
-        },
-        new CardBrandType()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -114,72 +74,66 @@ describe('CardBrandType Service', () => {
     });
 
     it('should return a list of CardBrandType', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          cardBrandTypeCode: 'BBBBBB',
-          cardBrandType: 'BBBBBB',
-          cardBrandTypeDetails: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a CardBrandType', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addCardBrandTypeToCollectionIfMissing', () => {
       it('should add a CardBrandType to an empty array', () => {
-        const cardBrandType: ICardBrandType = { id: 123 };
+        const cardBrandType: ICardBrandType = sampleWithRequiredData;
         expectedResult = service.addCardBrandTypeToCollectionIfMissing([], cardBrandType);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(cardBrandType);
       });
 
       it('should not add a CardBrandType to an array that contains it', () => {
-        const cardBrandType: ICardBrandType = { id: 123 };
+        const cardBrandType: ICardBrandType = sampleWithRequiredData;
         const cardBrandTypeCollection: ICardBrandType[] = [
           {
             ...cardBrandType,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addCardBrandTypeToCollectionIfMissing(cardBrandTypeCollection, cardBrandType);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a CardBrandType to an array that doesn't contain it", () => {
-        const cardBrandType: ICardBrandType = { id: 123 };
-        const cardBrandTypeCollection: ICardBrandType[] = [{ id: 456 }];
+        const cardBrandType: ICardBrandType = sampleWithRequiredData;
+        const cardBrandTypeCollection: ICardBrandType[] = [sampleWithPartialData];
         expectedResult = service.addCardBrandTypeToCollectionIfMissing(cardBrandTypeCollection, cardBrandType);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(cardBrandType);
       });
 
       it('should add only unique CardBrandType to an array', () => {
-        const cardBrandTypeArray: ICardBrandType[] = [{ id: 123 }, { id: 456 }, { id: 76695 }];
-        const cardBrandTypeCollection: ICardBrandType[] = [{ id: 123 }];
+        const cardBrandTypeArray: ICardBrandType[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const cardBrandTypeCollection: ICardBrandType[] = [sampleWithRequiredData];
         expectedResult = service.addCardBrandTypeToCollectionIfMissing(cardBrandTypeCollection, ...cardBrandTypeArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const cardBrandType: ICardBrandType = { id: 123 };
-        const cardBrandType2: ICardBrandType = { id: 456 };
+        const cardBrandType: ICardBrandType = sampleWithRequiredData;
+        const cardBrandType2: ICardBrandType = sampleWithPartialData;
         expectedResult = service.addCardBrandTypeToCollectionIfMissing([], cardBrandType, cardBrandType2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(cardBrandType);
@@ -187,16 +141,60 @@ describe('CardBrandType Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const cardBrandType: ICardBrandType = { id: 123 };
+        const cardBrandType: ICardBrandType = sampleWithRequiredData;
         expectedResult = service.addCardBrandTypeToCollectionIfMissing([], null, cardBrandType, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(cardBrandType);
       });
 
       it('should return initial array if no CardBrandType is added', () => {
-        const cardBrandTypeCollection: ICardBrandType[] = [{ id: 123 }];
+        const cardBrandTypeCollection: ICardBrandType[] = [sampleWithRequiredData];
         expectedResult = service.addCardBrandTypeToCollectionIfMissing(cardBrandTypeCollection, undefined, null);
         expect(expectedResult).toEqual(cardBrandTypeCollection);
+      });
+    });
+
+    describe('compareCardBrandType', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareCardBrandType(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareCardBrandType(entity1, entity2);
+        const compareResult2 = service.compareCardBrandType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareCardBrandType(entity1, entity2);
+        const compareResult2 = service.compareCardBrandType(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareCardBrandType(entity1, entity2);
+        const compareResult2 = service.compareCardBrandType(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

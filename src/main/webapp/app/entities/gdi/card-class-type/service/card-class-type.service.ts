@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICardClassType, getCardClassTypeIdentifier } from '../card-class-type.model';
+import { ICardClassType, NewCardClassType } from '../card-class-type.model';
+
+export type PartialUpdateCardClassType = Partial<ICardClassType> & Pick<ICardClassType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICardClassType>;
 export type EntityArrayResponseType = HttpResponse<ICardClassType[]>;
@@ -36,18 +20,18 @@ export class CardClassTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(cardClassType: ICardClassType): Observable<EntityResponseType> {
+  create(cardClassType: NewCardClassType): Observable<EntityResponseType> {
     return this.http.post<ICardClassType>(this.resourceUrl, cardClassType, { observe: 'response' });
   }
 
   update(cardClassType: ICardClassType): Observable<EntityResponseType> {
-    return this.http.put<ICardClassType>(`${this.resourceUrl}/${getCardClassTypeIdentifier(cardClassType) as number}`, cardClassType, {
+    return this.http.put<ICardClassType>(`${this.resourceUrl}/${this.getCardClassTypeIdentifier(cardClassType)}`, cardClassType, {
       observe: 'response',
     });
   }
 
-  partialUpdate(cardClassType: ICardClassType): Observable<EntityResponseType> {
-    return this.http.patch<ICardClassType>(`${this.resourceUrl}/${getCardClassTypeIdentifier(cardClassType) as number}`, cardClassType, {
+  partialUpdate(cardClassType: PartialUpdateCardClassType): Observable<EntityResponseType> {
+    return this.http.patch<ICardClassType>(`${this.resourceUrl}/${this.getCardClassTypeIdentifier(cardClassType)}`, cardClassType, {
       observe: 'response',
     });
   }
@@ -70,18 +54,26 @@ export class CardClassTypeService {
     return this.http.get<ICardClassType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCardClassTypeToCollectionIfMissing(
-    cardClassTypeCollection: ICardClassType[],
-    ...cardClassTypesToCheck: (ICardClassType | null | undefined)[]
-  ): ICardClassType[] {
-    const cardClassTypes: ICardClassType[] = cardClassTypesToCheck.filter(isPresent);
+  getCardClassTypeIdentifier(cardClassType: Pick<ICardClassType, 'id'>): number {
+    return cardClassType.id;
+  }
+
+  compareCardClassType(o1: Pick<ICardClassType, 'id'> | null, o2: Pick<ICardClassType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getCardClassTypeIdentifier(o1) === this.getCardClassTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCardClassTypeToCollectionIfMissing<Type extends Pick<ICardClassType, 'id'>>(
+    cardClassTypeCollection: Type[],
+    ...cardClassTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const cardClassTypes: Type[] = cardClassTypesToCheck.filter(isPresent);
     if (cardClassTypes.length > 0) {
       const cardClassTypeCollectionIdentifiers = cardClassTypeCollection.map(
-        cardClassTypeItem => getCardClassTypeIdentifier(cardClassTypeItem)!
+        cardClassTypeItem => this.getCardClassTypeIdentifier(cardClassTypeItem)!
       );
       const cardClassTypesToAdd = cardClassTypes.filter(cardClassTypeItem => {
-        const cardClassTypeIdentifier = getCardClassTypeIdentifier(cardClassTypeItem);
-        if (cardClassTypeIdentifier == null || cardClassTypeCollectionIdentifiers.includes(cardClassTypeIdentifier)) {
+        const cardClassTypeIdentifier = this.getCardClassTypeIdentifier(cardClassTypeItem);
+        if (cardClassTypeCollectionIdentifiers.includes(cardClassTypeIdentifier)) {
           return false;
         }
         cardClassTypeCollectionIdentifiers.push(cardClassTypeIdentifier);

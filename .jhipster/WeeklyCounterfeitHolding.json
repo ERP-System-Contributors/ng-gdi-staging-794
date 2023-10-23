@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004054815",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -37,13 +39,12 @@
       "fieldTypeBlobContent": "text"
     }
   ],
-  "relationships": [],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
+  "incrementalChangelog": false,
   "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
   "name": "WeeklyCounterfeitHolding",
-  "changelogDate": "20231004054815",
-  "incrementalChangelog": false
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IKenyanCurrencyDenomination, KenyanCurrencyDenomination } from '../kenyan-currency-denomination.model';
+import { KenyanCurrencyDenominationFormService, KenyanCurrencyDenominationFormGroup } from './kenyan-currency-denomination-form.service';
+import { IKenyanCurrencyDenomination } from '../kenyan-currency-denomination.model';
 import { KenyanCurrencyDenominationService } from '../service/kenyan-currency-denomination.service';
 
 @Component({
@@ -32,23 +14,22 @@ import { KenyanCurrencyDenominationService } from '../service/kenyan-currency-de
 })
 export class KenyanCurrencyDenominationUpdateComponent implements OnInit {
   isSaving = false;
+  kenyanCurrencyDenomination: IKenyanCurrencyDenomination | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    currencyDenominationCode: [null, [Validators.required]],
-    currencyDenominationType: [null, [Validators.required]],
-    currencyDenominationTypeDetails: [],
-  });
+  editForm: KenyanCurrencyDenominationFormGroup = this.kenyanCurrencyDenominationFormService.createKenyanCurrencyDenominationFormGroup();
 
   constructor(
     protected kenyanCurrencyDenominationService: KenyanCurrencyDenominationService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected kenyanCurrencyDenominationFormService: KenyanCurrencyDenominationFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ kenyanCurrencyDenomination }) => {
-      this.updateForm(kenyanCurrencyDenomination);
+      this.kenyanCurrencyDenomination = kenyanCurrencyDenomination;
+      if (kenyanCurrencyDenomination) {
+        this.updateForm(kenyanCurrencyDenomination);
+      }
     });
   }
 
@@ -58,8 +39,8 @@ export class KenyanCurrencyDenominationUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const kenyanCurrencyDenomination = this.createFromForm();
-    if (kenyanCurrencyDenomination.id !== undefined) {
+    const kenyanCurrencyDenomination = this.kenyanCurrencyDenominationFormService.getKenyanCurrencyDenomination(this.editForm);
+    if (kenyanCurrencyDenomination.id !== null) {
       this.subscribeToSaveResponse(this.kenyanCurrencyDenominationService.update(kenyanCurrencyDenomination));
     } else {
       this.subscribeToSaveResponse(this.kenyanCurrencyDenominationService.create(kenyanCurrencyDenomination));
@@ -67,10 +48,10 @@ export class KenyanCurrencyDenominationUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IKenyanCurrencyDenomination>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -86,21 +67,7 @@ export class KenyanCurrencyDenominationUpdateComponent implements OnInit {
   }
 
   protected updateForm(kenyanCurrencyDenomination: IKenyanCurrencyDenomination): void {
-    this.editForm.patchValue({
-      id: kenyanCurrencyDenomination.id,
-      currencyDenominationCode: kenyanCurrencyDenomination.currencyDenominationCode,
-      currencyDenominationType: kenyanCurrencyDenomination.currencyDenominationType,
-      currencyDenominationTypeDetails: kenyanCurrencyDenomination.currencyDenominationTypeDetails,
-    });
-  }
-
-  protected createFromForm(): IKenyanCurrencyDenomination {
-    return {
-      ...new KenyanCurrencyDenomination(),
-      id: this.editForm.get(['id'])!.value,
-      currencyDenominationCode: this.editForm.get(['currencyDenominationCode'])!.value,
-      currencyDenominationType: this.editForm.get(['currencyDenominationType'])!.value,
-      currencyDenominationTypeDetails: this.editForm.get(['currencyDenominationTypeDetails'])!.value,
-    };
+    this.kenyanCurrencyDenomination = kenyanCurrencyDenomination;
+    this.kenyanCurrencyDenominationFormService.resetForm(this.editForm, kenyanCurrencyDenomination);
   }
 }

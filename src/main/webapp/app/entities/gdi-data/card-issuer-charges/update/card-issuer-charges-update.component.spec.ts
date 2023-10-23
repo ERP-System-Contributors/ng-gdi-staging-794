@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { CardIssuerChargesFormService } from './card-issuer-charges-form.service';
 import { CardIssuerChargesService } from '../service/card-issuer-charges.service';
-import { ICardIssuerCharges, CardIssuerCharges } from '../card-issuer-charges.model';
+import { ICardIssuerCharges } from '../card-issuer-charges.model';
 import { IInstitutionCode } from 'app/entities/gdi/institution-code/institution-code.model';
 import { InstitutionCodeService } from 'app/entities/gdi/institution-code/service/institution-code.service';
 import { ICardCategoryType } from 'app/entities/gdi/card-category-type/card-category-type.model';
@@ -46,6 +28,7 @@ describe('CardIssuerCharges Management Update Component', () => {
   let comp: CardIssuerChargesUpdateComponent;
   let fixture: ComponentFixture<CardIssuerChargesUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let cardIssuerChargesFormService: CardIssuerChargesFormService;
   let cardIssuerChargesService: CardIssuerChargesService;
   let institutionCodeService: InstitutionCodeService;
   let cardCategoryTypeService: CardCategoryTypeService;
@@ -56,15 +39,24 @@ describe('CardIssuerCharges Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [CardIssuerChargesUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(CardIssuerChargesUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(CardIssuerChargesUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    cardIssuerChargesFormService = TestBed.inject(CardIssuerChargesFormService);
     cardIssuerChargesService = TestBed.inject(CardIssuerChargesService);
     institutionCodeService = TestBed.inject(InstitutionCodeService);
     cardCategoryTypeService = TestBed.inject(CardCategoryTypeService);
@@ -94,7 +86,7 @@ describe('CardIssuerCharges Management Update Component', () => {
       expect(institutionCodeService.query).toHaveBeenCalled();
       expect(institutionCodeService.addInstitutionCodeToCollectionIfMissing).toHaveBeenCalledWith(
         institutionCodeCollection,
-        ...additionalInstitutionCodes
+        ...additionalInstitutionCodes.map(expect.objectContaining)
       );
       expect(comp.institutionCodesSharedCollection).toEqual(expectedCollection);
     });
@@ -116,7 +108,7 @@ describe('CardIssuerCharges Management Update Component', () => {
       expect(cardCategoryTypeService.query).toHaveBeenCalled();
       expect(cardCategoryTypeService.addCardCategoryTypeToCollectionIfMissing).toHaveBeenCalledWith(
         cardCategoryTypeCollection,
-        ...additionalCardCategoryTypes
+        ...additionalCardCategoryTypes.map(expect.objectContaining)
       );
       expect(comp.cardCategoryTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -136,7 +128,10 @@ describe('CardIssuerCharges Management Update Component', () => {
       comp.ngOnInit();
 
       expect(cardTypesService.query).toHaveBeenCalled();
-      expect(cardTypesService.addCardTypesToCollectionIfMissing).toHaveBeenCalledWith(cardTypesCollection, ...additionalCardTypes);
+      expect(cardTypesService.addCardTypesToCollectionIfMissing).toHaveBeenCalledWith(
+        cardTypesCollection,
+        ...additionalCardTypes.map(expect.objectContaining)
+      );
       expect(comp.cardTypesSharedCollection).toEqual(expectedCollection);
     });
 
@@ -157,7 +152,7 @@ describe('CardIssuerCharges Management Update Component', () => {
       expect(cardBrandTypeService.query).toHaveBeenCalled();
       expect(cardBrandTypeService.addCardBrandTypeToCollectionIfMissing).toHaveBeenCalledWith(
         cardBrandTypeCollection,
-        ...additionalCardBrandTypes
+        ...additionalCardBrandTypes.map(expect.objectContaining)
       );
       expect(comp.cardBrandTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -179,7 +174,7 @@ describe('CardIssuerCharges Management Update Component', () => {
       expect(cardClassTypeService.query).toHaveBeenCalled();
       expect(cardClassTypeService.addCardClassTypeToCollectionIfMissing).toHaveBeenCalledWith(
         cardClassTypeCollection,
-        ...additionalCardClassTypes
+        ...additionalCardClassTypes.map(expect.objectContaining)
       );
       expect(comp.cardClassTypesSharedCollection).toEqual(expectedCollection);
     });
@@ -199,7 +194,10 @@ describe('CardIssuerCharges Management Update Component', () => {
       comp.ngOnInit();
 
       expect(cardChargesService.query).toHaveBeenCalled();
-      expect(cardChargesService.addCardChargesToCollectionIfMissing).toHaveBeenCalledWith(cardChargesCollection, ...additionalCardCharges);
+      expect(cardChargesService.addCardChargesToCollectionIfMissing).toHaveBeenCalledWith(
+        cardChargesCollection,
+        ...additionalCardCharges.map(expect.objectContaining)
+      );
       expect(comp.cardChargesSharedCollection).toEqual(expectedCollection);
     });
 
@@ -221,21 +219,22 @@ describe('CardIssuerCharges Management Update Component', () => {
       activatedRoute.data = of({ cardIssuerCharges });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(cardIssuerCharges));
       expect(comp.institutionCodesSharedCollection).toContain(bankCode);
       expect(comp.cardCategoryTypesSharedCollection).toContain(cardCategory);
       expect(comp.cardTypesSharedCollection).toContain(cardType);
       expect(comp.cardBrandTypesSharedCollection).toContain(cardBrand);
       expect(comp.cardClassTypesSharedCollection).toContain(cardClass);
       expect(comp.cardChargesSharedCollection).toContain(cardChargeType);
+      expect(comp.cardIssuerCharges).toEqual(cardIssuerCharges);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardIssuerCharges>>();
+      const saveSubject = new Subject<HttpResponse<ICardIssuerCharges>>();
       const cardIssuerCharges = { id: 123 };
+      jest.spyOn(cardIssuerChargesFormService, 'getCardIssuerCharges').mockReturnValue(cardIssuerCharges);
       jest.spyOn(cardIssuerChargesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ cardIssuerCharges });
@@ -248,18 +247,20 @@ describe('CardIssuerCharges Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(cardIssuerChargesFormService.getCardIssuerCharges).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(cardIssuerChargesService.update).toHaveBeenCalledWith(cardIssuerCharges);
+      expect(cardIssuerChargesService.update).toHaveBeenCalledWith(expect.objectContaining(cardIssuerCharges));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardIssuerCharges>>();
-      const cardIssuerCharges = new CardIssuerCharges();
+      const saveSubject = new Subject<HttpResponse<ICardIssuerCharges>>();
+      const cardIssuerCharges = { id: 123 };
+      jest.spyOn(cardIssuerChargesFormService, 'getCardIssuerCharges').mockReturnValue({ id: null });
       jest.spyOn(cardIssuerChargesService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ cardIssuerCharges });
+      activatedRoute.data = of({ cardIssuerCharges: null });
       comp.ngOnInit();
 
       // WHEN
@@ -269,14 +270,15 @@ describe('CardIssuerCharges Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(cardIssuerChargesService.create).toHaveBeenCalledWith(cardIssuerCharges);
+      expect(cardIssuerChargesFormService.getCardIssuerCharges).toHaveBeenCalled();
+      expect(cardIssuerChargesService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<CardIssuerCharges>>();
+      const saveSubject = new Subject<HttpResponse<ICardIssuerCharges>>();
       const cardIssuerCharges = { id: 123 };
       jest.spyOn(cardIssuerChargesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -289,58 +291,70 @@ describe('CardIssuerCharges Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(cardIssuerChargesService.update).toHaveBeenCalledWith(cardIssuerCharges);
+      expect(cardIssuerChargesService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackInstitutionCodeById', () => {
-      it('Should return tracked InstitutionCode primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareInstitutionCode', () => {
+      it('Should forward to institutionCodeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackInstitutionCodeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(institutionCodeService, 'compareInstitutionCode');
+        comp.compareInstitutionCode(entity, entity2);
+        expect(institutionCodeService.compareInstitutionCode).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardCategoryTypeById', () => {
-      it('Should return tracked CardCategoryType primary key', () => {
+    describe('compareCardCategoryType', () => {
+      it('Should forward to cardCategoryTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardCategoryTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardCategoryTypeService, 'compareCardCategoryType');
+        comp.compareCardCategoryType(entity, entity2);
+        expect(cardCategoryTypeService.compareCardCategoryType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardTypesById', () => {
-      it('Should return tracked CardTypes primary key', () => {
+    describe('compareCardTypes', () => {
+      it('Should forward to cardTypesService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardTypesById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardTypesService, 'compareCardTypes');
+        comp.compareCardTypes(entity, entity2);
+        expect(cardTypesService.compareCardTypes).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardBrandTypeById', () => {
-      it('Should return tracked CardBrandType primary key', () => {
+    describe('compareCardBrandType', () => {
+      it('Should forward to cardBrandTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardBrandTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardBrandTypeService, 'compareCardBrandType');
+        comp.compareCardBrandType(entity, entity2);
+        expect(cardBrandTypeService.compareCardBrandType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardClassTypeById', () => {
-      it('Should return tracked CardClassType primary key', () => {
+    describe('compareCardClassType', () => {
+      it('Should forward to cardClassTypeService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardClassTypeById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardClassTypeService, 'compareCardClassType');
+        comp.compareCardClassType(entity, entity2);
+        expect(cardClassTypeService.compareCardClassType).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackCardChargesById', () => {
-      it('Should return tracked CardCharges primary key', () => {
+    describe('compareCardCharges', () => {
+      it('Should forward to cardChargesService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackCardChargesById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(cardChargesService, 'compareCardCharges');
+        comp.compareCardCharges(entity, entity2);
+        expect(cardChargesService.compareCardCharges).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

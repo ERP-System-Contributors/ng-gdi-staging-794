@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { FraudCategoryFlagFormService } from './fraud-category-flag-form.service';
 import { FraudCategoryFlagService } from '../service/fraud-category-flag.service';
-import { IFraudCategoryFlag, FraudCategoryFlag } from '../fraud-category-flag.model';
+import { IFraudCategoryFlag } from '../fraud-category-flag.model';
 
 import { FraudCategoryFlagUpdateComponent } from './fraud-category-flag-update.component';
 
@@ -34,19 +16,29 @@ describe('FraudCategoryFlag Management Update Component', () => {
   let comp: FraudCategoryFlagUpdateComponent;
   let fixture: ComponentFixture<FraudCategoryFlagUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let fraudCategoryFlagFormService: FraudCategoryFlagFormService;
   let fraudCategoryFlagService: FraudCategoryFlagService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [FraudCategoryFlagUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(FraudCategoryFlagUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(FraudCategoryFlagUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    fraudCategoryFlagFormService = TestBed.inject(FraudCategoryFlagFormService);
     fraudCategoryFlagService = TestBed.inject(FraudCategoryFlagService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('FraudCategoryFlag Management Update Component', () => {
       activatedRoute.data = of({ fraudCategoryFlag });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(fraudCategoryFlag));
+      expect(comp.fraudCategoryFlag).toEqual(fraudCategoryFlag);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FraudCategoryFlag>>();
+      const saveSubject = new Subject<HttpResponse<IFraudCategoryFlag>>();
       const fraudCategoryFlag = { id: 123 };
+      jest.spyOn(fraudCategoryFlagFormService, 'getFraudCategoryFlag').mockReturnValue(fraudCategoryFlag);
       jest.spyOn(fraudCategoryFlagService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ fraudCategoryFlag });
@@ -80,18 +73,20 @@ describe('FraudCategoryFlag Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(fraudCategoryFlagFormService.getFraudCategoryFlag).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(fraudCategoryFlagService.update).toHaveBeenCalledWith(fraudCategoryFlag);
+      expect(fraudCategoryFlagService.update).toHaveBeenCalledWith(expect.objectContaining(fraudCategoryFlag));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FraudCategoryFlag>>();
-      const fraudCategoryFlag = new FraudCategoryFlag();
+      const saveSubject = new Subject<HttpResponse<IFraudCategoryFlag>>();
+      const fraudCategoryFlag = { id: 123 };
+      jest.spyOn(fraudCategoryFlagFormService, 'getFraudCategoryFlag').mockReturnValue({ id: null });
       jest.spyOn(fraudCategoryFlagService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ fraudCategoryFlag });
+      activatedRoute.data = of({ fraudCategoryFlag: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('FraudCategoryFlag Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(fraudCategoryFlagService.create).toHaveBeenCalledWith(fraudCategoryFlag);
+      expect(fraudCategoryFlagFormService.getFraudCategoryFlag).toHaveBeenCalled();
+      expect(fraudCategoryFlagService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FraudCategoryFlag>>();
+      const saveSubject = new Subject<HttpResponse<IFraudCategoryFlag>>();
       const fraudCategoryFlag = { id: 123 };
       jest.spyOn(fraudCategoryFlagService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('FraudCategoryFlag Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(fraudCategoryFlagService.update).toHaveBeenCalledWith(fraudCategoryFlag);
+      expect(fraudCategoryFlagService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

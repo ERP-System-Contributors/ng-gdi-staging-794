@@ -1,5 +1,5 @@
 #
-# Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
+# Erp System - Mark V No 5 (Ehud Series) Client 1.5.2
 # Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 version: '3'
 services:
   erp-client:
-    image: ghacupha/erp-client:1.5.2
+    image: ghacupha/ng-gdi-staging:0.0.1-SNAPSHOT
     volumes:
-    - ./templates:/etc/nginx/templates
+      - ./templates:/etc/nginx/templates
     environment:
       # - SERVER_API_URL="http://localhost:8980/"
       # - SERVER_API_URL_URL=http://localhost:8980

@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { ICommitteeType, CommitteeType } from '../committee-type.model';
+import { CommitteeTypeFormService, CommitteeTypeFormGroup } from './committee-type-form.service';
+import { ICommitteeType } from '../committee-type.model';
 import { CommitteeTypeService } from '../service/committee-type.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class CommitteeTypeUpdateComponent implements OnInit {
   isSaving = false;
+  committeeType: ICommitteeType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    committeeTypeCode: [null, [Validators.required]],
-    committeeType: [],
-    committeeTypeDetails: [],
-  });
+  editForm: CommitteeTypeFormGroup = this.committeeTypeFormService.createCommitteeTypeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected committeeTypeService: CommitteeTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected committeeTypeFormService: CommitteeTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ committeeType }) => {
-      this.updateForm(committeeType);
+      this.committeeType = committeeType;
+      if (committeeType) {
+        this.updateForm(committeeType);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class CommitteeTypeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class CommitteeTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const committeeType = this.createFromForm();
-    if (committeeType.id !== undefined) {
+    const committeeType = this.committeeTypeFormService.getCommitteeType(this.editForm);
+    if (committeeType.id !== null) {
       this.subscribeToSaveResponse(this.committeeTypeService.update(committeeType));
     } else {
       this.subscribeToSaveResponse(this.committeeTypeService.create(committeeType));
@@ -87,10 +68,10 @@ export class CommitteeTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<ICommitteeType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class CommitteeTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(committeeType: ICommitteeType): void {
-    this.editForm.patchValue({
-      id: committeeType.id,
-      committeeTypeCode: committeeType.committeeTypeCode,
-      committeeType: committeeType.committeeType,
-      committeeTypeDetails: committeeType.committeeTypeDetails,
-    });
-  }
-
-  protected createFromForm(): ICommitteeType {
-    return {
-      ...new CommitteeType(),
-      id: this.editForm.get(['id'])!.value,
-      committeeTypeCode: this.editForm.get(['committeeTypeCode'])!.value,
-      committeeType: this.editForm.get(['committeeType'])!.value,
-      committeeTypeDetails: this.editForm.get(['committeeTypeDetails'])!.value,
-    };
+    this.committeeType = committeeType;
+    this.committeeTypeFormService.resetForm(this.editForm, committeeType);
   }
 }

@@ -1,23 +1,4 @@
-<!--
-
-    Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-    Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
-
--->
-<div class="row justify-content-center">
+<div class="d-flex justify-content-center">
   <div class="col-8">
     <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
       <h2 id="jhi-credit-card-facility-heading" data-cy="CreditCardFacilityCreateUpdateHeading">Create or edit a Credit Card Facility</h2>
@@ -25,13 +6,13 @@
       <div>
         <jhi-alert-error></jhi-alert-error>
 
-        <div class="form-group" [hidden]="editForm.get('id')!.value == null">
-          <label class="form-control-label" for="field_id">ID</label>
+        <div class="row mb-3" *ngIf="editForm.controls.id.value !== null">
+          <label class="form-label" for="field_id">ID</label>
           <input type="number" class="form-control" name="id" id="field_id" data-cy="id" formControlName="id" [readonly]="true" />
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_reportingDate">Reporting Date</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_reportingDate">Reporting Date</label>
           <div class="input-group">
             <input
               id="field_reportingDate"
@@ -43,11 +24,9 @@
               #reportingDateDp="ngbDatepicker"
               formControlName="reportingDate"
             />
-            <span class="input-group-append">
-              <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
-                <fa-icon icon="calendar-alt"></fa-icon>
-              </button>
-            </span>
+            <button type="button" class="btn btn-secondary" (click)="reportingDateDp.toggle()">
+              <fa-icon icon="calendar-alt"></fa-icon>
+            </button>
           </div>
           <div
             *ngIf="
@@ -58,8 +37,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNumberOfActiveCreditCards">Total Number Of Active Credit Cards</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNumberOfActiveCreditCards">Total Number Of Active Credit Cards</label>
           <input
             type="number"
             class="form-control"
@@ -86,8 +65,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalCreditCardLimitsInCCY">Total Credit Card Limits In CCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalCreditCardLimitsInCCY">Total Credit Card Limits In CCY</label>
           <input
             type="number"
             class="form-control"
@@ -114,8 +93,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalCreditCardLimitsInLCY">Total Credit Card Limits In LCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalCreditCardLimitsInLCY">Total Credit Card Limits In LCY</label>
           <input
             type="number"
             class="form-control"
@@ -142,8 +121,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalCreditCardAmountUtilisedInCCY">Total Credit Card Amount Utilised In CCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalCreditCardAmountUtilisedInCCY">Total Credit Card Amount Utilised In CCY</label>
           <input
             type="number"
             class="form-control"
@@ -170,8 +149,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalCreditCardAmountUtilisedInLcy">Total Credit Card Amount Utilised In Lcy</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalCreditCardAmountUtilisedInLcy">Total Credit Card Amount Utilised In Lcy</label>
           <input
             type="number"
             class="form-control"
@@ -198,8 +177,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNPACreditCardAmountInFCY">Total NPA Credit Card Amount In FCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNPACreditCardAmountInFCY">Total NPA Credit Card Amount In FCY</label>
           <input
             type="number"
             class="form-control"
@@ -226,8 +205,8 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_totalNPACreditCardAmountInLCY">Total NPA Credit Card Amount In LCY</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_totalNPACreditCardAmountInLCY">Total NPA Credit Card Amount In LCY</label>
           <input
             type="number"
             class="form-control"
@@ -254,16 +233,18 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_bankCode">Bank Code</label>
-          <select class="form-control" id="field_bankCode" data-cy="bankCode" name="bankCode" formControlName="bankCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_bankCode">Bank Code</label>
+          <select
+            class="form-control"
+            id="field_bankCode"
+            data-cy="bankCode"
+            name="bankCode"
+            formControlName="bankCode"
+            [compareWith]="compareInstitutionCode"
+          >
             <option *ngIf="!editForm.get('bankCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                institutionCodeOption.id === editForm.get('bankCode')!.value?.id ? editForm.get('bankCode')!.value : institutionCodeOption
-              "
-              *ngFor="let institutionCodeOption of institutionCodesSharedCollection; trackBy: trackInstitutionCodeById"
-            >
+            <option [ngValue]="institutionCodeOption" *ngFor="let institutionCodeOption of institutionCodesSharedCollection">
               {{ institutionCodeOption.institutionName }}
             </option>
           </select>
@@ -272,24 +253,18 @@
           <small class="form-text text-danger" *ngIf="editForm.get(['bankCode'])?.errors?.required"> This field is required. </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_customerCategory">Customer Category</label>
+        <div class="row mb-3">
+          <label class="form-label" for="field_customerCategory">Customer Category</label>
           <select
             class="form-control"
             id="field_customerCategory"
             data-cy="customerCategory"
             name="customerCategory"
             formControlName="customerCategory"
+            [compareWith]="compareCreditCardOwnership"
           >
             <option *ngIf="!editForm.get('customerCategory')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                creditCardOwnershipOption.id === editForm.get('customerCategory')!.value?.id
-                  ? editForm.get('customerCategory')!.value
-                  : creditCardOwnershipOption
-              "
-              *ngFor="let creditCardOwnershipOption of creditCardOwnershipsSharedCollection; trackBy: trackCreditCardOwnershipById"
-            >
+            <option [ngValue]="creditCardOwnershipOption" *ngFor="let creditCardOwnershipOption of creditCardOwnershipsSharedCollection">
               {{ creditCardOwnershipOption.creditCardOwnershipCategoryType }}
             </option>
           </select>
@@ -305,18 +280,18 @@
           </small>
         </div>
 
-        <div class="form-group">
-          <label class="form-control-label" for="field_currencyCode">Currency Code</label>
-          <select class="form-control" id="field_currencyCode" data-cy="currencyCode" name="currencyCode" formControlName="currencyCode">
+        <div class="row mb-3">
+          <label class="form-label" for="field_currencyCode">Currency Code</label>
+          <select
+            class="form-control"
+            id="field_currencyCode"
+            data-cy="currencyCode"
+            name="currencyCode"
+            formControlName="currencyCode"
+            [compareWith]="compareIsoCurrencyCode"
+          >
             <option *ngIf="!editForm.get('currencyCode')!.value" [ngValue]="null" selected></option>
-            <option
-              [ngValue]="
-                isoCurrencyCodeOption.id === editForm.get('currencyCode')!.value?.id
-                  ? editForm.get('currencyCode')!.value
-                  : isoCurrencyCodeOption
-              "
-              *ngFor="let isoCurrencyCodeOption of isoCurrencyCodesSharedCollection; trackBy: trackIsoCurrencyCodeById"
-            >
+            <option [ngValue]="isoCurrencyCodeOption" *ngFor="let isoCurrencyCodeOption of isoCurrencyCodesSharedCollection">
               {{ isoCurrencyCodeOption.alphabeticCode }}
             </option>
           </select>

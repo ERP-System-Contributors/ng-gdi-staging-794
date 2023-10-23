@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,10 +6,10 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import {
-  IAgriculturalEnterpriseActivityType,
-  getAgriculturalEnterpriseActivityTypeIdentifier,
-} from '../agricultural-enterprise-activity-type.model';
+import { IAgriculturalEnterpriseActivityType, NewAgriculturalEnterpriseActivityType } from '../agricultural-enterprise-activity-type.model';
+
+export type PartialUpdateAgriculturalEnterpriseActivityType = Partial<IAgriculturalEnterpriseActivityType> &
+  Pick<IAgriculturalEnterpriseActivityType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IAgriculturalEnterpriseActivityType>;
 export type EntityArrayResponseType = HttpResponse<IAgriculturalEnterpriseActivityType[]>;
@@ -39,7 +21,7 @@ export class AgriculturalEnterpriseActivityTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType): Observable<EntityResponseType> {
+  create(agriculturalEnterpriseActivityType: NewAgriculturalEnterpriseActivityType): Observable<EntityResponseType> {
     return this.http.post<IAgriculturalEnterpriseActivityType>(this.resourceUrl, agriculturalEnterpriseActivityType, {
       observe: 'response',
     });
@@ -47,15 +29,15 @@ export class AgriculturalEnterpriseActivityTypeService {
 
   update(agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType): Observable<EntityResponseType> {
     return this.http.put<IAgriculturalEnterpriseActivityType>(
-      `${this.resourceUrl}/${getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityType) as number}`,
+      `${this.resourceUrl}/${this.getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityType)}`,
       agriculturalEnterpriseActivityType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(agriculturalEnterpriseActivityType: IAgriculturalEnterpriseActivityType): Observable<EntityResponseType> {
+  partialUpdate(agriculturalEnterpriseActivityType: PartialUpdateAgriculturalEnterpriseActivityType): Observable<EntityResponseType> {
     return this.http.patch<IAgriculturalEnterpriseActivityType>(
-      `${this.resourceUrl}/${getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityType) as number}`,
+      `${this.resourceUrl}/${this.getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityType)}`,
       agriculturalEnterpriseActivityType,
       { observe: 'response' }
     );
@@ -79,25 +61,37 @@ export class AgriculturalEnterpriseActivityTypeService {
     return this.http.get<IAgriculturalEnterpriseActivityType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addAgriculturalEnterpriseActivityTypeToCollectionIfMissing(
-    agriculturalEnterpriseActivityTypeCollection: IAgriculturalEnterpriseActivityType[],
-    ...agriculturalEnterpriseActivityTypesToCheck: (IAgriculturalEnterpriseActivityType | null | undefined)[]
-  ): IAgriculturalEnterpriseActivityType[] {
-    const agriculturalEnterpriseActivityTypes: IAgriculturalEnterpriseActivityType[] =
-      agriculturalEnterpriseActivityTypesToCheck.filter(isPresent);
+  getAgriculturalEnterpriseActivityTypeIdentifier(
+    agriculturalEnterpriseActivityType: Pick<IAgriculturalEnterpriseActivityType, 'id'>
+  ): number {
+    return agriculturalEnterpriseActivityType.id;
+  }
+
+  compareAgriculturalEnterpriseActivityType(
+    o1: Pick<IAgriculturalEnterpriseActivityType, 'id'> | null,
+    o2: Pick<IAgriculturalEnterpriseActivityType, 'id'> | null
+  ): boolean {
+    return o1 && o2
+      ? this.getAgriculturalEnterpriseActivityTypeIdentifier(o1) === this.getAgriculturalEnterpriseActivityTypeIdentifier(o2)
+      : o1 === o2;
+  }
+
+  addAgriculturalEnterpriseActivityTypeToCollectionIfMissing<Type extends Pick<IAgriculturalEnterpriseActivityType, 'id'>>(
+    agriculturalEnterpriseActivityTypeCollection: Type[],
+    ...agriculturalEnterpriseActivityTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const agriculturalEnterpriseActivityTypes: Type[] = agriculturalEnterpriseActivityTypesToCheck.filter(isPresent);
     if (agriculturalEnterpriseActivityTypes.length > 0) {
       const agriculturalEnterpriseActivityTypeCollectionIdentifiers = agriculturalEnterpriseActivityTypeCollection.map(
-        agriculturalEnterpriseActivityTypeItem => getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityTypeItem)!
+        agriculturalEnterpriseActivityTypeItem =>
+          this.getAgriculturalEnterpriseActivityTypeIdentifier(agriculturalEnterpriseActivityTypeItem)!
       );
       const agriculturalEnterpriseActivityTypesToAdd = agriculturalEnterpriseActivityTypes.filter(
         agriculturalEnterpriseActivityTypeItem => {
-          const agriculturalEnterpriseActivityTypeIdentifier = getAgriculturalEnterpriseActivityTypeIdentifier(
+          const agriculturalEnterpriseActivityTypeIdentifier = this.getAgriculturalEnterpriseActivityTypeIdentifier(
             agriculturalEnterpriseActivityTypeItem
           );
-          if (
-            agriculturalEnterpriseActivityTypeIdentifier == null ||
-            agriculturalEnterpriseActivityTypeCollectionIdentifiers.includes(agriculturalEnterpriseActivityTypeIdentifier)
-          ) {
+          if (agriculturalEnterpriseActivityTypeCollectionIdentifiers.includes(agriculturalEnterpriseActivityTypeIdentifier)) {
             return false;
           }
           agriculturalEnterpriseActivityTypeCollectionIdentifiers.push(agriculturalEnterpriseActivityTypeIdentifier);

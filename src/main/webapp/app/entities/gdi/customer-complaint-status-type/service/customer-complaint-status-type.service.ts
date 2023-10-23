@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { ICustomerComplaintStatusType, getCustomerComplaintStatusTypeIdentifier } from '../customer-complaint-status-type.model';
+import { ICustomerComplaintStatusType, NewCustomerComplaintStatusType } from '../customer-complaint-status-type.model';
+
+export type PartialUpdateCustomerComplaintStatusType = Partial<ICustomerComplaintStatusType> & Pick<ICustomerComplaintStatusType, 'id'>;
 
 export type EntityResponseType = HttpResponse<ICustomerComplaintStatusType>;
 export type EntityArrayResponseType = HttpResponse<ICustomerComplaintStatusType[]>;
@@ -36,21 +20,21 @@ export class CustomerComplaintStatusTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(customerComplaintStatusType: ICustomerComplaintStatusType): Observable<EntityResponseType> {
+  create(customerComplaintStatusType: NewCustomerComplaintStatusType): Observable<EntityResponseType> {
     return this.http.post<ICustomerComplaintStatusType>(this.resourceUrl, customerComplaintStatusType, { observe: 'response' });
   }
 
   update(customerComplaintStatusType: ICustomerComplaintStatusType): Observable<EntityResponseType> {
     return this.http.put<ICustomerComplaintStatusType>(
-      `${this.resourceUrl}/${getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusType) as number}`,
+      `${this.resourceUrl}/${this.getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusType)}`,
       customerComplaintStatusType,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(customerComplaintStatusType: ICustomerComplaintStatusType): Observable<EntityResponseType> {
+  partialUpdate(customerComplaintStatusType: PartialUpdateCustomerComplaintStatusType): Observable<EntityResponseType> {
     return this.http.patch<ICustomerComplaintStatusType>(
-      `${this.resourceUrl}/${getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusType) as number}`,
+      `${this.resourceUrl}/${this.getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusType)}`,
       customerComplaintStatusType,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class CustomerComplaintStatusTypeService {
     return this.http.get<ICustomerComplaintStatusType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addCustomerComplaintStatusTypeToCollectionIfMissing(
-    customerComplaintStatusTypeCollection: ICustomerComplaintStatusType[],
-    ...customerComplaintStatusTypesToCheck: (ICustomerComplaintStatusType | null | undefined)[]
-  ): ICustomerComplaintStatusType[] {
-    const customerComplaintStatusTypes: ICustomerComplaintStatusType[] = customerComplaintStatusTypesToCheck.filter(isPresent);
+  getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusType: Pick<ICustomerComplaintStatusType, 'id'>): number {
+    return customerComplaintStatusType.id;
+  }
+
+  compareCustomerComplaintStatusType(
+    o1: Pick<ICustomerComplaintStatusType, 'id'> | null,
+    o2: Pick<ICustomerComplaintStatusType, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getCustomerComplaintStatusTypeIdentifier(o1) === this.getCustomerComplaintStatusTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addCustomerComplaintStatusTypeToCollectionIfMissing<Type extends Pick<ICustomerComplaintStatusType, 'id'>>(
+    customerComplaintStatusTypeCollection: Type[],
+    ...customerComplaintStatusTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const customerComplaintStatusTypes: Type[] = customerComplaintStatusTypesToCheck.filter(isPresent);
     if (customerComplaintStatusTypes.length > 0) {
       const customerComplaintStatusTypeCollectionIdentifiers = customerComplaintStatusTypeCollection.map(
-        customerComplaintStatusTypeItem => getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusTypeItem)!
+        customerComplaintStatusTypeItem => this.getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusTypeItem)!
       );
       const customerComplaintStatusTypesToAdd = customerComplaintStatusTypes.filter(customerComplaintStatusTypeItem => {
-        const customerComplaintStatusTypeIdentifier = getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusTypeItem);
-        if (
-          customerComplaintStatusTypeIdentifier == null ||
-          customerComplaintStatusTypeCollectionIdentifiers.includes(customerComplaintStatusTypeIdentifier)
-        ) {
+        const customerComplaintStatusTypeIdentifier = this.getCustomerComplaintStatusTypeIdentifier(customerComplaintStatusTypeItem);
+        if (customerComplaintStatusTypeCollectionIdentifiers.includes(customerComplaintStatusTypeIdentifier)) {
           return false;
         }
         customerComplaintStatusTypeCollectionIdentifiers.push(customerComplaintStatusTypeIdentifier);

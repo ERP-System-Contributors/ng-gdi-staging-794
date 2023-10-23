@@ -1,7 +1,7 @@
 {
   "changelogDate": "20220406130104",
-  "dto": "mapstruct",
   "clientRootFolder": "gdi",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "countryCode",
@@ -27,8 +27,9 @@
   "incrementalChangelog": false,
   "jpaMetamodelFiltering": true,
   "name": "IsoCountryCode",
-  "pagination": "infinite-scroll",
+  "pagination": "pagination",
   "readOnly": false,
   "relationships": [],
+  "searchEngine": "elasticsearch",
   "service": "serviceImpl"
 }

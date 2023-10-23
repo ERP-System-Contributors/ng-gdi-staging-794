@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { GdiTransactionDataIndexFormService } from './gdi-transaction-data-index-form.service';
 import { GdiTransactionDataIndexService } from '../service/gdi-transaction-data-index.service';
-import { IGdiTransactionDataIndex, GdiTransactionDataIndex } from '../gdi-transaction-data-index.model';
+import { IGdiTransactionDataIndex } from '../gdi-transaction-data-index.model';
 import { IGdiMasterDataIndex } from 'app/entities/gdi/gdi-master-data-index/gdi-master-data-index.model';
 import { GdiMasterDataIndexService } from 'app/entities/gdi/gdi-master-data-index/service/gdi-master-data-index.service';
 
@@ -36,20 +18,30 @@ describe('GdiTransactionDataIndex Management Update Component', () => {
   let comp: GdiTransactionDataIndexUpdateComponent;
   let fixture: ComponentFixture<GdiTransactionDataIndexUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let gdiTransactionDataIndexFormService: GdiTransactionDataIndexFormService;
   let gdiTransactionDataIndexService: GdiTransactionDataIndexService;
   let gdiMasterDataIndexService: GdiMasterDataIndexService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [GdiTransactionDataIndexUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(GdiTransactionDataIndexUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(GdiTransactionDataIndexUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    gdiTransactionDataIndexFormService = TestBed.inject(GdiTransactionDataIndexFormService);
     gdiTransactionDataIndexService = TestBed.inject(GdiTransactionDataIndexService);
     gdiMasterDataIndexService = TestBed.inject(GdiMasterDataIndexService);
 
@@ -74,29 +66,30 @@ describe('GdiTransactionDataIndex Management Update Component', () => {
       expect(gdiMasterDataIndexService.query).toHaveBeenCalled();
       expect(gdiMasterDataIndexService.addGdiMasterDataIndexToCollectionIfMissing).toHaveBeenCalledWith(
         gdiMasterDataIndexCollection,
-        ...additionalGdiMasterDataIndices
+        ...additionalGdiMasterDataIndices.map(expect.objectContaining)
       );
       expect(comp.gdiMasterDataIndicesSharedCollection).toEqual(expectedCollection);
     });
 
     it('Should update editForm', () => {
       const gdiTransactionDataIndex: IGdiTransactionDataIndex = { id: 456 };
-      const masterDataItems: IGdiMasterDataIndex = { id: 81067 };
-      gdiTransactionDataIndex.masterDataItems = [masterDataItems];
+      const masterDataItem: IGdiMasterDataIndex = { id: 81067 };
+      gdiTransactionDataIndex.masterDataItems = [masterDataItem];
 
       activatedRoute.data = of({ gdiTransactionDataIndex });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(gdiTransactionDataIndex));
-      expect(comp.gdiMasterDataIndicesSharedCollection).toContain(masterDataItems);
+      expect(comp.gdiMasterDataIndicesSharedCollection).toContain(masterDataItem);
+      expect(comp.gdiTransactionDataIndex).toEqual(gdiTransactionDataIndex);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<GdiTransactionDataIndex>>();
+      const saveSubject = new Subject<HttpResponse<IGdiTransactionDataIndex>>();
       const gdiTransactionDataIndex = { id: 123 };
+      jest.spyOn(gdiTransactionDataIndexFormService, 'getGdiTransactionDataIndex').mockReturnValue(gdiTransactionDataIndex);
       jest.spyOn(gdiTransactionDataIndexService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ gdiTransactionDataIndex });
@@ -109,18 +102,20 @@ describe('GdiTransactionDataIndex Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(gdiTransactionDataIndexFormService.getGdiTransactionDataIndex).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(gdiTransactionDataIndexService.update).toHaveBeenCalledWith(gdiTransactionDataIndex);
+      expect(gdiTransactionDataIndexService.update).toHaveBeenCalledWith(expect.objectContaining(gdiTransactionDataIndex));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<GdiTransactionDataIndex>>();
-      const gdiTransactionDataIndex = new GdiTransactionDataIndex();
+      const saveSubject = new Subject<HttpResponse<IGdiTransactionDataIndex>>();
+      const gdiTransactionDataIndex = { id: 123 };
+      jest.spyOn(gdiTransactionDataIndexFormService, 'getGdiTransactionDataIndex').mockReturnValue({ id: null });
       jest.spyOn(gdiTransactionDataIndexService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ gdiTransactionDataIndex });
+      activatedRoute.data = of({ gdiTransactionDataIndex: null });
       comp.ngOnInit();
 
       // WHEN
@@ -130,14 +125,15 @@ describe('GdiTransactionDataIndex Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(gdiTransactionDataIndexService.create).toHaveBeenCalledWith(gdiTransactionDataIndex);
+      expect(gdiTransactionDataIndexFormService.getGdiTransactionDataIndex).toHaveBeenCalled();
+      expect(gdiTransactionDataIndexService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<GdiTransactionDataIndex>>();
+      const saveSubject = new Subject<HttpResponse<IGdiTransactionDataIndex>>();
       const gdiTransactionDataIndex = { id: 123 };
       jest.spyOn(gdiTransactionDataIndexService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -150,46 +146,20 @@ describe('GdiTransactionDataIndex Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(gdiTransactionDataIndexService.update).toHaveBeenCalledWith(gdiTransactionDataIndex);
+      expect(gdiTransactionDataIndexService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackGdiMasterDataIndexById', () => {
-      it('Should return tracked GdiMasterDataIndex primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareGdiMasterDataIndex', () => {
+      it('Should forward to gdiMasterDataIndexService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackGdiMasterDataIndexById(0, entity);
-        expect(trackResult).toEqual(entity.id);
-      });
-    });
-  });
-
-  describe('Getting selected relationships', () => {
-    describe('getSelectedGdiMasterDataIndex', () => {
-      it('Should return option if no GdiMasterDataIndex is selected', () => {
-        const option = { id: 123 };
-        const result = comp.getSelectedGdiMasterDataIndex(option);
-        expect(result === option).toEqual(true);
-      });
-
-      it('Should return selected GdiMasterDataIndex for according option', () => {
-        const option = { id: 123 };
-        const selected = { id: 123 };
-        const selected2 = { id: 456 };
-        const result = comp.getSelectedGdiMasterDataIndex(option, [selected2, selected]);
-        expect(result === selected).toEqual(true);
-        expect(result === selected2).toEqual(false);
-        expect(result === option).toEqual(false);
-      });
-
-      it('Should return option if this GdiMasterDataIndex is not selected', () => {
-        const option = { id: 123 };
-        const selected = { id: 456 };
-        const result = comp.getSelectedGdiMasterDataIndex(option, [selected]);
-        expect(result === option).toEqual(true);
-        expect(result === selected).toEqual(false);
+        const entity2 = { id: 456 };
+        jest.spyOn(gdiMasterDataIndexService, 'compareGdiMasterDataIndex');
+        comp.compareGdiMasterDataIndex(entity, entity2);
+        expect(gdiMasterDataIndexService.compareGdiMasterDataIndex).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

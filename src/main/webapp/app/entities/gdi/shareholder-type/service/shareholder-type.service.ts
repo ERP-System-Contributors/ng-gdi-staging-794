@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IShareholderType, getShareholderTypeIdentifier } from '../shareholder-type.model';
+import { IShareholderType, NewShareholderType } from '../shareholder-type.model';
+
+export type PartialUpdateShareholderType = Partial<IShareholderType> & Pick<IShareholderType, 'id'>;
 
 export type EntityResponseType = HttpResponse<IShareholderType>;
 export type EntityArrayResponseType = HttpResponse<IShareholderType[]>;
@@ -36,24 +20,20 @@ export class ShareholderTypeService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(shareholderType: IShareholderType): Observable<EntityResponseType> {
+  create(shareholderType: NewShareholderType): Observable<EntityResponseType> {
     return this.http.post<IShareholderType>(this.resourceUrl, shareholderType, { observe: 'response' });
   }
 
   update(shareholderType: IShareholderType): Observable<EntityResponseType> {
-    return this.http.put<IShareholderType>(
-      `${this.resourceUrl}/${getShareholderTypeIdentifier(shareholderType) as number}`,
-      shareholderType,
-      { observe: 'response' }
-    );
+    return this.http.put<IShareholderType>(`${this.resourceUrl}/${this.getShareholderTypeIdentifier(shareholderType)}`, shareholderType, {
+      observe: 'response',
+    });
   }
 
-  partialUpdate(shareholderType: IShareholderType): Observable<EntityResponseType> {
-    return this.http.patch<IShareholderType>(
-      `${this.resourceUrl}/${getShareholderTypeIdentifier(shareholderType) as number}`,
-      shareholderType,
-      { observe: 'response' }
-    );
+  partialUpdate(shareholderType: PartialUpdateShareholderType): Observable<EntityResponseType> {
+    return this.http.patch<IShareholderType>(`${this.resourceUrl}/${this.getShareholderTypeIdentifier(shareholderType)}`, shareholderType, {
+      observe: 'response',
+    });
   }
 
   find(id: number): Observable<EntityResponseType> {
@@ -74,18 +54,26 @@ export class ShareholderTypeService {
     return this.http.get<IShareholderType[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addShareholderTypeToCollectionIfMissing(
-    shareholderTypeCollection: IShareholderType[],
-    ...shareholderTypesToCheck: (IShareholderType | null | undefined)[]
-  ): IShareholderType[] {
-    const shareholderTypes: IShareholderType[] = shareholderTypesToCheck.filter(isPresent);
+  getShareholderTypeIdentifier(shareholderType: Pick<IShareholderType, 'id'>): number {
+    return shareholderType.id;
+  }
+
+  compareShareholderType(o1: Pick<IShareholderType, 'id'> | null, o2: Pick<IShareholderType, 'id'> | null): boolean {
+    return o1 && o2 ? this.getShareholderTypeIdentifier(o1) === this.getShareholderTypeIdentifier(o2) : o1 === o2;
+  }
+
+  addShareholderTypeToCollectionIfMissing<Type extends Pick<IShareholderType, 'id'>>(
+    shareholderTypeCollection: Type[],
+    ...shareholderTypesToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const shareholderTypes: Type[] = shareholderTypesToCheck.filter(isPresent);
     if (shareholderTypes.length > 0) {
       const shareholderTypeCollectionIdentifiers = shareholderTypeCollection.map(
-        shareholderTypeItem => getShareholderTypeIdentifier(shareholderTypeItem)!
+        shareholderTypeItem => this.getShareholderTypeIdentifier(shareholderTypeItem)!
       );
       const shareholderTypesToAdd = shareholderTypes.filter(shareholderTypeItem => {
-        const shareholderTypeIdentifier = getShareholderTypeIdentifier(shareholderTypeItem);
-        if (shareholderTypeIdentifier == null || shareholderTypeCollectionIdentifiers.includes(shareholderTypeIdentifier)) {
+        const shareholderTypeIdentifier = this.getShareholderTypeIdentifier(shareholderTypeItem);
+        if (shareholderTypeCollectionIdentifiers.includes(shareholderTypeIdentifier)) {
           return false;
         }
         shareholderTypeCollectionIdentifiers.push(shareholderTypeIdentifier);

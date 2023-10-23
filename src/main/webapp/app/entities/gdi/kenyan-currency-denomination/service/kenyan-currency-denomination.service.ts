@@ -1,21 +1,3 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -24,7 +6,9 @@ import { isPresent } from 'app/core/util/operators';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IKenyanCurrencyDenomination, getKenyanCurrencyDenominationIdentifier } from '../kenyan-currency-denomination.model';
+import { IKenyanCurrencyDenomination, NewKenyanCurrencyDenomination } from '../kenyan-currency-denomination.model';
+
+export type PartialUpdateKenyanCurrencyDenomination = Partial<IKenyanCurrencyDenomination> & Pick<IKenyanCurrencyDenomination, 'id'>;
 
 export type EntityResponseType = HttpResponse<IKenyanCurrencyDenomination>;
 export type EntityArrayResponseType = HttpResponse<IKenyanCurrencyDenomination[]>;
@@ -36,21 +20,21 @@ export class KenyanCurrencyDenominationService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(kenyanCurrencyDenomination: IKenyanCurrencyDenomination): Observable<EntityResponseType> {
+  create(kenyanCurrencyDenomination: NewKenyanCurrencyDenomination): Observable<EntityResponseType> {
     return this.http.post<IKenyanCurrencyDenomination>(this.resourceUrl, kenyanCurrencyDenomination, { observe: 'response' });
   }
 
   update(kenyanCurrencyDenomination: IKenyanCurrencyDenomination): Observable<EntityResponseType> {
     return this.http.put<IKenyanCurrencyDenomination>(
-      `${this.resourceUrl}/${getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenomination) as number}`,
+      `${this.resourceUrl}/${this.getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenomination)}`,
       kenyanCurrencyDenomination,
       { observe: 'response' }
     );
   }
 
-  partialUpdate(kenyanCurrencyDenomination: IKenyanCurrencyDenomination): Observable<EntityResponseType> {
+  partialUpdate(kenyanCurrencyDenomination: PartialUpdateKenyanCurrencyDenomination): Observable<EntityResponseType> {
     return this.http.patch<IKenyanCurrencyDenomination>(
-      `${this.resourceUrl}/${getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenomination) as number}`,
+      `${this.resourceUrl}/${this.getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenomination)}`,
       kenyanCurrencyDenomination,
       { observe: 'response' }
     );
@@ -74,21 +58,29 @@ export class KenyanCurrencyDenominationService {
     return this.http.get<IKenyanCurrencyDenomination[]>(this.resourceSearchUrl, { params: options, observe: 'response' });
   }
 
-  addKenyanCurrencyDenominationToCollectionIfMissing(
-    kenyanCurrencyDenominationCollection: IKenyanCurrencyDenomination[],
-    ...kenyanCurrencyDenominationsToCheck: (IKenyanCurrencyDenomination | null | undefined)[]
-  ): IKenyanCurrencyDenomination[] {
-    const kenyanCurrencyDenominations: IKenyanCurrencyDenomination[] = kenyanCurrencyDenominationsToCheck.filter(isPresent);
+  getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenomination: Pick<IKenyanCurrencyDenomination, 'id'>): number {
+    return kenyanCurrencyDenomination.id;
+  }
+
+  compareKenyanCurrencyDenomination(
+    o1: Pick<IKenyanCurrencyDenomination, 'id'> | null,
+    o2: Pick<IKenyanCurrencyDenomination, 'id'> | null
+  ): boolean {
+    return o1 && o2 ? this.getKenyanCurrencyDenominationIdentifier(o1) === this.getKenyanCurrencyDenominationIdentifier(o2) : o1 === o2;
+  }
+
+  addKenyanCurrencyDenominationToCollectionIfMissing<Type extends Pick<IKenyanCurrencyDenomination, 'id'>>(
+    kenyanCurrencyDenominationCollection: Type[],
+    ...kenyanCurrencyDenominationsToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const kenyanCurrencyDenominations: Type[] = kenyanCurrencyDenominationsToCheck.filter(isPresent);
     if (kenyanCurrencyDenominations.length > 0) {
       const kenyanCurrencyDenominationCollectionIdentifiers = kenyanCurrencyDenominationCollection.map(
-        kenyanCurrencyDenominationItem => getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenominationItem)!
+        kenyanCurrencyDenominationItem => this.getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenominationItem)!
       );
       const kenyanCurrencyDenominationsToAdd = kenyanCurrencyDenominations.filter(kenyanCurrencyDenominationItem => {
-        const kenyanCurrencyDenominationIdentifier = getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenominationItem);
-        if (
-          kenyanCurrencyDenominationIdentifier == null ||
-          kenyanCurrencyDenominationCollectionIdentifiers.includes(kenyanCurrencyDenominationIdentifier)
-        ) {
+        const kenyanCurrencyDenominationIdentifier = this.getKenyanCurrencyDenominationIdentifier(kenyanCurrencyDenominationItem);
+        if (kenyanCurrencyDenominationCollectionIdentifiers.includes(kenyanCurrencyDenominationIdentifier)) {
           return false;
         }
         kenyanCurrencyDenominationCollectionIdentifiers.push(kenyanCurrencyDenominationIdentifier);

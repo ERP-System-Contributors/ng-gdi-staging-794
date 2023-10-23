@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IMerchantType, MerchantType } from '../merchant-type.model';
+import { MerchantTypeFormService, MerchantTypeFormGroup } from './merchant-type-form.service';
+import { IMerchantType } from '../merchant-type.model';
 import { MerchantTypeService } from '../service/merchant-type.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class MerchantTypeUpdateComponent implements OnInit {
   isSaving = false;
+  merchantType: IMerchantType | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    merchantTypeCode: [null, [Validators.required]],
-    merchantType: [null, [Validators.required]],
-    merchantTypeDetails: [],
-  });
+  editForm: MerchantTypeFormGroup = this.merchantTypeFormService.createMerchantTypeFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected merchantTypeService: MerchantTypeService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected merchantTypeFormService: MerchantTypeFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ merchantType }) => {
-      this.updateForm(merchantType);
+      this.merchantType = merchantType;
+      if (merchantType) {
+        this.updateForm(merchantType);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class MerchantTypeUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class MerchantTypeUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const merchantType = this.createFromForm();
-    if (merchantType.id !== undefined) {
+    const merchantType = this.merchantTypeFormService.getMerchantType(this.editForm);
+    if (merchantType.id !== null) {
       this.subscribeToSaveResponse(this.merchantTypeService.update(merchantType));
     } else {
       this.subscribeToSaveResponse(this.merchantTypeService.create(merchantType));
@@ -87,10 +68,10 @@ export class MerchantTypeUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IMerchantType>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class MerchantTypeUpdateComponent implements OnInit {
   }
 
   protected updateForm(merchantType: IMerchantType): void {
-    this.editForm.patchValue({
-      id: merchantType.id,
-      merchantTypeCode: merchantType.merchantTypeCode,
-      merchantType: merchantType.merchantType,
-      merchantTypeDetails: merchantType.merchantTypeDetails,
-    });
-  }
-
-  protected createFromForm(): IMerchantType {
-    return {
-      ...new MerchantType(),
-      id: this.editForm.get(['id'])!.value,
-      merchantTypeCode: this.editForm.get(['merchantTypeCode'])!.value,
-      merchantType: this.editForm.get(['merchantType'])!.value,
-      merchantTypeDetails: this.editForm.get(['merchantTypeDetails'])!.value,
-    };
+    this.merchantType = merchantType;
+    this.merchantTypeFormService.resetForm(this.editForm, merchantType);
   }
 }

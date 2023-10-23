@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { TerminalTypesFormService } from './terminal-types-form.service';
 import { TerminalTypesService } from '../service/terminal-types.service';
-import { ITerminalTypes, TerminalTypes } from '../terminal-types.model';
+import { ITerminalTypes } from '../terminal-types.model';
 
 import { TerminalTypesUpdateComponent } from './terminal-types-update.component';
 
@@ -34,19 +16,29 @@ describe('TerminalTypes Management Update Component', () => {
   let comp: TerminalTypesUpdateComponent;
   let fixture: ComponentFixture<TerminalTypesUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let terminalTypesFormService: TerminalTypesFormService;
   let terminalTypesService: TerminalTypesService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [TerminalTypesUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(TerminalTypesUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(TerminalTypesUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    terminalTypesFormService = TestBed.inject(TerminalTypesFormService);
     terminalTypesService = TestBed.inject(TerminalTypesService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('TerminalTypes Management Update Component', () => {
       activatedRoute.data = of({ terminalTypes });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(terminalTypes));
+      expect(comp.terminalTypes).toEqual(terminalTypes);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<TerminalTypes>>();
+      const saveSubject = new Subject<HttpResponse<ITerminalTypes>>();
       const terminalTypes = { id: 123 };
+      jest.spyOn(terminalTypesFormService, 'getTerminalTypes').mockReturnValue(terminalTypes);
       jest.spyOn(terminalTypesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ terminalTypes });
@@ -80,18 +73,20 @@ describe('TerminalTypes Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(terminalTypesFormService.getTerminalTypes).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(terminalTypesService.update).toHaveBeenCalledWith(terminalTypes);
+      expect(terminalTypesService.update).toHaveBeenCalledWith(expect.objectContaining(terminalTypes));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<TerminalTypes>>();
-      const terminalTypes = new TerminalTypes();
+      const saveSubject = new Subject<HttpResponse<ITerminalTypes>>();
+      const terminalTypes = { id: 123 };
+      jest.spyOn(terminalTypesFormService, 'getTerminalTypes').mockReturnValue({ id: null });
       jest.spyOn(terminalTypesService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ terminalTypes });
+      activatedRoute.data = of({ terminalTypes: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('TerminalTypes Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(terminalTypesService.create).toHaveBeenCalledWith(terminalTypes);
+      expect(terminalTypesFormService.getTerminalTypes).toHaveBeenCalled();
+      expect(terminalTypesService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<TerminalTypes>>();
+      const saveSubject = new Subject<HttpResponse<ITerminalTypes>>();
       const terminalTypes = { id: 123 };
       jest.spyOn(terminalTypesService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('TerminalTypes Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(terminalTypesService.update).toHaveBeenCalledWith(terminalTypes);
+      expect(terminalTypesService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

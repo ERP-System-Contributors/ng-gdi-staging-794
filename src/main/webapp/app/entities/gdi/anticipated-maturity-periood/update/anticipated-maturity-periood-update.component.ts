@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { IAnticipatedMaturityPeriood, AnticipatedMaturityPeriood } from '../anticipated-maturity-periood.model';
+import { AnticipatedMaturityPerioodFormService, AnticipatedMaturityPerioodFormGroup } from './anticipated-maturity-periood-form.service';
+import { IAnticipatedMaturityPeriood } from '../anticipated-maturity-periood.model';
 import { AnticipatedMaturityPerioodService } from '../service/anticipated-maturity-periood.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
@@ -35,25 +17,24 @@ import { DataUtils, FileLoadError } from 'app/core/util/data-util.service';
 })
 export class AnticipatedMaturityPerioodUpdateComponent implements OnInit {
   isSaving = false;
+  anticipatedMaturityPeriood: IAnticipatedMaturityPeriood | null = null;
 
-  editForm = this.fb.group({
-    id: [],
-    anticipatedMaturityTenorCode: [null, [Validators.required]],
-    aniticipatedMaturityTenorType: [null, [Validators.required]],
-    anticipatedMaturityTenorDetails: [],
-  });
+  editForm: AnticipatedMaturityPerioodFormGroup = this.anticipatedMaturityPerioodFormService.createAnticipatedMaturityPerioodFormGroup();
 
   constructor(
     protected dataUtils: DataUtils,
     protected eventManager: EventManager,
     protected anticipatedMaturityPerioodService: AnticipatedMaturityPerioodService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected anticipatedMaturityPerioodFormService: AnticipatedMaturityPerioodFormService,
+    protected activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ anticipatedMaturityPeriood }) => {
-      this.updateForm(anticipatedMaturityPeriood);
+      this.anticipatedMaturityPeriood = anticipatedMaturityPeriood;
+      if (anticipatedMaturityPeriood) {
+        this.updateForm(anticipatedMaturityPeriood);
+      }
     });
   }
 
@@ -68,7 +49,7 @@ export class AnticipatedMaturityPerioodUpdateComponent implements OnInit {
   setFileData(event: Event, field: string, isImage: boolean): void {
     this.dataUtils.loadFileToForm(event, this.editForm, field, isImage).subscribe({
       error: (err: FileLoadError) =>
-        this.eventManager.broadcast(new EventWithContent<AlertError>('erpSystemApp.error', { message: err.message })),
+        this.eventManager.broadcast(new EventWithContent<AlertError>('ngGdiStaging794App.error', { message: err.message })),
     });
   }
 
@@ -78,8 +59,8 @@ export class AnticipatedMaturityPerioodUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const anticipatedMaturityPeriood = this.createFromForm();
-    if (anticipatedMaturityPeriood.id !== undefined) {
+    const anticipatedMaturityPeriood = this.anticipatedMaturityPerioodFormService.getAnticipatedMaturityPeriood(this.editForm);
+    if (anticipatedMaturityPeriood.id !== null) {
       this.subscribeToSaveResponse(this.anticipatedMaturityPerioodService.update(anticipatedMaturityPeriood));
     } else {
       this.subscribeToSaveResponse(this.anticipatedMaturityPerioodService.create(anticipatedMaturityPeriood));
@@ -87,10 +68,10 @@ export class AnticipatedMaturityPerioodUpdateComponent implements OnInit {
   }
 
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IAnticipatedMaturityPeriood>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -106,21 +87,7 @@ export class AnticipatedMaturityPerioodUpdateComponent implements OnInit {
   }
 
   protected updateForm(anticipatedMaturityPeriood: IAnticipatedMaturityPeriood): void {
-    this.editForm.patchValue({
-      id: anticipatedMaturityPeriood.id,
-      anticipatedMaturityTenorCode: anticipatedMaturityPeriood.anticipatedMaturityTenorCode,
-      aniticipatedMaturityTenorType: anticipatedMaturityPeriood.aniticipatedMaturityTenorType,
-      anticipatedMaturityTenorDetails: anticipatedMaturityPeriood.anticipatedMaturityTenorDetails,
-    });
-  }
-
-  protected createFromForm(): IAnticipatedMaturityPeriood {
-    return {
-      ...new AnticipatedMaturityPeriood(),
-      id: this.editForm.get(['id'])!.value,
-      anticipatedMaturityTenorCode: this.editForm.get(['anticipatedMaturityTenorCode'])!.value,
-      aniticipatedMaturityTenorType: this.editForm.get(['aniticipatedMaturityTenorType'])!.value,
-      anticipatedMaturityTenorDetails: this.editForm.get(['anticipatedMaturityTenorDetails'])!.value,
-    };
+    this.anticipatedMaturityPeriood = anticipatedMaturityPeriood;
+    this.anticipatedMaturityPerioodFormService.resetForm(this.editForm, anticipatedMaturityPeriood);
   }
 }

@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { FiscalQuarterFormService } from './fiscal-quarter-form.service';
 import { FiscalQuarterService } from '../service/fiscal-quarter.service';
-import { IFiscalQuarter, FiscalQuarter } from '../fiscal-quarter.model';
+import { IFiscalQuarter } from '../fiscal-quarter.model';
 import { IFiscalYear } from 'app/entities/system/fiscal-year/fiscal-year.model';
 import { FiscalYearService } from 'app/entities/system/fiscal-year/service/fiscal-year.service';
 import { IPlaceholder } from 'app/entities/system/placeholder/placeholder.model';
@@ -40,6 +22,7 @@ describe('FiscalQuarter Management Update Component', () => {
   let comp: FiscalQuarterUpdateComponent;
   let fixture: ComponentFixture<FiscalQuarterUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let fiscalQuarterFormService: FiscalQuarterFormService;
   let fiscalQuarterService: FiscalQuarterService;
   let fiscalYearService: FiscalYearService;
   let placeholderService: PlaceholderService;
@@ -47,15 +30,24 @@ describe('FiscalQuarter Management Update Component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [FiscalQuarterUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(FiscalQuarterUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(FiscalQuarterUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    fiscalQuarterFormService = TestBed.inject(FiscalQuarterFormService);
     fiscalQuarterService = TestBed.inject(FiscalQuarterService);
     fiscalYearService = TestBed.inject(FiscalYearService);
     placeholderService = TestBed.inject(PlaceholderService);
@@ -80,7 +72,10 @@ describe('FiscalQuarter Management Update Component', () => {
       comp.ngOnInit();
 
       expect(fiscalYearService.query).toHaveBeenCalled();
-      expect(fiscalYearService.addFiscalYearToCollectionIfMissing).toHaveBeenCalledWith(fiscalYearCollection, ...additionalFiscalYears);
+      expect(fiscalYearService.addFiscalYearToCollectionIfMissing).toHaveBeenCalledWith(
+        fiscalYearCollection,
+        ...additionalFiscalYears.map(expect.objectContaining)
+      );
       expect(comp.fiscalYearsSharedCollection).toEqual(expectedCollection);
     });
 
@@ -99,7 +94,10 @@ describe('FiscalQuarter Management Update Component', () => {
       comp.ngOnInit();
 
       expect(placeholderService.query).toHaveBeenCalled();
-      expect(placeholderService.addPlaceholderToCollectionIfMissing).toHaveBeenCalledWith(placeholderCollection, ...additionalPlaceholders);
+      expect(placeholderService.addPlaceholderToCollectionIfMissing).toHaveBeenCalledWith(
+        placeholderCollection,
+        ...additionalPlaceholders.map(expect.objectContaining)
+      );
       expect(comp.placeholdersSharedCollection).toEqual(expectedCollection);
     });
 
@@ -125,7 +123,7 @@ describe('FiscalQuarter Management Update Component', () => {
       expect(universallyUniqueMappingService.query).toHaveBeenCalled();
       expect(universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing).toHaveBeenCalledWith(
         universallyUniqueMappingCollection,
-        ...additionalUniversallyUniqueMappings
+        ...additionalUniversallyUniqueMappings.map(expect.objectContaining)
       );
       expect(comp.universallyUniqueMappingsSharedCollection).toEqual(expectedCollection);
     });
@@ -134,26 +132,27 @@ describe('FiscalQuarter Management Update Component', () => {
       const fiscalQuarter: IFiscalQuarter = { id: 456 };
       const fiscalYear: IFiscalYear = { id: 23620 };
       fiscalQuarter.fiscalYear = fiscalYear;
-      const placeholders: IPlaceholder = { id: 39312 };
-      fiscalQuarter.placeholders = [placeholders];
-      const universallyUniqueMappings: IUniversallyUniqueMapping = { id: 19909 };
-      fiscalQuarter.universallyUniqueMappings = [universallyUniqueMappings];
+      const placeholder: IPlaceholder = { id: 39312 };
+      fiscalQuarter.placeholders = [placeholder];
+      const universallyUniqueMapping: IUniversallyUniqueMapping = { id: 19909 };
+      fiscalQuarter.universallyUniqueMappings = [universallyUniqueMapping];
 
       activatedRoute.data = of({ fiscalQuarter });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(fiscalQuarter));
       expect(comp.fiscalYearsSharedCollection).toContain(fiscalYear);
-      expect(comp.placeholdersSharedCollection).toContain(placeholders);
-      expect(comp.universallyUniqueMappingsSharedCollection).toContain(universallyUniqueMappings);
+      expect(comp.placeholdersSharedCollection).toContain(placeholder);
+      expect(comp.universallyUniqueMappingsSharedCollection).toContain(universallyUniqueMapping);
+      expect(comp.fiscalQuarter).toEqual(fiscalQuarter);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FiscalQuarter>>();
+      const saveSubject = new Subject<HttpResponse<IFiscalQuarter>>();
       const fiscalQuarter = { id: 123 };
+      jest.spyOn(fiscalQuarterFormService, 'getFiscalQuarter').mockReturnValue(fiscalQuarter);
       jest.spyOn(fiscalQuarterService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ fiscalQuarter });
@@ -166,18 +165,20 @@ describe('FiscalQuarter Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(fiscalQuarterFormService.getFiscalQuarter).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(fiscalQuarterService.update).toHaveBeenCalledWith(fiscalQuarter);
+      expect(fiscalQuarterService.update).toHaveBeenCalledWith(expect.objectContaining(fiscalQuarter));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FiscalQuarter>>();
-      const fiscalQuarter = new FiscalQuarter();
+      const saveSubject = new Subject<HttpResponse<IFiscalQuarter>>();
+      const fiscalQuarter = { id: 123 };
+      jest.spyOn(fiscalQuarterFormService, 'getFiscalQuarter').mockReturnValue({ id: null });
       jest.spyOn(fiscalQuarterService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ fiscalQuarter });
+      activatedRoute.data = of({ fiscalQuarter: null });
       comp.ngOnInit();
 
       // WHEN
@@ -187,14 +188,15 @@ describe('FiscalQuarter Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(fiscalQuarterService.create).toHaveBeenCalledWith(fiscalQuarter);
+      expect(fiscalQuarterFormService.getFiscalQuarter).toHaveBeenCalled();
+      expect(fiscalQuarterService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<FiscalQuarter>>();
+      const saveSubject = new Subject<HttpResponse<IFiscalQuarter>>();
       const fiscalQuarter = { id: 123 };
       jest.spyOn(fiscalQuarterService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -207,88 +209,40 @@ describe('FiscalQuarter Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(fiscalQuarterService.update).toHaveBeenCalledWith(fiscalQuarter);
+      expect(fiscalQuarterService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });
   });
 
-  describe('Tracking relationships identifiers', () => {
-    describe('trackFiscalYearById', () => {
-      it('Should return tracked FiscalYear primary key', () => {
+  describe('Compare relationships', () => {
+    describe('compareFiscalYear', () => {
+      it('Should forward to fiscalYearService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackFiscalYearById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(fiscalYearService, 'compareFiscalYear');
+        comp.compareFiscalYear(entity, entity2);
+        expect(fiscalYearService.compareFiscalYear).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackPlaceholderById', () => {
-      it('Should return tracked Placeholder primary key', () => {
+    describe('comparePlaceholder', () => {
+      it('Should forward to placeholderService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackPlaceholderById(0, entity);
-        expect(trackResult).toEqual(entity.id);
+        const entity2 = { id: 456 };
+        jest.spyOn(placeholderService, 'comparePlaceholder');
+        comp.comparePlaceholder(entity, entity2);
+        expect(placeholderService.comparePlaceholder).toHaveBeenCalledWith(entity, entity2);
       });
     });
 
-    describe('trackUniversallyUniqueMappingById', () => {
-      it('Should return tracked UniversallyUniqueMapping primary key', () => {
+    describe('compareUniversallyUniqueMapping', () => {
+      it('Should forward to universallyUniqueMappingService', () => {
         const entity = { id: 123 };
-        const trackResult = comp.trackUniversallyUniqueMappingById(0, entity);
-        expect(trackResult).toEqual(entity.id);
-      });
-    });
-  });
-
-  describe('Getting selected relationships', () => {
-    describe('getSelectedPlaceholder', () => {
-      it('Should return option if no Placeholder is selected', () => {
-        const option = { id: 123 };
-        const result = comp.getSelectedPlaceholder(option);
-        expect(result === option).toEqual(true);
-      });
-
-      it('Should return selected Placeholder for according option', () => {
-        const option = { id: 123 };
-        const selected = { id: 123 };
-        const selected2 = { id: 456 };
-        const result = comp.getSelectedPlaceholder(option, [selected2, selected]);
-        expect(result === selected).toEqual(true);
-        expect(result === selected2).toEqual(false);
-        expect(result === option).toEqual(false);
-      });
-
-      it('Should return option if this Placeholder is not selected', () => {
-        const option = { id: 123 };
-        const selected = { id: 456 };
-        const result = comp.getSelectedPlaceholder(option, [selected]);
-        expect(result === option).toEqual(true);
-        expect(result === selected).toEqual(false);
-      });
-    });
-
-    describe('getSelectedUniversallyUniqueMapping', () => {
-      it('Should return option if no UniversallyUniqueMapping is selected', () => {
-        const option = { id: 123 };
-        const result = comp.getSelectedUniversallyUniqueMapping(option);
-        expect(result === option).toEqual(true);
-      });
-
-      it('Should return selected UniversallyUniqueMapping for according option', () => {
-        const option = { id: 123 };
-        const selected = { id: 123 };
-        const selected2 = { id: 456 };
-        const result = comp.getSelectedUniversallyUniqueMapping(option, [selected2, selected]);
-        expect(result === selected).toEqual(true);
-        expect(result === selected2).toEqual(false);
-        expect(result === option).toEqual(false);
-      });
-
-      it('Should return option if this UniversallyUniqueMapping is not selected', () => {
-        const option = { id: 123 };
-        const selected = { id: 456 };
-        const result = comp.getSelectedUniversallyUniqueMapping(option, [selected]);
-        expect(result === option).toEqual(true);
-        expect(result === selected).toEqual(false);
+        const entity2 = { id: 456 };
+        jest.spyOn(universallyUniqueMappingService, 'compareUniversallyUniqueMapping');
+        comp.compareUniversallyUniqueMapping(entity, entity2);
+        expect(universallyUniqueMappingService.compareUniversallyUniqueMapping).toHaveBeenCalledWith(entity, entity2);
       });
     });
   });

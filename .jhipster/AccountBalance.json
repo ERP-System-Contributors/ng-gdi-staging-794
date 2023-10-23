@@ -1,5 +1,7 @@
 {
+  "changelogDate": "20231004091106",
   "clientRootFolder": "gdi-data",
+  "dto": "mapstruct",
   "fields": [
     {
       "fieldName": "reportingDate",
@@ -15,8 +17,8 @@
       "fieldName": "accountContractNumber",
       "fieldType": "String",
       "fieldValidateRules": ["required", "unique", "minlength", "maxlength", "pattern"],
-      "fieldValidateRulesMinlength": "12",
       "fieldValidateRulesMaxlength": "16",
+      "fieldValidateRulesMinlength": "12",
       "fieldValidateRulesPattern": "^\\d{15}$"
     },
     {
@@ -40,35 +42,34 @@
       "fieldValidateRules": ["required"]
     }
   ],
+  "incrementalChangelog": false,
+  "jpaMetamodelFiltering": true,
+  "name": "AccountBalance",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipName": "bankCode",
+      "otherEntityField": "institutionName",
       "otherEntityName": "institutionCode",
+      "relationshipName": "bankCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "institutionName"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "branchId",
+      "otherEntityField": "branchCode",
       "otherEntityName": "bankBranchCode",
+      "relationshipName": "branchId",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "branchCode"
+      "relationshipValidateRules": ["required"]
     },
     {
-      "relationshipName": "currencyCode",
+      "otherEntityField": "alphabeticCode",
       "otherEntityName": "isoCurrencyCode",
+      "relationshipName": "currencyCode",
       "relationshipType": "many-to-one",
-      "relationshipValidateRules": ["required"],
-      "otherEntityField": "alphabeticCode"
+      "relationshipValidateRules": ["required"]
     }
   ],
-  "service": "serviceImpl",
-  "dto": "mapstruct",
-  "jpaMetamodelFiltering": true,
-  "readOnly": false,
-  "pagination": "pagination",
-  "name": "AccountBalance",
-  "changelogDate": "20231004091106",
-  "incrementalChangelog": false
+  "searchEngine": "elasticsearch",
+  "service": "serviceImpl"
 }

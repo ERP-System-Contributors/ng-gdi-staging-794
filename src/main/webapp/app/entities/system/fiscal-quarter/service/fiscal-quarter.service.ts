@@ -1,33 +1,28 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { isPresent } from 'app/core/util/operators';
 import { DATE_FORMAT } from 'app/config/input.constants';
 import { ApplicationConfigService } from 'app/core/config/application-config.service';
 import { createRequestOption } from 'app/core/request/request-util';
 import { SearchWithPagination } from 'app/core/request/request.model';
-import { IFiscalQuarter, getFiscalQuarterIdentifier } from '../fiscal-quarter.model';
+import { IFiscalQuarter, NewFiscalQuarter } from '../fiscal-quarter.model';
+
+export type PartialUpdateFiscalQuarter = Partial<IFiscalQuarter> & Pick<IFiscalQuarter, 'id'>;
+
+type RestOf<T extends IFiscalQuarter | NewFiscalQuarter> = Omit<T, 'startDate' | 'endDate'> & {
+  startDate?: string | null;
+  endDate?: string | null;
+};
+
+export type RestFiscalQuarter = RestOf<IFiscalQuarter>;
+
+export type NewRestFiscalQuarter = RestOf<NewFiscalQuarter>;
+
+export type PartialUpdateRestFiscalQuarter = RestOf<PartialUpdateFiscalQuarter>;
 
 export type EntityResponseType = HttpResponse<IFiscalQuarter>;
 export type EntityArrayResponseType = HttpResponse<IFiscalQuarter[]>;
@@ -39,38 +34,38 @@ export class FiscalQuarterService {
 
   constructor(protected http: HttpClient, protected applicationConfigService: ApplicationConfigService) {}
 
-  create(fiscalQuarter: IFiscalQuarter): Observable<EntityResponseType> {
+  create(fiscalQuarter: NewFiscalQuarter): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalQuarter);
     return this.http
-      .post<IFiscalQuarter>(this.resourceUrl, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .post<RestFiscalQuarter>(this.resourceUrl, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   update(fiscalQuarter: IFiscalQuarter): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalQuarter);
     return this.http
-      .put<IFiscalQuarter>(`${this.resourceUrl}/${getFiscalQuarterIdentifier(fiscalQuarter) as number}`, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .put<RestFiscalQuarter>(`${this.resourceUrl}/${this.getFiscalQuarterIdentifier(fiscalQuarter)}`, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
-  partialUpdate(fiscalQuarter: IFiscalQuarter): Observable<EntityResponseType> {
+  partialUpdate(fiscalQuarter: PartialUpdateFiscalQuarter): Observable<EntityResponseType> {
     const copy = this.convertDateFromClient(fiscalQuarter);
     return this.http
-      .patch<IFiscalQuarter>(`${this.resourceUrl}/${getFiscalQuarterIdentifier(fiscalQuarter) as number}`, copy, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .patch<RestFiscalQuarter>(`${this.resourceUrl}/${this.getFiscalQuarterIdentifier(fiscalQuarter)}`, copy, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   find(id: number): Observable<EntityResponseType> {
     return this.http
-      .get<IFiscalQuarter>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-      .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+      .get<RestFiscalQuarter>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+      .pipe(map(res => this.convertResponseFromServer(res)));
   }
 
   query(req?: any): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IFiscalQuarter[]>(this.resourceUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestFiscalQuarter[]>(this.resourceUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
   delete(id: number): Observable<HttpResponse<{}>> {
@@ -80,22 +75,30 @@ export class FiscalQuarterService {
   search(req: SearchWithPagination): Observable<EntityArrayResponseType> {
     const options = createRequestOption(req);
     return this.http
-      .get<IFiscalQuarter[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
-      .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+      .get<RestFiscalQuarter[]>(this.resourceSearchUrl, { params: options, observe: 'response' })
+      .pipe(map(res => this.convertResponseArrayFromServer(res)));
   }
 
-  addFiscalQuarterToCollectionIfMissing(
-    fiscalQuarterCollection: IFiscalQuarter[],
-    ...fiscalQuartersToCheck: (IFiscalQuarter | null | undefined)[]
-  ): IFiscalQuarter[] {
-    const fiscalQuarters: IFiscalQuarter[] = fiscalQuartersToCheck.filter(isPresent);
+  getFiscalQuarterIdentifier(fiscalQuarter: Pick<IFiscalQuarter, 'id'>): number {
+    return fiscalQuarter.id;
+  }
+
+  compareFiscalQuarter(o1: Pick<IFiscalQuarter, 'id'> | null, o2: Pick<IFiscalQuarter, 'id'> | null): boolean {
+    return o1 && o2 ? this.getFiscalQuarterIdentifier(o1) === this.getFiscalQuarterIdentifier(o2) : o1 === o2;
+  }
+
+  addFiscalQuarterToCollectionIfMissing<Type extends Pick<IFiscalQuarter, 'id'>>(
+    fiscalQuarterCollection: Type[],
+    ...fiscalQuartersToCheck: (Type | null | undefined)[]
+  ): Type[] {
+    const fiscalQuarters: Type[] = fiscalQuartersToCheck.filter(isPresent);
     if (fiscalQuarters.length > 0) {
       const fiscalQuarterCollectionIdentifiers = fiscalQuarterCollection.map(
-        fiscalQuarterItem => getFiscalQuarterIdentifier(fiscalQuarterItem)!
+        fiscalQuarterItem => this.getFiscalQuarterIdentifier(fiscalQuarterItem)!
       );
       const fiscalQuartersToAdd = fiscalQuarters.filter(fiscalQuarterItem => {
-        const fiscalQuarterIdentifier = getFiscalQuarterIdentifier(fiscalQuarterItem);
-        if (fiscalQuarterIdentifier == null || fiscalQuarterCollectionIdentifiers.includes(fiscalQuarterIdentifier)) {
+        const fiscalQuarterIdentifier = this.getFiscalQuarterIdentifier(fiscalQuarterItem);
+        if (fiscalQuarterCollectionIdentifiers.includes(fiscalQuarterIdentifier)) {
           return false;
         }
         fiscalQuarterCollectionIdentifiers.push(fiscalQuarterIdentifier);
@@ -106,28 +109,31 @@ export class FiscalQuarterService {
     return fiscalQuarterCollection;
   }
 
-  protected convertDateFromClient(fiscalQuarter: IFiscalQuarter): IFiscalQuarter {
-    return Object.assign({}, fiscalQuarter, {
-      startDate: fiscalQuarter.startDate?.isValid() ? fiscalQuarter.startDate.format(DATE_FORMAT) : undefined,
-      endDate: fiscalQuarter.endDate?.isValid() ? fiscalQuarter.endDate.format(DATE_FORMAT) : undefined,
+  protected convertDateFromClient<T extends IFiscalQuarter | NewFiscalQuarter | PartialUpdateFiscalQuarter>(fiscalQuarter: T): RestOf<T> {
+    return {
+      ...fiscalQuarter,
+      startDate: fiscalQuarter.startDate?.format(DATE_FORMAT) ?? null,
+      endDate: fiscalQuarter.endDate?.format(DATE_FORMAT) ?? null,
+    };
+  }
+
+  protected convertDateFromServer(restFiscalQuarter: RestFiscalQuarter): IFiscalQuarter {
+    return {
+      ...restFiscalQuarter,
+      startDate: restFiscalQuarter.startDate ? dayjs(restFiscalQuarter.startDate) : undefined,
+      endDate: restFiscalQuarter.endDate ? dayjs(restFiscalQuarter.endDate) : undefined,
+    };
+  }
+
+  protected convertResponseFromServer(res: HttpResponse<RestFiscalQuarter>): HttpResponse<IFiscalQuarter> {
+    return res.clone({
+      body: res.body ? this.convertDateFromServer(res.body) : null,
     });
   }
 
-  protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-    if (res.body) {
-      res.body.startDate = res.body.startDate ? dayjs(res.body.startDate) : undefined;
-      res.body.endDate = res.body.endDate ? dayjs(res.body.endDate) : undefined;
-    }
-    return res;
-  }
-
-  protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-    if (res.body) {
-      res.body.forEach((fiscalQuarter: IFiscalQuarter) => {
-        fiscalQuarter.startDate = fiscalQuarter.startDate ? dayjs(fiscalQuarter.startDate) : undefined;
-        fiscalQuarter.endDate = fiscalQuarter.endDate ? dayjs(fiscalQuarter.endDate) : undefined;
-      });
-    }
-    return res;
+  protected convertResponseArrayFromServer(res: HttpResponse<RestFiscalQuarter[]>): HttpResponse<IFiscalQuarter[]> {
+    return res.clone({
+      body: res.body ? res.body.map(item => this.convertDateFromServer(item)) : null,
+    });
   }
 }

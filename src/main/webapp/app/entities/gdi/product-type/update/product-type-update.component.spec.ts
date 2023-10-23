@@ -1,32 +1,14 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
-jest.mock('@angular/router');
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { RouterTestingModule } from '@angular/router/testing';
+import { of, Subject, from } from 'rxjs';
 
+import { ProductTypeFormService } from './product-type-form.service';
 import { ProductTypeService } from '../service/product-type.service';
-import { IProductType, ProductType } from '../product-type.model';
+import { IProductType } from '../product-type.model';
 
 import { ProductTypeUpdateComponent } from './product-type-update.component';
 
@@ -34,19 +16,29 @@ describe('ProductType Management Update Component', () => {
   let comp: ProductTypeUpdateComponent;
   let fixture: ComponentFixture<ProductTypeUpdateComponent>;
   let activatedRoute: ActivatedRoute;
+  let productTypeFormService: ProductTypeFormService;
   let productTypeService: ProductTypeService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, RouterTestingModule.withRoutes([])],
       declarations: [ProductTypeUpdateComponent],
-      providers: [FormBuilder, ActivatedRoute],
+      providers: [
+        FormBuilder,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: from([{}]),
+          },
+        },
+      ],
     })
       .overrideTemplate(ProductTypeUpdateComponent, '')
       .compileComponents();
 
     fixture = TestBed.createComponent(ProductTypeUpdateComponent);
     activatedRoute = TestBed.inject(ActivatedRoute);
+    productTypeFormService = TestBed.inject(ProductTypeFormService);
     productTypeService = TestBed.inject(ProductTypeService);
 
     comp = fixture.componentInstance;
@@ -59,15 +51,16 @@ describe('ProductType Management Update Component', () => {
       activatedRoute.data = of({ productType });
       comp.ngOnInit();
 
-      expect(comp.editForm.value).toEqual(expect.objectContaining(productType));
+      expect(comp.productType).toEqual(productType);
     });
   });
 
   describe('save', () => {
     it('Should call update service on save for existing entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ProductType>>();
+      const saveSubject = new Subject<HttpResponse<IProductType>>();
       const productType = { id: 123 };
+      jest.spyOn(productTypeFormService, 'getProductType').mockReturnValue(productType);
       jest.spyOn(productTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
       activatedRoute.data = of({ productType });
@@ -80,18 +73,20 @@ describe('ProductType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
+      expect(productTypeFormService.getProductType).toHaveBeenCalled();
       expect(comp.previousState).toHaveBeenCalled();
-      expect(productTypeService.update).toHaveBeenCalledWith(productType);
+      expect(productTypeService.update).toHaveBeenCalledWith(expect.objectContaining(productType));
       expect(comp.isSaving).toEqual(false);
     });
 
     it('Should call create service on save for new entity', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ProductType>>();
-      const productType = new ProductType();
+      const saveSubject = new Subject<HttpResponse<IProductType>>();
+      const productType = { id: 123 };
+      jest.spyOn(productTypeFormService, 'getProductType').mockReturnValue({ id: null });
       jest.spyOn(productTypeService, 'create').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
-      activatedRoute.data = of({ productType });
+      activatedRoute.data = of({ productType: null });
       comp.ngOnInit();
 
       // WHEN
@@ -101,14 +96,15 @@ describe('ProductType Management Update Component', () => {
       saveSubject.complete();
 
       // THEN
-      expect(productTypeService.create).toHaveBeenCalledWith(productType);
+      expect(productTypeFormService.getProductType).toHaveBeenCalled();
+      expect(productTypeService.create).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).toHaveBeenCalled();
     });
 
     it('Should set isSaving to false on error', () => {
       // GIVEN
-      const saveSubject = new Subject<HttpResponse<ProductType>>();
+      const saveSubject = new Subject<HttpResponse<IProductType>>();
       const productType = { id: 123 };
       jest.spyOn(productTypeService, 'update').mockReturnValue(saveSubject);
       jest.spyOn(comp, 'previousState');
@@ -121,7 +117,7 @@ describe('ProductType Management Update Component', () => {
       saveSubject.error('This is an error!');
 
       // THEN
-      expect(productTypeService.update).toHaveBeenCalledWith(productType);
+      expect(productTypeService.update).toHaveBeenCalled();
       expect(comp.isSaving).toEqual(false);
       expect(comp.previousState).not.toHaveBeenCalled();
     });

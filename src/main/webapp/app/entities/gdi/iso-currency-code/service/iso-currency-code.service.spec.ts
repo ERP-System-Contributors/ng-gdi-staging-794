@@ -1,32 +1,18 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-import { IIsoCurrencyCode, IsoCurrencyCode } from '../iso-currency-code.model';
+import { IIsoCurrencyCode } from '../iso-currency-code.model';
+import { sampleWithRequiredData, sampleWithNewData, sampleWithPartialData, sampleWithFullData } from '../iso-currency-code.test-samples';
 
 import { IsoCurrencyCodeService } from './iso-currency-code.service';
+
+const requireRestSample: IIsoCurrencyCode = {
+  ...sampleWithRequiredData,
+};
 
 describe('IsoCurrencyCode Service', () => {
   let service: IsoCurrencyCodeService;
   let httpMock: HttpTestingController;
-  let elemDefault: IIsoCurrencyCode;
   let expectedResult: IIsoCurrencyCode | IIsoCurrencyCode[] | boolean | null;
 
   beforeEach(() => {
@@ -36,39 +22,27 @@ describe('IsoCurrencyCode Service', () => {
     expectedResult = null;
     service = TestBed.inject(IsoCurrencyCodeService);
     httpMock = TestBed.inject(HttpTestingController);
-
-    elemDefault = {
-      id: 0,
-      alphabeticCode: 'AAAAAAA',
-      numericCode: 'AAAAAAA',
-      minorUnit: 'AAAAAAA',
-      currency: 'AAAAAAA',
-      country: 'AAAAAAA',
-    };
   });
 
   describe('Service methods', () => {
     it('should find an element', () => {
-      const returnedFromService = Object.assign({}, elemDefault);
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.find(123).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush(returnedFromService);
-      expect(expectedResult).toMatchObject(elemDefault);
+      expect(expectedResult).toMatchObject(expected);
     });
 
     it('should create a IsoCurrencyCode', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 0,
-        },
-        elemDefault
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const isoCurrencyCode = { ...sampleWithNewData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.create(new IsoCurrencyCode()).subscribe(resp => (expectedResult = resp.body));
+      service.create(isoCurrencyCode).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'POST' });
       req.flush(returnedFromService);
@@ -76,21 +50,11 @@ describe('IsoCurrencyCode Service', () => {
     });
 
     it('should update a IsoCurrencyCode', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          alphabeticCode: 'BBBBBB',
-          numericCode: 'BBBBBB',
-          minorUnit: 'BBBBBB',
-          currency: 'BBBBBB',
-          country: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const isoCurrencyCode = { ...sampleWithRequiredData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
-      const expected = Object.assign({}, returnedFromService);
-
-      service.update(expected).subscribe(resp => (expectedResult = resp.body));
+      service.update(isoCurrencyCode).subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'PUT' });
       req.flush(returnedFromService);
@@ -98,17 +62,9 @@ describe('IsoCurrencyCode Service', () => {
     });
 
     it('should partial update a IsoCurrencyCode', () => {
-      const patchObject = Object.assign(
-        {
-          numericCode: 'BBBBBB',
-          minorUnit: 'BBBBBB',
-        },
-        new IsoCurrencyCode()
-      );
-
-      const returnedFromService = Object.assign(patchObject, elemDefault);
-
-      const expected = Object.assign({}, returnedFromService);
+      const patchObject = { ...sampleWithPartialData };
+      const returnedFromService = { ...requireRestSample };
+      const expected = { ...sampleWithRequiredData };
 
       service.partialUpdate(patchObject).subscribe(resp => (expectedResult = resp.body));
 
@@ -118,74 +74,66 @@ describe('IsoCurrencyCode Service', () => {
     });
 
     it('should return a list of IsoCurrencyCode', () => {
-      const returnedFromService = Object.assign(
-        {
-          id: 1,
-          alphabeticCode: 'BBBBBB',
-          numericCode: 'BBBBBB',
-          minorUnit: 'BBBBBB',
-          currency: 'BBBBBB',
-          country: 'BBBBBB',
-        },
-        elemDefault
-      );
+      const returnedFromService = { ...requireRestSample };
 
-      const expected = Object.assign({}, returnedFromService);
+      const expected = { ...sampleWithRequiredData };
 
       service.query().subscribe(resp => (expectedResult = resp.body));
 
       const req = httpMock.expectOne({ method: 'GET' });
       req.flush([returnedFromService]);
       httpMock.verify();
-      expect(expectedResult).toContainEqual(expected);
+      expect(expectedResult).toMatchObject([expected]);
     });
 
     it('should delete a IsoCurrencyCode', () => {
+      const expected = true;
+
       service.delete(123).subscribe(resp => (expectedResult = resp.ok));
 
       const req = httpMock.expectOne({ method: 'DELETE' });
       req.flush({ status: 200 });
-      expect(expectedResult);
+      expect(expectedResult).toBe(expected);
     });
 
     describe('addIsoCurrencyCodeToCollectionIfMissing', () => {
       it('should add a IsoCurrencyCode to an empty array', () => {
-        const isoCurrencyCode: IIsoCurrencyCode = { id: 123 };
+        const isoCurrencyCode: IIsoCurrencyCode = sampleWithRequiredData;
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing([], isoCurrencyCode);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(isoCurrencyCode);
       });
 
       it('should not add a IsoCurrencyCode to an array that contains it', () => {
-        const isoCurrencyCode: IIsoCurrencyCode = { id: 123 };
+        const isoCurrencyCode: IIsoCurrencyCode = sampleWithRequiredData;
         const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [
           {
             ...isoCurrencyCode,
           },
-          { id: 456 },
+          sampleWithPartialData,
         ];
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing(isoCurrencyCodeCollection, isoCurrencyCode);
         expect(expectedResult).toHaveLength(2);
       });
 
       it("should add a IsoCurrencyCode to an array that doesn't contain it", () => {
-        const isoCurrencyCode: IIsoCurrencyCode = { id: 123 };
-        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [{ id: 456 }];
+        const isoCurrencyCode: IIsoCurrencyCode = sampleWithRequiredData;
+        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [sampleWithPartialData];
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing(isoCurrencyCodeCollection, isoCurrencyCode);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(isoCurrencyCode);
       });
 
       it('should add only unique IsoCurrencyCode to an array', () => {
-        const isoCurrencyCodeArray: IIsoCurrencyCode[] = [{ id: 123 }, { id: 456 }, { id: 55293 }];
-        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [{ id: 123 }];
+        const isoCurrencyCodeArray: IIsoCurrencyCode[] = [sampleWithRequiredData, sampleWithPartialData, sampleWithFullData];
+        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [sampleWithRequiredData];
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing(isoCurrencyCodeCollection, ...isoCurrencyCodeArray);
         expect(expectedResult).toHaveLength(3);
       });
 
       it('should accept varargs', () => {
-        const isoCurrencyCode: IIsoCurrencyCode = { id: 123 };
-        const isoCurrencyCode2: IIsoCurrencyCode = { id: 456 };
+        const isoCurrencyCode: IIsoCurrencyCode = sampleWithRequiredData;
+        const isoCurrencyCode2: IIsoCurrencyCode = sampleWithPartialData;
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing([], isoCurrencyCode, isoCurrencyCode2);
         expect(expectedResult).toHaveLength(2);
         expect(expectedResult).toContain(isoCurrencyCode);
@@ -193,16 +141,60 @@ describe('IsoCurrencyCode Service', () => {
       });
 
       it('should accept null and undefined values', () => {
-        const isoCurrencyCode: IIsoCurrencyCode = { id: 123 };
+        const isoCurrencyCode: IIsoCurrencyCode = sampleWithRequiredData;
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing([], null, isoCurrencyCode, undefined);
         expect(expectedResult).toHaveLength(1);
         expect(expectedResult).toContain(isoCurrencyCode);
       });
 
       it('should return initial array if no IsoCurrencyCode is added', () => {
-        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [{ id: 123 }];
+        const isoCurrencyCodeCollection: IIsoCurrencyCode[] = [sampleWithRequiredData];
         expectedResult = service.addIsoCurrencyCodeToCollectionIfMissing(isoCurrencyCodeCollection, undefined, null);
         expect(expectedResult).toEqual(isoCurrencyCodeCollection);
+      });
+    });
+
+    describe('compareIsoCurrencyCode', () => {
+      it('Should return true if both entities are null', () => {
+        const entity1 = null;
+        const entity2 = null;
+
+        const compareResult = service.compareIsoCurrencyCode(entity1, entity2);
+
+        expect(compareResult).toEqual(true);
+      });
+
+      it('Should return false if one entity is null', () => {
+        const entity1 = { id: 123 };
+        const entity2 = null;
+
+        const compareResult1 = service.compareIsoCurrencyCode(entity1, entity2);
+        const compareResult2 = service.compareIsoCurrencyCode(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey differs', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 456 };
+
+        const compareResult1 = service.compareIsoCurrencyCode(entity1, entity2);
+        const compareResult2 = service.compareIsoCurrencyCode(entity2, entity1);
+
+        expect(compareResult1).toEqual(false);
+        expect(compareResult2).toEqual(false);
+      });
+
+      it('Should return false if primaryKey matches', () => {
+        const entity1 = { id: 123 };
+        const entity2 = { id: 123 };
+
+        const compareResult1 = service.compareIsoCurrencyCode(entity1, entity2);
+        const compareResult2 = service.compareIsoCurrencyCode(entity2, entity1);
+
+        expect(compareResult1).toEqual(true);
+        expect(compareResult2).toEqual(true);
       });
     });
   });

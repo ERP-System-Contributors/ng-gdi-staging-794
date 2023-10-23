@@ -1,29 +1,11 @@
-///
-/// Erp System - Mark VI No 2 (Phoebe Series) Client 1.5.3
-/// Copyright © 2021 - 2023 Edwin Njeru (mailnjeru@gmail.com)
-///
-/// This program is free software: you can redistribute it and/or modify
-/// it under the terms of the GNU General Public License as published by
-/// the Free Software Foundation, either version 3 of the License, or
-/// (at your option) any later version.
-///
-/// This program is distributed in the hope that it will be useful,
-/// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
-///
-/// You should have received a copy of the GNU General Public License
-/// along with this program. If not, see <http://www.gnu.org/licenses/>.
-///
-
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { IUniversallyUniqueMapping, UniversallyUniqueMapping } from '../universally-unique-mapping.model';
+import { UniversallyUniqueMappingFormService, UniversallyUniqueMappingFormGroup } from './universally-unique-mapping-form.service';
+import { IUniversallyUniqueMapping } from '../universally-unique-mapping.model';
 import { UniversallyUniqueMappingService } from '../service/universally-unique-mapping.service';
 import { IPlaceholder } from 'app/entities/system/placeholder/placeholder.model';
 import { PlaceholderService } from 'app/entities/system/placeholder/service/placeholder.service';
@@ -34,28 +16,31 @@ import { PlaceholderService } from 'app/entities/system/placeholder/service/plac
 })
 export class UniversallyUniqueMappingUpdateComponent implements OnInit {
   isSaving = false;
+  universallyUniqueMapping: IUniversallyUniqueMapping | null = null;
 
   universallyUniqueMappingsSharedCollection: IUniversallyUniqueMapping[] = [];
   placeholdersSharedCollection: IPlaceholder[] = [];
 
-  editForm = this.fb.group({
-    id: [],
-    universalKey: [null, [Validators.required]],
-    mappedValue: [],
-    parentMapping: [],
-    placeholders: [],
-  });
+  editForm: UniversallyUniqueMappingFormGroup = this.universallyUniqueMappingFormService.createUniversallyUniqueMappingFormGroup();
 
   constructor(
     protected universallyUniqueMappingService: UniversallyUniqueMappingService,
+    protected universallyUniqueMappingFormService: UniversallyUniqueMappingFormService,
     protected placeholderService: PlaceholderService,
-    protected activatedRoute: ActivatedRoute,
-    protected fb: FormBuilder
+    protected activatedRoute: ActivatedRoute
   ) {}
+
+  compareUniversallyUniqueMapping = (o1: IUniversallyUniqueMapping | null, o2: IUniversallyUniqueMapping | null): boolean =>
+    this.universallyUniqueMappingService.compareUniversallyUniqueMapping(o1, o2);
+
+  comparePlaceholder = (o1: IPlaceholder | null, o2: IPlaceholder | null): boolean => this.placeholderService.comparePlaceholder(o1, o2);
 
   ngOnInit(): void {
     this.activatedRoute.data.subscribe(({ universallyUniqueMapping }) => {
-      this.updateForm(universallyUniqueMapping);
+      this.universallyUniqueMapping = universallyUniqueMapping;
+      if (universallyUniqueMapping) {
+        this.updateForm(universallyUniqueMapping);
+      }
 
       this.loadRelationshipsOptions();
     });
@@ -67,38 +52,19 @@ export class UniversallyUniqueMappingUpdateComponent implements OnInit {
 
   save(): void {
     this.isSaving = true;
-    const universallyUniqueMapping = this.createFromForm();
-    if (universallyUniqueMapping.id !== undefined) {
+    const universallyUniqueMapping = this.universallyUniqueMappingFormService.getUniversallyUniqueMapping(this.editForm);
+    if (universallyUniqueMapping.id !== null) {
       this.subscribeToSaveResponse(this.universallyUniqueMappingService.update(universallyUniqueMapping));
     } else {
       this.subscribeToSaveResponse(this.universallyUniqueMappingService.create(universallyUniqueMapping));
     }
   }
 
-  trackUniversallyUniqueMappingById(index: number, item: IUniversallyUniqueMapping): number {
-    return item.id!;
-  }
-
-  trackPlaceholderById(index: number, item: IPlaceholder): number {
-    return item.id!;
-  }
-
-  getSelectedPlaceholder(option: IPlaceholder, selectedVals?: IPlaceholder[]): IPlaceholder {
-    if (selectedVals) {
-      for (const selectedVal of selectedVals) {
-        if (option.id === selectedVal.id) {
-          return selectedVal;
-        }
-      }
-    }
-    return option;
-  }
-
   protected subscribeToSaveResponse(result: Observable<HttpResponse<IUniversallyUniqueMapping>>): void {
-    result.pipe(finalize(() => this.onSaveFinalize())).subscribe(
-      () => this.onSaveSuccess(),
-      () => this.onSaveError()
-    );
+    result.pipe(finalize(() => this.onSaveFinalize())).subscribe({
+      next: () => this.onSaveSuccess(),
+      error: () => this.onSaveError(),
+    });
   }
 
   protected onSaveSuccess(): void {
@@ -114,19 +80,15 @@ export class UniversallyUniqueMappingUpdateComponent implements OnInit {
   }
 
   protected updateForm(universallyUniqueMapping: IUniversallyUniqueMapping): void {
-    this.editForm.patchValue({
-      id: universallyUniqueMapping.id,
-      universalKey: universallyUniqueMapping.universalKey,
-      mappedValue: universallyUniqueMapping.mappedValue,
-      parentMapping: universallyUniqueMapping.parentMapping,
-      placeholders: universallyUniqueMapping.placeholders,
-    });
+    this.universallyUniqueMapping = universallyUniqueMapping;
+    this.universallyUniqueMappingFormService.resetForm(this.editForm, universallyUniqueMapping);
 
-    this.universallyUniqueMappingsSharedCollection = this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing(
-      this.universallyUniqueMappingsSharedCollection,
-      universallyUniqueMapping.parentMapping
-    );
-    this.placeholdersSharedCollection = this.placeholderService.addPlaceholderToCollectionIfMissing(
+    this.universallyUniqueMappingsSharedCollection =
+      this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing<IUniversallyUniqueMapping>(
+        this.universallyUniqueMappingsSharedCollection,
+        universallyUniqueMapping.parentMapping
+      );
+    this.placeholdersSharedCollection = this.placeholderService.addPlaceholderToCollectionIfMissing<IPlaceholder>(
       this.placeholdersSharedCollection,
       ...(universallyUniqueMapping.placeholders ?? [])
     );
@@ -138,9 +100,9 @@ export class UniversallyUniqueMappingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IUniversallyUniqueMapping[]>) => res.body ?? []))
       .pipe(
         map((universallyUniqueMappings: IUniversallyUniqueMapping[]) =>
-          this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing(
+          this.universallyUniqueMappingService.addUniversallyUniqueMappingToCollectionIfMissing<IUniversallyUniqueMapping>(
             universallyUniqueMappings,
-            this.editForm.get('parentMapping')!.value
+            this.universallyUniqueMapping?.parentMapping
           )
         )
       )
@@ -154,20 +116,12 @@ export class UniversallyUniqueMappingUpdateComponent implements OnInit {
       .pipe(map((res: HttpResponse<IPlaceholder[]>) => res.body ?? []))
       .pipe(
         map((placeholders: IPlaceholder[]) =>
-          this.placeholderService.addPlaceholderToCollectionIfMissing(placeholders, ...(this.editForm.get('placeholders')!.value ?? []))
+          this.placeholderService.addPlaceholderToCollectionIfMissing<IPlaceholder>(
+            placeholders,
+            ...(this.universallyUniqueMapping?.placeholders ?? [])
+          )
         )
       )
       .subscribe((placeholders: IPlaceholder[]) => (this.placeholdersSharedCollection = placeholders));
-  }
-
-  protected createFromForm(): IUniversallyUniqueMapping {
-    return {
-      ...new UniversallyUniqueMapping(),
-      id: this.editForm.get(['id'])!.value,
-      universalKey: this.editForm.get(['universalKey'])!.value,
-      mappedValue: this.editForm.get(['mappedValue'])!.value,
-      parentMapping: this.editForm.get(['parentMapping'])!.value,
-      placeholders: this.editForm.get(['placeholders'])!.value,
-    };
   }
 }
