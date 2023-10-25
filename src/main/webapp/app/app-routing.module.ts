@@ -46,10 +46,10 @@ import { erpNavbarRoute } from './erp/erp-nav/navbar/erp-navbar.route';
           path: 'login',
           loadChildren: () => import('./erp/home-page/erp-login/login.module').then(m => m.LoginModule),
         },
-        {
-          path: '',
-          loadChildren: () => import(`./entities/entity-routing.module`).then(m => m.EntityRoutingModule),
-        },
+        // {
+        //   path: '',
+        //   loadChildren: () => import(`./entities/entity-routing.module`).then(m => m.EntityRoutingModule),
+        // },
         erpNavbarRoute,
         ...erpErrorRoute,
       ],

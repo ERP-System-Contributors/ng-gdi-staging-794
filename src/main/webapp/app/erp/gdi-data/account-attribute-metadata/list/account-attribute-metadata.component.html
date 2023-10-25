@@ -1,0 +1,234 @@
+<!--
+
+    GDI STAGING - Mark VI No 3 (Phoebe Series) Client 0.0.1-SNAPSHOT
+    Copyright © 2023 ERP System Contributors (mailnjeru@gmail.com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<div>
+  <h2 id="page-heading" data-cy="AccountAttributeMetadataHeading">
+    <span>Account Attribute Metadata</span>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
+        <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
+        <span>Refresh list</span>
+      </button>
+
+      <button
+        id="jh-create-entity"
+        data-cy="entityCreateButton"
+        class="btn btn-primary jh-create-entity create-account-attribute-metadata"
+        [routerLink]="['/account-attribute-metadata/new']"
+      >
+        <fa-icon icon="plus"></fa-icon>
+        <span class="hidden-sm-down"> Create a new Account Attribute Metadata </span>
+      </button>
+    </div>
+  </h2>
+
+  <jhi-alert-error></jhi-alert-error>
+
+  <jhi-alert></jhi-alert>
+
+  <form name="searchForm" class="row row-cols-sm-auto align-items-center">
+    <div class="col-sm-12">
+      <div class="input-group w-100 mt-3">
+        <label class="visually-hidden" for="currentSearch">Search for Account Attribute Metadata</label>
+        <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
+
+        <button class="btn btn-info" (click)="search(currentSearch)">
+          <fa-icon icon="search"></fa-icon>
+        </button>
+
+        <button class="btn btn-danger" (click)="search('')" *ngIf="currentSearch">
+          <fa-icon icon="trash-alt"></fa-icon>
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <jhi-filter [filters]="filters"></jhi-filter>
+
+  <div class="alert alert-warning" id="no-result" *ngIf="accountAttributeMetadata?.length === 0">
+    <span>No Account Attribute Metadata found</span>
+  </div>
+
+  <div class="table-responsive table-entities" id="entities" *ngIf="accountAttributeMetadata && accountAttributeMetadata.length > 0">
+    <table class="table table-striped" aria-describedby="page-heading">
+      <thead>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id">
+            <div class="d-flex">
+              <span>ID</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="precedence">
+            <div class="d-flex">
+              <span>Precedence</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="columnName">
+            <div class="d-flex">
+              <span>Column Name</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="shortName">
+            <div class="d-flex">
+              <span>Short Name</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="detailedDefinition">
+            <div class="d-flex">
+              <span>Detailed Definition</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="dataType">
+            <div class="d-flex">
+              <span>Data Type</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="length">
+            <div class="d-flex">
+              <span>Length</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="columnIndex">
+            <div class="d-flex">
+              <span>Column Index</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="mandatoryFieldFlag">
+            <div class="d-flex">
+              <span>Mandatory Field Flag</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="businessValidation">
+            <div class="d-flex">
+              <span>Business Validation</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="technicalValidation">
+            <div class="d-flex">
+              <span>Technical Validation</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="dbColumnName">
+            <div class="d-flex">
+              <span>Db Column Name</span>
+              <fa-icon class="p-1" *ngIf="!currentSearch" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="metadataVersion">
+            <div class="d-flex">
+              <span>Metadata Version</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="standardInputTemplate.id">
+            <div class="d-flex">
+              <span>Standard Input Template</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let accountAttributeMetadata of accountAttributeMetadata; trackBy: trackId" data-cy="entityTable">
+          <td>
+            <a [routerLink]="['/account-attribute-metadata', accountAttributeMetadata.id, 'view']">{{ accountAttributeMetadata.id }}</a>
+          </td>
+          <td>{{ accountAttributeMetadata.precedence }}</td>
+          <td>{{ accountAttributeMetadata.columnName }}</td>
+          <td>{{ accountAttributeMetadata.shortName }}</td>
+          <td>{{ accountAttributeMetadata.detailedDefinition }}</td>
+          <td>{{ accountAttributeMetadata.dataType }}</td>
+          <td>{{ accountAttributeMetadata.length }}</td>
+          <td>{{ accountAttributeMetadata.columnIndex }}</td>
+          <td>{{ accountAttributeMetadata.mandatoryFieldFlag }}</td>
+          <td>{{ accountAttributeMetadata.businessValidation }}</td>
+          <td>{{ accountAttributeMetadata.technicalValidation }}</td>
+          <td>{{ accountAttributeMetadata.dbColumnName }}</td>
+          <td>{{ accountAttributeMetadata.metadataVersion }}</td>
+          <td>
+            <div *ngIf="accountAttributeMetadata.standardInputTemplate">
+              <a [routerLink]="['/gdi-master-data-index', accountAttributeMetadata.standardInputTemplate.id, 'view']">{{
+                accountAttributeMetadata.standardInputTemplate.id
+              }}</a>
+            </div>
+          </td>
+          <td class="text-end">
+            <div class="btn-group">
+              <button
+                type="submit"
+                [routerLink]="['/account-attribute-metadata', accountAttributeMetadata.id, 'view']"
+                class="btn btn-info btn-sm"
+                data-cy="entityDetailsButton"
+              >
+                <fa-icon icon="eye"></fa-icon>
+                <span class="d-none d-md-inline">View</span>
+              </button>
+
+              <button
+                type="submit"
+                [routerLink]="['/account-attribute-metadata', accountAttributeMetadata.id, 'edit']"
+                class="btn btn-primary btn-sm"
+                data-cy="entityEditButton"
+              >
+                <fa-icon icon="pencil-alt"></fa-icon>
+                <span class="d-none d-md-inline">Edit</span>
+              </button>
+
+              <button type="submit" (click)="delete(accountAttributeMetadata)" class="btn btn-danger btn-sm" data-cy="entityDeleteButton">
+                <fa-icon icon="times"></fa-icon>
+                <span class="d-none d-md-inline">Delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="accountAttributeMetadata && accountAttributeMetadata.length > 0">
+    <div class="d-flex justify-content-center">
+      <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+    </div>
+
+    <div class="d-flex justify-content-center">
+      <ngb-pagination
+        [collectionSize]="totalItems"
+        [page]="page"
+        [pageSize]="itemsPerPage"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="navigateToPage($event)"
+      ></ngb-pagination>
+    </div>
+  </div>
+</div>

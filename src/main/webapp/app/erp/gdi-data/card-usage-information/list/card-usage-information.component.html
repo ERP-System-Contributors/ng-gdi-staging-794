@@ -1,0 +1,261 @@
+<!--
+
+    GDI STAGING - Mark VI No 3 (Phoebe Series) Client 0.0.1-SNAPSHOT
+    Copyright © 2023 ERP System Contributors (mailnjeru@gmail.com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<div>
+  <h2 id="page-heading" data-cy="CardUsageInformationHeading">
+    <span>Card Usage Informations</span>
+
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-info me-2" (click)="load()" [disabled]="isLoading">
+        <fa-icon icon="sync" [spin]="isLoading"></fa-icon>
+        <span>Refresh list</span>
+      </button>
+
+      <button
+        id="jh-create-entity"
+        data-cy="entityCreateButton"
+        class="btn btn-primary jh-create-entity create-card-usage-information"
+        [routerLink]="['/card-usage-information/new']"
+      >
+        <fa-icon icon="plus"></fa-icon>
+        <span class="hidden-sm-down"> Create a new Card Usage Information </span>
+      </button>
+    </div>
+  </h2>
+
+  <jhi-alert-error></jhi-alert-error>
+
+  <jhi-alert></jhi-alert>
+
+  <form name="searchForm" class="row row-cols-sm-auto align-items-center">
+    <div class="col-sm-12">
+      <div class="input-group w-100 mt-3">
+        <label class="visually-hidden" for="currentSearch">Search for Card Usage Information</label>
+        <input type="text" class="form-control" [(ngModel)]="currentSearch" id="currentSearch" name="currentSearch" placeholder="Query" />
+
+        <button class="btn btn-info" (click)="search(currentSearch)">
+          <fa-icon icon="search"></fa-icon>
+        </button>
+
+        <button class="btn btn-danger" (click)="search('')" *ngIf="currentSearch">
+          <fa-icon icon="trash-alt"></fa-icon>
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <jhi-filter [filters]="filters"></jhi-filter>
+
+  <div class="alert alert-warning" id="no-result" *ngIf="cardUsageInformations?.length === 0">
+    <span>No Card Usage Informations found</span>
+  </div>
+
+  <div class="table-responsive table-entities" id="entities" *ngIf="cardUsageInformations && cardUsageInformations.length > 0">
+    <table class="table table-striped" aria-describedby="page-heading">
+      <thead>
+        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="navigateToWithComponentValues()">
+          <th scope="col" jhiSortBy="id">
+            <div class="d-flex">
+              <span>ID</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="reportingDate">
+            <div class="d-flex">
+              <span>Reporting Date</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="totalNumberOfLiveCards">
+            <div class="d-flex">
+              <span>Total Number Of Live Cards</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="totalActiveCards">
+            <div class="d-flex">
+              <span>Total Active Cards</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="totalNumberOfTransactionsDone">
+            <div class="d-flex">
+              <span>Total Number Of Transactions Done</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="totalValueOfTransactionsDoneInLCY">
+            <div class="d-flex">
+              <span>Total Value Of Transactions Done In LCY</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="bankCode.institutionName">
+            <div class="d-flex">
+              <span>Bank Code</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="cardType.cardType">
+            <div class="d-flex">
+              <span>Card Type</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="cardBrand.cardBrandType">
+            <div class="d-flex">
+              <span>Card Brand</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="cardCategoryType.cardCategoryDescription">
+            <div class="d-flex">
+              <span>Card Category Type</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="transactionType.transactionTypeDetails">
+            <div class="d-flex">
+              <span>Transaction Type</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="channelType.channelTypes">
+            <div class="d-flex">
+              <span>Channel Type</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col" jhiSortBy="cardState.cardStateFlagDetails">
+            <div class="d-flex">
+              <span>Card State</span>
+              <fa-icon class="p-1" icon="sort"></fa-icon>
+            </div>
+          </th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cardUsageInformation of cardUsageInformations; trackBy: trackId" data-cy="entityTable">
+          <td>
+            <a [routerLink]="['/card-usage-information', cardUsageInformation.id, 'view']">{{ cardUsageInformation.id }}</a>
+          </td>
+          <td>{{ cardUsageInformation.reportingDate | formatMediumDate }}</td>
+          <td>{{ cardUsageInformation.totalNumberOfLiveCards }}</td>
+          <td>{{ cardUsageInformation.totalActiveCards }}</td>
+          <td>{{ cardUsageInformation.totalNumberOfTransactionsDone }}</td>
+          <td>{{ cardUsageInformation.totalValueOfTransactionsDoneInLCY }}</td>
+          <td>
+            <div *ngIf="cardUsageInformation.bankCode">
+              <a [routerLink]="['/institution-code', cardUsageInformation.bankCode.id, 'view']">{{
+                cardUsageInformation.bankCode.institutionName
+              }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.cardType">
+              <a [routerLink]="['/card-types', cardUsageInformation.cardType.id, 'view']">{{ cardUsageInformation.cardType.cardType }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.cardBrand">
+              <a [routerLink]="['/card-brand-type', cardUsageInformation.cardBrand.id, 'view']">{{
+                cardUsageInformation.cardBrand.cardBrandType
+              }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.cardCategoryType">
+              <a [routerLink]="['/card-category-type', cardUsageInformation.cardCategoryType.id, 'view']">{{
+                cardUsageInformation.cardCategoryType.cardCategoryDescription
+              }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.transactionType">
+              <a [routerLink]="['/bank-transaction-type', cardUsageInformation.transactionType.id, 'view']">{{
+                cardUsageInformation.transactionType.transactionTypeDetails
+              }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.channelType">
+              <a [routerLink]="['/channel-type', cardUsageInformation.channelType.id, 'view']">{{
+                cardUsageInformation.channelType.channelTypes
+              }}</a>
+            </div>
+          </td>
+          <td>
+            <div *ngIf="cardUsageInformation.cardState">
+              <a [routerLink]="['/card-state', cardUsageInformation.cardState.id, 'view']">{{
+                cardUsageInformation.cardState.cardStateFlagDetails
+              }}</a>
+            </div>
+          </td>
+          <td class="text-end">
+            <div class="btn-group">
+              <button
+                type="submit"
+                [routerLink]="['/card-usage-information', cardUsageInformation.id, 'view']"
+                class="btn btn-info btn-sm"
+                data-cy="entityDetailsButton"
+              >
+                <fa-icon icon="eye"></fa-icon>
+                <span class="d-none d-md-inline">View</span>
+              </button>
+
+              <button
+                type="submit"
+                [routerLink]="['/card-usage-information', cardUsageInformation.id, 'edit']"
+                class="btn btn-primary btn-sm"
+                data-cy="entityEditButton"
+              >
+                <fa-icon icon="pencil-alt"></fa-icon>
+                <span class="d-none d-md-inline">Edit</span>
+              </button>
+
+              <button type="submit" (click)="delete(cardUsageInformation)" class="btn btn-danger btn-sm" data-cy="entityDeleteButton">
+                <fa-icon icon="times"></fa-icon>
+                <span class="d-none d-md-inline">Delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="cardUsageInformations && cardUsageInformations.length > 0">
+    <div class="d-flex justify-content-center">
+      <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+    </div>
+
+    <div class="d-flex justify-content-center">
+      <ngb-pagination
+        [collectionSize]="totalItems"
+        [page]="page"
+        [pageSize]="itemsPerPage"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="navigateToPage($event)"
+      ></ngb-pagination>
+    </div>
+  </div>
+</div>
