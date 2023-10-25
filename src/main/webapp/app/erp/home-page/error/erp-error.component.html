@@ -17,16 +17,18 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<jhi-page-ribbon></jhi-page-ribbon>
-
 <div>
-  <router-outlet name="erp-navbar"></router-outlet>
-</div>
+  <div class="row">
+    <div class="col-md-4">
+      <span class="hipster img-fluid rounded"></span>
+    </div>
 
-<div class="container-fluid">
-  <div class="card jh-card">
-    <router-outlet></router-outlet>
+    <div class="col-md-8">
+      <h1>Error page!</h1>
+
+      <div *ngIf="errorMessage">
+        <div class="alert alert-danger">{{ errorMessage }}</div>
+      </div>
+    </div>
   </div>
-
-  <jhi-footer></jhi-footer>
 </div>

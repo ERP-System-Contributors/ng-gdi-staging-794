@@ -17,13 +17,12 @@
 ///
 
 import { Route } from '@angular/router';
+import { HomePageComponent } from './home-page.component';
 
-import { HomeComponent } from './home.component';
-
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
+export const HOME_PAGE_ROUTE: Route = {
+  path: '',
+  component: HomePageComponent,
   data: {
-    pageTitle: 'Welcome, Java Hipster!',
+    pageTitle: 'ERP| GDI Module',
   },
 };

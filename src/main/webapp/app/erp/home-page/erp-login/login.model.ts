@@ -16,14 +16,6 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
-
-import { HomeComponent } from './home.component';
-
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
-};
+export class Login {
+  constructor(public username: string, public password: string, public rememberMe: boolean) {}
+}

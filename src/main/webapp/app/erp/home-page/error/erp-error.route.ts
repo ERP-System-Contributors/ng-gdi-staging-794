@@ -16,14 +16,36 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
+import { Routes } from '@angular/router';
 
-import { HomeComponent } from './home.component';
+import { ERPErrorComponent } from './erp-error.component';
 
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
+export const erpErrorRoute: Routes = [
+  {
+    path: 'error',
+    component: ERPErrorComponent,
+    data: {
+      pageTitle: 'Error page!',
+    },
   },
-};
+  {
+    path: 'accessdenied',
+    component: ERPErrorComponent,
+    data: {
+      pageTitle: 'Error page!',
+      errorMessage: 'You are not authorized to access this page.',
+    },
+  },
+  {
+    path: '404',
+    component: ERPErrorComponent,
+    data: {
+      pageTitle: 'Error page!',
+      errorMessage: 'The page does not exist.',
+    },
+  },
+  {
+    path: '**',
+    redirectTo: '/404',
+  },
+];

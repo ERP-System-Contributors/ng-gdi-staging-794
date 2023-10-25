@@ -18,12 +18,12 @@
 
 import { Route } from '@angular/router';
 
-import { HomeComponent } from './home.component';
+import { LoginComponent } from './login.component';
 
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
+export const LOGIN_ROUTE: Route = {
+  path: '',
+  component: LoginComponent,
   data: {
-    pageTitle: 'Welcome, Java Hipster!',
+    pageTitle: 'GDI| Sign in',
   },
 };

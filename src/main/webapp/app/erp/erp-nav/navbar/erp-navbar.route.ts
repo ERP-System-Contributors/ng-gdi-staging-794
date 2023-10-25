@@ -18,12 +18,10 @@
 
 import { Route } from '@angular/router';
 
-import { HomeComponent } from './home.component';
+import { ErpNavbarComponent } from './erp-navbar.component';
 
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
+export const erpNavbarRoute: Route = {
+  path: '',
+  component: ErpNavbarComponent,
+  outlet: 'erp-navbar',
 };

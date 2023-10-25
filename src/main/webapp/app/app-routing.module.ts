@@ -19,12 +19,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { errorRoute } from './layouts/error/error.route';
-import { navbarRoute } from './layouts/navbar/navbar.route';
 import { DEBUG_INFO_ENABLED } from 'app/app.constants';
 import { Authority } from 'app/config/authority.constants';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access.service';
+import { erpErrorRoute } from './erp/home-page/error/erp-error.route';
+import { erpNavbarRoute } from './erp/erp-nav/navbar/erp-navbar.route';
 
 @NgModule({
   imports: [
@@ -44,14 +44,14 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access.service'
         },
         {
           path: 'login',
-          loadChildren: () => import('./login/login.module').then(m => m.LoginModule),
+          loadChildren: () => import('./erp/home-page/erp-login/login.module').then(m => m.LoginModule),
         },
         {
           path: '',
           loadChildren: () => import(`./entities/entity-routing.module`).then(m => m.EntityRoutingModule),
         },
-        navbarRoute,
-        ...errorRoute,
+        erpNavbarRoute,
+        ...erpErrorRoute,
       ],
       { enableTracing: DEBUG_INFO_ENABLED }
     ),

@@ -16,14 +16,18 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
+export interface ERPInfoResponse {
+  'display-ribbon-on-profiles'?: string;
+  git?: any;
+  build?: any;
+  activeProfiles?: string[];
+}
 
-import { HomeComponent } from './home.component';
-
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
-};
+export class ERPProfileInfo {
+  constructor(
+    public activeProfiles?: string[],
+    public ribbonEnv?: string,
+    public inProduction?: boolean,
+    public openAPIEnabled?: boolean
+  ) {}
+}

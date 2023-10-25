@@ -16,14 +16,15 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
-import { HomeComponent } from './home.component';
+import { SharedModule } from 'app/shared/shared.module';
+import { LOGIN_ROUTE } from './login.route';
+import { LoginComponent } from './login.component';
 
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
-};
+@NgModule({
+  imports: [SharedModule, RouterModule.forChild([LOGIN_ROUTE])],
+  declarations: [LoginComponent],
+})
+export class LoginModule {}

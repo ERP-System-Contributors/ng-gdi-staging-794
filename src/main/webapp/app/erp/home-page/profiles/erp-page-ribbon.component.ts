@@ -16,14 +16,27 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import { HomeComponent } from './home.component';
+import { ErpProfileService } from './erp-profile.service';
 
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
-};
+@Component({
+  selector: 'jhi-erp-page-ribbon',
+  template: `
+    <div class="ribbon" *ngIf="ribbonEnv$ | async as ribbonEnv">
+      <a href="">{{ { dev: 'Development' }[ribbonEnv] || '' }}</a>
+    </div>
+  `,
+  styleUrls: ['./erp-page-ribbon.component.scss'],
+})
+export class ErpPageRibbonComponent implements OnInit {
+  ribbonEnv$?: Observable<string | undefined>;
+
+  constructor(private profileService: ErpProfileService) {}
+
+  ngOnInit(): void {
+    this.ribbonEnv$ = this.profileService.getProfileInfo().pipe(map(profileInfo => profileInfo.ribbonEnv));
+  }
+}

@@ -23,10 +23,10 @@ import { Router, ActivatedRouteSnapshot, NavigationEnd } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
-  selector: 'jhi-main-default',
-  templateUrl: './main.component.html',
+  selector: 'jhi-main',
+  templateUrl: './erp-main.component.html',
 })
-export class MainComponent implements OnInit {
+export class ErpMainComponent implements OnInit {
   constructor(private accountService: AccountService, private titleService: Title, private router: Router) {}
 
   ngOnInit(): void {

@@ -16,14 +16,10 @@
 /// along with this program. If not, see <http://www.gnu.org/licenses/>.
 ///
 
-import { Route } from '@angular/router';
+import { Component } from '@angular/core';
 
-import { HomeComponent } from './home.component';
-
-export const HOME_ROUTE: Route = {
-  path: 'jhipster-home',
-  component: HomeComponent,
-  data: {
-    pageTitle: 'Welcome, Java Hipster!',
-  },
-};
+@Component({
+  selector: 'jhi-erp-footer',
+  templateUrl: './erp-footer.component.html',
+})
+export class ErpFooterComponent {}
