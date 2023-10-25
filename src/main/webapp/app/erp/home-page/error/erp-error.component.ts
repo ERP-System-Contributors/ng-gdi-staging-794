@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
   selector: 'jhi-erp-error',
   templateUrl: './erp-error.component.html',
+  styleUrls: ['./erp-error.component.scss']
 })
 export class ERPErrorComponent implements OnInit {
   errorMessage?: string;

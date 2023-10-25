@@ -40,7 +40,7 @@ import { erpNavbarRoute } from './erp/erp-nav/navbar/erp-navbar.route';
         },
         {
           path: 'account',
-          loadChildren: () => import('./account/account.module').then(m => m.AccountModule),
+          loadChildren: () => import('./erp/home-page/erp-account/erp-account.module').then(m => m.ErpAccountModule),
         },
         {
           path: 'login',
